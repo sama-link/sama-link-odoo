@@ -25,6 +25,9 @@ class HrCustody(models.Model):
     note = fields.Text(string='Notes')
     value = fields.Float(string='Estimated Value')
     active = fields.Boolean(default=True, string='Active')
+    custody_image_ids = fields.One2many('hr.custody.image', 'custody_id', string='Images')
+    document = fields.Binary(string='Document')
+    document_name = fields.Char(string='Document Name')
     state = fields.Selection([
         ('received', 'Received'),
         ('cleared', 'Cleared')
@@ -45,3 +48,12 @@ class HrCustody(models.Model):
         for rec in self:
             rec.state = 'cleared'
             rec.date_return = date.today()
+
+
+class HrCustodyImage(models.Model):
+    _name = 'hr.custody.image'
+    _description = 'Custody Image'
+
+    custody_id = fields.Many2one('hr.custody', string='Custody', required=True, ondelete='cascade')
+    image = fields.Binary(string='Image', required=True)
+    name = fields.Char(string='Description')

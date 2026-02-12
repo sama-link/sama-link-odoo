@@ -1,5 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_custody_type_user,hr.custody.type.user,model_hr_custody_type,base.group_user,1,0,0,0
 access_hr_custody_type_manager,hr.custody.type.manager,model_hr_custody_type,hr.group_hr_manager,1,1,1,1
-access_hr_custody_user,hr.custody.user,model_hr_custody,base.group_user,1,0,0,0
+access_hr_custody_user,hr.custody.user,model_hr_custody,base.group_user,1,1,1,0
 access_hr_custody_manager,hr.custody.manager,model_hr_custody,hr.group_hr_manager,1,1,1,1
+access_hr_custody_image_user,hr.custody.image.user,model_hr_custody_image,base.group_user,1,1,1,1
+access_hr_custody_image_manager,hr.custody.image.manager,model_hr_custody_image,hr.group_hr_manager,1,1,1,1
