@@ -14,9 +14,6 @@ class HrMission(models.Model):
     _rec_name = 'employee_id'
     _check_company_auto = True
 
-    active = fields.Boolean(default=True, string='Active')
-
-
     def _default_employee(self):
         employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
         return employee.id if employee else False
