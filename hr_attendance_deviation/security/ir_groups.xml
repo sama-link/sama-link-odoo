@@ -1,0 +1,11 @@
+<odoo>
+    <data noupdate="1">
+        <record id="group_hr_attendance_middleware_user" model="res.groups">
+            <field name="name">Attendance Middleware User: Can approve Late/Early for his team</field>
+        </record>
+        <record id="group_hr_attendance_middleware_admin" model="res.groups">
+            <field name="name">Attendance Middleware Admin: Can force checkings</field>
+            <field name="implied_ids" eval="[(4, ref('hr_attendance_deviation.group_hr_attendance_middleware_user'))]"/>
+        </record>
+    </data>
+</odoo>

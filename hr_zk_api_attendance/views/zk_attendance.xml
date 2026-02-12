@@ -1,0 +1,63 @@
+<odoo>
+    <record id="view_zk_attendance_list" model="ir.ui.view">
+        <field name="name">zk.attendance.list</field>
+        <field name="model">zk.attendance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="zk_id"/>
+                <field name="emp_code"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="att_date"/>
+                <field name="punch_time" widget="time"/>
+                <field name="punch_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_zk_attendance_form" model="ir.ui.view">
+        <field name="name">zk.attendance.form</field>
+        <field name="model">zk.attendance</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="zk_id"/>
+                        <field name="emp_code"/>
+                        <field name="employee_id"/>
+                        <field name="department_id"/>
+                        <field name="att_date"/>
+                        <field name="punch_time" widget="time"/>
+                        <field name="punch_state"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_zk_attendance_search" model="ir.ui.view">
+        <field name="name">zk.attendance.search</field>
+        <field name="model">zk.attendance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="zk_id"/>
+                <field name="emp_code"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="search_by_hr_attendance_id" string="Not Valid" domain="[('hr_attendance_id', '=', False)]"/>
+                <filter string="Employee" name="groupby_employee" context="{'group_by': 'employee_id'}"/>
+                <filter string="Attendance Day" name="groupby_att_date_day" context="{'group_by': 'att_date:day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_zk_attendance" model="ir.actions.act_window">
+        <field name="name">ZK Attendance</field>
+        <field name="res_model">zk.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_groupby_employee': 1, 'search_default_groupby_att_date_day': 2}</field>
+    </record>
+    <data noupdate="1">
+        <menuitem id="menu_hr_zk_attendance" name="Attendances" parent="menu_zk_api_root" action="action_zk_attendance" sequence="10"/>
+    </data>
+</odoo>

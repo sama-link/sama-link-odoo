@@ -1,0 +1,14 @@
+<odoo>
+    <data>
+        <record id="edit_project" model="ir.ui.view">
+            <field name="name">project.project.inherit.edit_project</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <field name="tag_ids" position="after">
+                    <field name="company_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>

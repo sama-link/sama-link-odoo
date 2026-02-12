@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_contract_form_custody" model="ir.ui.view">
+        <field name="name">hr.contract.form.custody</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Custody" name="custody">
+                    <field name="custody_ids" readonly="1">
+                        <list decoration-info="state == 'received'" decoration-muted="state == 'cleared'">
+                            <field name="name"/>
+                            <field name="custody_type_id"/>
+                            <field name="date_receive"/>
+                            <field name="date_return"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

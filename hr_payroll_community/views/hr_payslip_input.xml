@@ -1,0 +1,23 @@
+<odoo>
+    <record id="view_hr_payslip_input_list" model="ir.ui.view">
+        <field name="name">hr.payslip.input.list</field>
+        <field name="model">hr.payslip.input</field>
+        <field name="arch" type="xml">
+            <list string="Payslip Inputs">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="amount"/>
+                <field name="contract_id"/>
+                <field name="payslip_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_payslip_input" model="ir.actions.act_window">
+        <field name="name">Payslip Inputs</field>
+        <field name="res_model">hr.payslip.input</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_hr_payslip_input" name="Payslip Inputs" groups="hr_payroll_community.group_hr_payroll_community_user" parent="hr_payroll_community.menu_hr_payroll_community_root" action="action_hr_payslip_input" sequence="2"/>
+</odoo>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_attendance_middleware,hr.attendance.middleware,model_hr_attendance_middleware,base.group_user,1,0,0,0
+access_hr_attendance_middleware_admin,hr.attendance.middleware,model_hr_attendance_middleware,group_hr_attendance_middleware_admin,1,1,1,1
+access_hr_attendance_middleware_user,hr.attendance.middleware,model_hr_attendance_middleware,group_hr_attendance_middleware_user,1,1,1,0

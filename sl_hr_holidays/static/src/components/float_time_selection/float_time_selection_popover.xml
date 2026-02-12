@@ -1,0 +1,12 @@
+<templates>
+
+    <t t-name="sl_hr_holidays.FloatCivilianTimeSelectionPopover" t-inherit="hr_holidays.FloatTimeSelectionPopover" t-inherit-mode="primary">
+        <xpath expr="//div" position="inside">
+            <select class="o_hour_selection form-control form-control-sm w-auto" t-on-change="onTimeChange" t-model="state.selectedMeridiem">
+                <option class="text-center" t-att-value="'AM'" t-esc="'AM'" t-att-selected="state.selectedMeridiem == 'AM'"/>
+                <option class="text-center" t-att-value="'PM'" t-esc="'PM'" t-att-selected="state.selectedMeridiem == 'PM'"/>
+            </select>
+         </xpath>
+    </t>
+
+</templates>

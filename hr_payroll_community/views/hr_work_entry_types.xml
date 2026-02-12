@@ -1,0 +1,13 @@
+<odoo>
+    <record id="action_hr_work_entry_type" model="ir.actions.act_window">
+        <field name="name">Work Entry Types</field>
+        <field name="res_model">hr.work.entry.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_hr_work_entry_type_conf"
+              name="Work Entry Types"
+              parent="hr_payroll_community.menu_hr_payroll_community_configuration"
+              action="action_hr_work_entry_type"
+              sequence="20"/>
+</odoo>

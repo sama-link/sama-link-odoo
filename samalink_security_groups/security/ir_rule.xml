@@ -1,0 +1,169 @@
+<odoo>
+    <record id="hr_employee_rule_group_samalink_employee_edit_own" model="ir.rule">
+        <field name="name">HR Employee Samalink Employee (Edit Own Only)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
+        <field name="domain_force">
+            [('user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="0"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_attendance_rule_group_samalink_manager_team_attendance" model="ir.rule">
+        <field name="name">HR Attendance Samalink Manager (Team Attendance)</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('employee_id.parent_id', '=', user.employee_id.id), ('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_employee_rule_group_samalink_manager_team_employees" model="ir.rule">
+        <field name="name">HR Employee Samalink Manager (Team Employees)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('parent_id', '=', user.employee_id.id), ('user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_employee_rule_group_samalink_administrator_all_employees" model="ir.rule">
+        <field name="name">HR Employee Samalink Admin (All Employees)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_administrator'))]"/>
+        <field name="domain_force">
+            [(1, '=', 1)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_leave_rule_group_samalink_administrator_clear_read_own" model="ir.rule">
+        <field name="name">HR Leave Samalink Administrator (Clear Read Own)</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_administrator'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_leave_rule_group_samalink_administrator_clear_read_only" model="ir.rule">
+        <field name="name">HR Leave Samalink Administrator (Clear Read only)</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_administrator'))]"/>
+        <field name="domain_force">[('state', '=', False)]</field>
+        <field name="perm_read" eval="0"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
+
+    <record id="hr_attendance_rule_group_samalink_administrator_clear_read_own" model="ir.rule">
+        <field name="name">HR Attendance Samalink Administrator (Clear Read Own)</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_administrator'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="hr_employee_rule_group_samalink_hr_officer_clear_edit_own" model="ir.rule">
+        <field name="name">HR Employee Samalink Employee (Clear Edit Own Only)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_hr_officer'))]"/>
+        <field name="domain_force">
+            [(1, '=', 1)]
+        </field>
+        <field name="perm_read" eval="0"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- <record id="hr_payslip_line_rule_group_samalink_employee" model="ir.rule"> -->
+        <!-- <field name="name">Payslip Line Samalink Employee (OWN Lines)</field> -->
+        <!-- <field name="model_id" ref="hr_payroll_community.model_hr_payslip_line"/> -->
+        <!-- <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/> -->
+        <!-- <field name="domain_force"> -->
+            <!-- [('slip_id.employee_id.user_id', '=', user.id),('slip_id.state', '=', 'done')] -->
+        <!-- </field> -->
+    <!-- </record> -->
+<!--  -->
+    <!-- <record id="hr_payslip_line_rule_group_samalink_hr_accountant" model="ir.rule"> -->
+        <!-- <field name="name">Payslip Line Samalink HR Accountant (All Lines)</field> -->
+        <!-- <field name="model_id" ref="hr_payroll_community.model_hr_payslip_line"/> -->
+        <!-- <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_hr_accountant'))]"/> -->
+        <!-- <field name="domain_force"> -->
+            <!-- [(1, '=', 1)] -->
+        <!-- </field> -->
+    <!-- </record> -->
+
+    <!-- <record id="hr_employee_rule_group_samalink_hr_manager_clear" model="ir.rule"> -->
+        <!-- <field name="name">HR Employee Samalink HR Manager (Clear)</field> -->
+        <!-- <field name="model_id" ref="hr.model_hr_employee"/> -->
+        <!-- <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_hr_manager'))]"/> -->
+        <!-- <field name="domain_force"> -->
+            <!-- [(1, '=', 1)] -->
+        <!-- </field> -->
+        <!-- <field name="perm_read" eval="0"/> -->
+        <!-- <field name="perm_write" eval="0"/> -->
+        <!-- <field name="perm_create" eval="1"/> -->
+        <!-- <field name="perm_unlink" eval="1"/> -->
+    <!-- </record> -->
+
+    <!-- <record id="hr_employee_rule_group_samalink_manager" model="ir.rule">
+        <field name="name">HR Employee Samalink Manager (Team Employees)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('parent_id', '=', user.employee_id.id), ('user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record> -->
+
+    <!-- <record id="hr_employee_rule_group_samalink_hr_manager_edit_own" model="ir.rule"> -->
+        <!-- <field name="name">HR Employee Samalink HR Manager (Edit Own Only)</field> -->
+        <!-- <field name="model_id" ref="hr.model_hr_employee"/> -->
+        <!-- <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_hr_manager'))]"/> -->
+        <!-- <field name="domain_force"> -->
+            <!-- [('user_id', '=', user.id)] -->
+        <!-- </field> -->
+        <!-- <field name="perm_read" eval="0"/> -->
+        <!-- <field name="perm_write" eval="1"/> -->
+        <!-- <field name="perm_create" eval="0"/> -->
+        <!-- <field name="perm_unlink" eval="0"/> -->
+    <!-- </record> -->
+<!--  -->
+    <!-- <record id="hr_employee_rule_group_samalink_administrator" model="ir.rule"> -->
+        <!-- <field name="name">HR Employee Samalink Administrator (All Employees READONLY)</field> -->
+        <!-- <field name="model_id" ref="hr.model_hr_employee"/> -->
+        <!-- <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_administrator'))]"/> -->
+        <!-- <field name="domain_force"> -->
+            <!-- [('user_id', '=', user.id)] -->
+        <!-- </field> -->
+        <!-- <field name="perm_read" eval="0"/> -->
+        <!-- <field name="perm_write" eval="1"/> -->
+        <!-- <field name="perm_create" eval="1"/> -->
+        <!-- <field name="perm_unlink" eval="1"/> -->
+    <!-- </record> -->
+</odoo>

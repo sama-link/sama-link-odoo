@@ -1,0 +1,212 @@
+<odoo>
+    <record id="view_hr_attendance_middleware_list" model="ir.ui.view">
+        <field name="name">hr.attendance.middleware.list</field>
+        <field name="model">hr.attendance.middleware</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="late_check_in_state == 'late' or early_check_out_state == 'early'">
+                <header>
+                    <button type="object" name="action_confirm_late_check_in" string="Confirm Late Check-In" confirm="Are you sure you want to confirm this late check-in?" class="btn-primary"/>
+                    <button type="object" name="action_cancel_late_check_in_approval" string="Cancel Late Check-In Approval" confirm="Are you sure you want to cancel this late check-in approval?" class="btn-danger"/>
+                    <button type="object" name="action_confirm_early_check_out" string="Confirm Early Check-Out" confirm="Are you sure you want to confirm this early check-out?" class="btn-primary"/>
+                    <button type="object" name="action_cancel_early_check_out_approval" string="Cancel Early Check-Out Approval" confirm="Are you sure you want to cancel this early check-out approval?" class="btn-danger"/>
+                    <button type="object" name="action_recheck_has_late_early_request" string="Recheck Late/Early Requests" class="btn-secondary"/>
+                </header>
+                <field name="employee_id"/>
+                <field name="date"/>
+                <field name="late_check_in" widget="float_time"/>
+                <field name="early_check_out" widget="float_time"/>
+                <field name="late_check_in_state"/>
+                <field name="early_check_out_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_attendance_middleware_form" model="ir.ui.view">
+        <field name="name">hr.attendance.middleware.form</field>
+        <field name="model">hr.attendance.middleware</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- <button type="object" name="action_fix_work_entries" string="Fix Work Entries"/> -->
+                    <!-- <button type="object" name="action_adjust_checkings" string="Adjust Checkings"/> -->
+                    <field name="force_late_check_in" invisible="1"/>
+                    <field name="force_early_check_out" invisible="1"/>
+                    <button type="object" name="action_adjust_or_create_hr_attendance" string="Adjust or Create Attendance" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
+                    <button type="object" name="action_confirm_late_check_in" string="Confirm Late Check-In" invisible="not late_check_in and not force_late_check_in"/>
+                    <button type="object" name="action_confirm_early_check_out" string="Confirm Early Check-Out" invisible="not early_check_out and not force_early_check_out"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,work_entries_valid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="employee_id" force_save="1"/>
+                        </group>
+                        <group>
+                            <field name="date" readonly="date" force_save="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Working Time">
+                            <div>
+                                <i class="fa fa-exclamation-circle text-info"></i>
+                                <span class="text-muted">To adjust work entries and to adjust checkings.</span>
+                            </div>
+                            <field name="working_time_ids">
+                                <list editable="bottom">
+                                    <field name="calendar_id" string="Schedule" optional="show"/>
+                                    <field name="hour_from" widget="float_civilian_time_selection"/>
+                                    <field name="hour_to" widget="float_civilian_time_selection"/>
+                                    <field name="dayofweek" optional="hide"/>
+                                </list>
+                            </field>
+                            <separator string="Best Work Time"/>
+                            <field name="best_work_time_id">
+                                <list>
+                                    <field name="calendar_id" string="Schedule" optional="show"/>
+                                    <field name="hour_from" widget="float_civilian_time_selection"/>
+                                    <field name="hour_to" widget="float_civilian_time_selection"/>
+                                </list>
+                            </field>
+                            <label for="is_check_in_close_to_start" string=" (Valid)" invisible="not is_check_in_close_to_start"/>
+                            <field name="is_check_in_close_to_start" invisible="1"/>
+                        </page>
+                        <page string="Work Entries">
+                            <div>
+                                <i class="fa fa-exclamation-circle text-info"></i>
+                                <span class="text-muted">To calculate overtime correctly.</span>
+                            </div>
+                            <field name="work_entry_ids">
+                                <list editable="bottom">
+                                    <field name="work_entry_type_id"/>
+                                    <field name="date_start"/>
+                                    <field name="date_stop"/>
+                                    <field name="duration" widget="float_time" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Attendances">
+                            <separator string="ZK"/>
+                            <field name="zk_attendance_ids">
+                                <list editable="bottom">
+                                    <field name="punch_time"/>
+                                    <field name="punch_state"/>
+                                    <field name="zk_id" optional="hide"/>
+                                </list>
+                            </field>
+                            <separator string="Odoo"/>
+                            <field name="hr_attendance_id"/>
+                        </page>
+                        <page string="Checkings">
+                            <group string="Original Checkings">
+                                <group>
+                                    <field name="check_in_computed"/>
+                                </group>
+                                <group>
+                                    <field name="check_out_computed"/>
+                                </group>
+                            </group>
+                            <group string="Adjusted Checkings">
+                                <group>
+                                    <field name="check_in_final"/>
+                                    <field name="late_check_in" widget="float_time" invisible="not late_check_in"/>
+                                </group>
+                                <group>
+                                    <field name="check_out_final"/>
+                                    <field name="early_check_out" widget="float_time" invisible="not early_check_out"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Force Adjustments" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin">
+                            <group>
+                                <group>
+                                    <field name="force_best_work_time_id"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group>
+                                    <field name="force_check_in"/>
+                                    <field name="force_late_check_in"/>
+                                </group>
+                                <group>
+                                    <field name="force_check_out"/>
+                                    <field name="force_early_check_out"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hr_attendance_middleware_search" model="ir.ui.view">
+        <field name="name">hr.attendance.middleware.search</field>
+        <field name="model">hr.attendance.middleware</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <filter name="late_check_in_state_filter" string="Late Check-In" domain="[('late_check_in_state', '=', 'late')]"/>
+                <filter name="early_check_out_state_filter" string="Early Check-Out" domain="[('early_check_out_state', '=', 'early')]"/>
+                <filter name="no_late_early_request_filter" string="No Late/Early Request" domain="[('has_late_early_request', '=', False)]"/>
+                <!-- <filter name="filter_by_this_month" string="This Month" domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%%Y-%%m-%%d'))]"/> -->
+                <!-- <filter name="filter_by_today" string="Today" domain="[('date', '=', context_today().strftime('%%Y-%%m-%%d'))]"/> -->
+                <filter name="group_by_employee" string="Group by Employee" domain="[]" context="{'group_by': 'employee_id'}"/>
+                <filter name="group_by_state" string="Group by State"  domain="[]" context="{'group_by': 'state'}"/>
+                <filter name="group_by_date" string="Group by Date" domain="[]" context="{'group_by': 'date:day'}"/>
+                <filter name="group_by_attendance_day" string="Group by Attendance Day" domain="[]" context="{'group_by': 'attendance_day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hr_attendance_middleware" model="ir.actions.act_window">
+        <field name="name">Attendance Middleware</field>
+        <field name="res_model">hr.attendance.middleware</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_by_this_month': 1, 'search_default_group_by_state': 1, 'search_default_group_by_date': 1}</field>
+    </record>
+
+    <record id="action_hr_attendance_middleware_team" model="ir.actions.act_window">
+        <field name="name">Attendance Middleware (Team)</field>
+        <field name="res_model">hr.attendance.middleware</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_id.parent_id.user_id', '=', uid), '|', ('late_check_in_state', '=', 'late'), ('early_check_out_state', '=', 'early')]</field>
+        <field name="context">{'search_default_no_late_early_request_filter': 1, 'search_default_group_by_state': 1, 'search_default_group_by_date': 1}</field>
+    </record>
+
+    <record id="action_hr_attendance_middleware_no_late_early_request" model="ir.actions.act_window">
+        <field name="name">Attendance Middleware No Late/Early Permission</field>
+        <field name="res_model">hr.attendance.middleware</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('has_late_early_request', '=', False), '|', ('late_check_in_state', '=', 'late'), ('early_check_out_state', '=', 'early')]</field>
+        <field name="context">{'search_default_no_late_early_request_filter': 1, 'search_default_group_by_state': 1, 'search_default_group_by_date': 1}</field>
+    </record>
+
+    <data noupdate="1">
+        <menuitem id="menu_hr_attendance_middleware_root"
+                    name="Attendance Middleware"
+                    parent="hr.menu_hr_root"
+                    sequence="100"/>
+
+        <menuitem id="menu_hr_attendance_middleware"
+                    name="Attendance Middleware (All Employees)"
+                    parent="menu_hr_attendance_middleware_root"
+                    action="action_hr_attendance_middleware"
+                    groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"
+                    sequence="10"/>
+
+        <menuitem id="menu_hr_attendance_middleware_team"
+                    name="Attendance Middleware (Team)"
+                    parent="menu_hr_attendance_middleware_root"
+                    action="action_hr_attendance_middleware_team"
+                    groups="hr_attendance_deviation.group_hr_attendance_middleware_user"
+                    sequence="20"/>
+
+        <menuitem id="menu_hr_attendance_middleware_no_late_early_request"
+                    name="No Late/Early Permission"
+                    parent="menu_hr_attendance_middleware_root"
+                    action="action_hr_attendance_middleware_no_late_early_request"
+                    groups="hr_attendance_deviation.group_hr_attendance_middleware_user"
+                    sequence="30"/>
+    </data>
+</odoo>

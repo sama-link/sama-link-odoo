@@ -1,0 +1,33 @@
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.loan</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Loan Settings" string="Loan Settings" name="ohrms_loan">
+                    <block title="Loan Settings" name="loan_apply_config">
+                        <setting string="Loan Submission" help="Configure loan submission settings between dates.">
+                            <field name="loan_allowed_dates_restrection"/>
+                            <br/>
+                            <span class="me-2">From</span>
+                            <field name="loan_after_month_day"/>
+                            <br/>
+                            <span class="me-2">To</span>
+                            <field name="loan_before_month_day"/>
+                        </setting>
+                        <setting string="Loan Maximum Amount" help="Set the maximum loan amount that can be requested by employees.">
+                            <field name="loan_allowed_wage_percentage_restriction"/>
+                            <br/>
+                            <span class="me-2">Percentage (%) of Wage</span>
+                            <field name="loan_max_wage_percentage"/>
+                        </setting>
+                        <setting string="Loan Multi Requests" help="Set restriction on multiple loan requests by employees.">
+                            <field name="loan_multi_request_restriction"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

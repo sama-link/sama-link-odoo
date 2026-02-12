@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_hr_work_entry_payslip_list" model="ir.ui.view">
+        <field name="name">hr.work.entry.payslip.list</field>
+        <field name="model">hr.work.entry</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="date_start"/>
+                <field name="date_stop"/>
+                <field name="work_entry_type_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_rest_allow_list_payslip" model="ir.actions.act_window">
+        <field name="name">Rest Days</field>
+        <field name="res_model">hr.work.entry</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_hr_work_entry_payslip_list"/>
+        <field name="domain">[('employee_id', '=', False)]</field>
+    </record>
+</odoo>

@@ -1,0 +1,15 @@
+<odoo>
+    <data>
+        <record id="hr_contract_view_form" model="ir.ui.view">
+            <field name="name">hr.contract.form</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <div id="resource_calendar_warning" position="after">
+                    <field name="multi_shifts"/>
+                    <field name="resource_calendar_ids" required="multi_shifts" invisible="not multi_shifts" widget="many2many_tags" options="{'no_create': True}"/>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

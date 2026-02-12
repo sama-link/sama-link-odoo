@@ -1,0 +1,20 @@
+{
+    'name': 'HR Incentives v1.0.0',
+    'version': '1.0.0',
+    'summary': 'Manage HR incentives such as bonuses and penalties for employees',
+    'description': 'Module to manage employee incentives within HR.',
+    'author': '46-d-006',
+    'website': 'https://yourcompany.com',
+    'category': 'Human Resources',
+    'depends': ['hr', 'hr_contract', 'hr_payroll_community'],
+    'data': [
+        'views/hr_incentive.xml',
+        'security/res_groups.xml',
+        'security/ir.model.access.csv',
+        'security/ir_rule.xml',
+        'views/hr_payslip.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

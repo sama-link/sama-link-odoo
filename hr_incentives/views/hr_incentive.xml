@@ -1,0 +1,111 @@
+<odoo>
+    <record id="view_hr_incentives_form" model="ir.ui.view">
+        <field name="name">hr.incentive.form</field>
+        <field name="model">hr.incentive</field>
+        <field name="arch" type="xml">
+            <form string="HR Incentives">
+                <header>
+                    <button name="action_approve" string="Approve" type="object" invisible="state not in ('draft','validated')" groups="hr_incentives.group_hr_incentives_officer,hr_incentives.group_hr_incentives_manager" class="btn-primary" confirm="Are you sure you want to approve this incentive?"/>
+                    <button name="action_refuse" string="Refuse" type="object" invisible="state != 'validated'" groups="hr_incentives.group_hr_incentives_manager" class="btn-outline-danger" confirm="Are you sure you want to refuse this incentive?"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state != 'approved'" groups="hr_incentives.group_hr_incentives_manager" class="btn-secondary" confirm="Are you sure you want to cancel this incentive?"/>
+                    <button name="action_draft" string="Set to Draft" type="object" invisible="state != 'validated'" groups="hr_incentives.group_hr_incentives_officer" class="btn-secondary" confirm="Are you sure you want to set this incentive to draft?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="work_location_id"/>
+                            <field name="current_contract_id"/>
+                        </group>
+                        <group>
+                            <field name="based_on" widget="radio" options="{'horizontal': true}"/>
+                            <field name="date"/>
+                            <field name="type"/>
+                            <field name="days" invisible="based_on != 'days'"/>
+                            <field name="amount" readonly="based_on != 'amount'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hr_incentives_list" model="ir.ui.view">
+        <field name="name">hr.incentive.list</field>
+        <field name="model">hr.incentive</field>
+        <field name="arch" type="xml">
+            <list string="HR Incentives">
+                <field name="employee_id"/>
+                <field name="type"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="state"/>
+                <field name="work_location_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_incentives_search" model="ir.ui.view">
+        <field name="name">hr.incentive.search</field>
+        <field name="model">hr.incentive</field>
+        <field name="arch" type="xml">
+            <search string="HR Incentives">
+                <field name="employee_id"/>
+                <field name="work_location_id"/>
+                <filter name="group_work_location" string="Work Location" domain="[]" context="{'group_by': 'work_location_id'}"/>
+                <filter name="archived" string="Archived" groups="base.group_no_one" domain="[('active', '=', False), ('deleted', '=', False)]"/>
+                <filter name="trashed" string="Trashed" groups="base.group_system" domain="[('active', '=', False), ('deleted', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hr_incentives" model="ir.actions.act_window">
+        <field name="name">HR Incentives</field>
+        <field name="res_model">hr.incentive</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create HR Incentives records.
+            </p>
+        </field>
+    </record>
+
+    <record id="view_hr_incentives_payslip_list" model="ir.ui.view">
+        <field name="name">hr.incentive.payslip.list</field>
+        <field name="model">hr.incentive</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <list string="HR Incentives" create="false" delete="false" edit="false">
+                <field name="type"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_incentives_payslip" model="ir.actions.act_window">
+        <field name="name">HR Incentives</field>
+        <field name="res_model">hr.incentive</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create HR Incentives records.
+            </p>
+        </field>
+        <field name="view_id" ref="view_hr_incentives_payslip_list"/>
+        <field name="domain">[('employee_id', '=', False)]</field>
+    </record>
+    <data noupdate="1">
+        <menuitem id="menu_hr_incentives_root" name="Incentives"
+                  sequence="20"
+                  parent="hr.menu_hr_root"
+                  action="action_hr_incentives"
+                  />
+    </data>
+</odoo>

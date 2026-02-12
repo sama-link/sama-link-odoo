@@ -1,0 +1,29 @@
+<odoo>
+    <data noupdate="1">
+        <record id="hr_mission_comp_rule" model="ir.rule">
+            <field name="name">Mission multi-company</field>
+            <field name="model_id" ref="model_hr_mission"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+        </record>
+
+        <record id="hr_mission_rule_employee_own_only" model="ir.rule">
+            <field name="name">HR Mission: employees see own records only</field>
+            <field name="model_id" ref="model_hr_mission"/>
+            <field name="domain_force">[('employee_id.user_id','=',user.id)]</field>
+            <!-- apply to HR users (adjust group as needed) -->
+            <field name="groups" eval="[(4, ref('hr_mission.group_hr_mission_user'))]"/>
+        </record>
+        <record id="hr_mission_rule_officer_team_only" model="ir.rule">
+            <field name="name">HR Mission: managers see team records only</field>
+            <field name="model_id" ref="model_hr_mission"/>
+            <field name="domain_force">[('employee_id.parent_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('hr_mission.group_hr_mission_officer'))]"/>
+        </record>
+        <record id="hr_mission_rule_manager_all" model="ir.rule">
+            <field name="name">HR Mission: HR see all records</field>
+            <field name="model_id" ref="model_hr_mission"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('hr_mission.group_hr_mission_manager'))]"/>
+        </record>
+    </data>
+</odoo>

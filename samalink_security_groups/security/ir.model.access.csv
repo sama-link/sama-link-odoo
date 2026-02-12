@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_hr_payslip_samalink_employee,hr.payslip (editonly),hr_payroll_community.model_hr_payslip,group_samalink_employee,1,1,0,0
+access_hr_payslip_line_samalink_employee,hr.payslip.line (readonly),hr_payroll_community.model_hr_payslip_line,group_samalink_employee,1,0,0,0
+access_hr_payslip_input_samalink_employee,hr.payslip.input (readonly),hr_payroll_community.model_hr_payslip_input,group_samalink_employee,1,0,0,0
+access_hr_payslip_worked_days_samalink_employee,hr.payslip.worked.days (readonly),hr_payroll_community.model_hr_payslip_worked_days,group_samalink_employee,1,0,0,0
+access_hr_employee_samalink_employee,hr.employee (editonly),hr.model_hr_employee,group_samalink_employee,1,1,0,0
+access_hr_work_entry_samalink_employee,hr.work.entry (readonly),hr_work_entry.model_hr_work_entry,group_samalink_employee,1,0,0,0
+access_hr_work_entry_type_samalink_employee,hr.work.entry.type (readonly),hr_work_entry.model_hr_work_entry_type,group_samalink_employee,1,0,0,0
+access_hr_leave_type_samalink_employee,hr.leave.type (readonly),hr_holidays.model_hr_leave_type,group_samalink_employee,1,0,0,0
+access_mail_activity_samalink_employee,mail.activity (readonly),calendar.model_mail_activity,group_samalink_employee,1,0,0,0

@@ -1,0 +1,22 @@
+{
+    'name': 'Samalink HR v1.0.0',
+    'version': '1.0',
+    'summary': 'HR Module for Samalink',
+    'description': 'Custom HR functionalities for Samalink.',
+    'author': '46-d-006',
+    'website': 'https://edara.digital',
+    'category': 'Human Resources',
+    'depends': ['base', 'hr', 'samalink_security_groups', 'hr_contract'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/hr_employee.xml',
+        'views/hr_contract.xml',
+        'views/hr_attendance.xml',
+        'views/hr_work_entry.xml',
+        'views/hr_absent_entry.xml',
+        'views/hr_job.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}

@@ -1,0 +1,93 @@
+<odoo>
+    <record id="hr_employee_my_info_form_view" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.my.info</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <notebook>
+                        <page string="Private Contact">
+                            <group name="work_contact" string="Work Contact">
+                                <label for="private_street" string="Private Address"/>
+                                <div class="o_address_format">
+                                    <field name="private_street" placeholder="Street..." class="o_address_street"/>
+                                    <field name="private_street2" placeholder="Street 2..." class="o_address_street"/>
+                                    <field name="private_city" placeholder="City" class="o_address_city"/>
+                                    <field name="private_state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'default_country_id': private_country_id}"/>
+                                    <field name="private_zip" placeholder="ZIP" class="o_address_zip"/>
+                                    <field name="private_country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                </div>
+                                <field name="private_email" placeholder="e.g. myprivateemail@example.com"/>
+                                <field name="private_phone"/>
+                                <field name="bank_account_id" context="{'default_partner_id': work_contact_id}" options="{'no_quick_create': True}" readonly="not id"/>
+                                <label for="distance_home_work"/>
+                                <div class="o_row" name="div_km_home_work">
+                                    <field name="distance_home_work" class="o_hr_narrow_field"/>
+                                    <span><field name="distance_home_work_unit"/></span>
+                                </div>
+                                <field name="private_car_plate"/>
+                            </group>
+                            <group string="Citizenship">
+                                <field name="country_id" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                <field name="identification_id"/>
+                                <field name="ssnid"/>
+                                <field name="passport_id"/>
+                                <field name="gender"/>
+                                <field name="birthday"/>
+                                <field name="place_of_birth"/>
+                                <field name="country_of_birth"/>
+                            </group>
+                            <group string="Emergency" name="emergency">
+                                <field name="emergency_contact"/>
+                                <field name="emergency_phone" class="o_force_ltr"/>
+                                <separator string="Family Status"/>
+                                <field name="marital"/>
+                                <field name="spouse_complete_name" invisible="marital not in ['married', 'cohabitant']"/>
+                                <field name="spouse_birthdate" invisible="marital not in ['married', 'cohabitant']"/>
+                                <field name="children"/>
+                            </group>
+                            <group string="Education">
+                                <field name="certificate"/>
+                                <field name="study_field"/>
+                                <field name="study_school"/>
+                                <separator name="has_work_permit" string="Work Permit"/>
+                                <field name="visa_no"/>
+                                <field name="permit_no"/>
+                                <field name="visa_expire"/>
+                                <field name="work_permit_expiration_date"/>
+                                <field name="work_permit_name" invisible="1"/>
+                                <field name="has_work_permit" widget="work_permit_upload" filename="work_permit_name"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_open_view_employee_form_my" model="ir.actions.act_window">
+        <field name="name">My Info</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="hr_employee_my_info_form_view"/>
+        <field name="target">current</field>
+    </record>
+
+    <record id="action_open_my_employee" model="ir.actions.server">
+        <field name="name">My Info</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">action = env['hr.employee'].action_open_my_employee()</field>
+    </record>
+
+    <menuitem id="hr_employee_menu_my_info"
+              name="My Info"
+              action="action_open_my_employee"
+              sequence="10"/>
+
+    <menuitem id="hr_employee_menu_my_employees"
+            name="My Employees"
+            action="hr.open_view_employee_list_my"
+            sequence="10"/>
+</odoo>

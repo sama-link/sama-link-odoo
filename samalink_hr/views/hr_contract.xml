@@ -1,0 +1,41 @@
+<odoo>
+    <data>
+        <record id="hr_contract_view_form" model="ir.ui.view">
+            <field name="name">hr.contract.form</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <group name="top_info_left" position="inside">
+                    <field name="work_location_id"/>
+                </group>
+                <group name="salary" position="inside">
+                    <field name="salary_payment_method"/>
+                    <field name="not_listed_payment_method" invisible="salary_payment_method != 'other'" required="salary_payment_method == 'other'"/>
+                </group>
+            </field>
+        </record>
+
+        <record id="hr_contract_view_tree" model="ir.ui.view">
+            <field name="name">hr.contract.tree.inherit</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_tree"/>
+            <field name="arch" type="xml">
+                <list position="inside">
+                    <field name="work_location_id" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="hr_contract_view_search_inherit" model="ir.ui.view">
+            <field name="name">hr.contract.search.inherit</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_search"/>
+            <field name="arch" type="xml">
+                <search position="inside">
+                    <field name="work_location_id" string="Work Location"/>
+                    <filter name="group_work_location" string="Work Location" domain="[]" context="{'group_by': 'work_location_id'}"/>
+                </search>
+            </field>
+        </record>
+    </data>
+</odoo>

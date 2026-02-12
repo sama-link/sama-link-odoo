@@ -1,0 +1,41 @@
+<odoo>
+    <data>
+        <record id="hr_payslip_view_form" model="ir.ui.view">
+            <field name="name">hr.payslip.form</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll_community.hr_payslip_view_form"/>
+            <field name="arch" type="xml">
+                <page name="salary_slip_details" position="inside">
+                    <group>
+                        <group>
+                            <separator string="Early Leaving"/>
+                                <field name="early_leaving_days"/>
+                                <field name="early_leaving_hours" widget="float_time"/>
+                            <separator string="Late Leaving"/>
+                                <field name="late_days"/>
+                                <field name="late_hours" widget="float_time"/>
+                            <separator string="Permissions"/>
+                                <field name="late_permission_count"/>
+                                <field name="late_permission_hours" widget="float_time"/>
+                        </group>
+                        <group>
+                            <separator string="Overtime"/>
+                                <field name="overtime_hours" widget="float_time"/>
+                            <separator string="Attendance"/>
+                                <field name="days_attended"/>
+                                <field name="weekend_days"/>
+                                <field name="absent_days"/>
+                            <separator string="Time Off"/>
+                                <field name="generic_timeoff_days"/>
+                                <field name="sick_timeoff_days"/>
+                                <field name="casual_timeoff_days"/>
+                                <field name="paid_timeoff_days"/>
+                                <field name="unpaid_leaves"/>
+                                <field name="timeoff_days" string="Total All"/>
+                        </group>
+                    </group>
+                </page>
+            </field>
+        </record>
+    </data>
+</odoo>
