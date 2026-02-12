@@ -1,0 +1,7 @@
+<odoo>
+    <record id="hr_transfer_comp_rule" model="ir.rule">
+        <field name="name">Work Location Transfer multi-company</field>
+        <field name="model_id" ref="model_hr_transfer"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'parent_of', company_ids)]</field>
+    </record>
+</odoo>

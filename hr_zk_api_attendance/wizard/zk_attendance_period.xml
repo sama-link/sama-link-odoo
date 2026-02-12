@@ -1,0 +1,35 @@
+<odoo>
+    <record id="view_zk_attendance_period_wizard_form" model="ir.ui.view">
+        <field name="name">zk.attendance.period.wizard.form</field>
+        <field name="model">zk.attendance.period.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Period Wizard">
+                <group>
+                    <group>
+                        <field name="date_period"/>
+                        <field name="department_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All departments"/>
+                        <field name="employee_ids" invisible="not department_ids" widget="many2many_tags" options="{'no_create': True}" domain="[('department_id', 'in', department_ids)]" placeholder="All department employees"/>
+                        <field name="employee_ids" invisible="department_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All employees"/>
+                        <field name="create_hr_attendance"/>
+                    </group>
+                    <group>
+                        <field name="start_date" nolabel="1" force_save="1" readonly="date_period != 'custom'" widget="daterange" options="{'end_date_field': 'end_date'}"/>
+                    </group>
+                    <field name="end_date" force_save="1" readonly="date_period != 'custom'" widget="daterange" options="{'start_date_field': 'start_date'}" invisible="1"/>
+                </group>
+                <footer>
+                    <button string="Get Attendance" type="object" name="do_action" class="btn-primary" invisible="id"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" invisible="id"/>
+                    <button string="Close" class="btn-secondary" special="cancel" invisible="not id"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_zk_attendance_period" model="ir.actions.act_window">
+        <field name="name">Attendance Period</field>
+        <field name="res_model">zk.attendance.period.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

@@ -1,0 +1,43 @@
+<odoo>
+    <record id="action_hr_leave_waiting_1st_approve" model="ir.actions.act_window">
+        <field name="name">Leaves Waiting 1st Approval</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'confirm'), ('employee_id.leave_manager_id', '=', uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No leaves waiting for approval.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_hr_leave_waiting_2nd_approve" model="ir.actions.act_window">
+        <field name="name">Leaves Waiting 2nd Approval</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'validate1')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No leaves waiting for approval.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_hr_leave_waiting_1st_approve"
+              name="Leaves Waiting Approval"
+              parent="hr_holidays.menu_hr_holidays_root"
+              action="action_hr_leave_waiting_1st_approve"
+              sequence="10"/>
+
+    <menuitem id="menu_hr_leave_waiting_2nd_approve"
+              name="Leaves Waiting Approval"
+              parent="hr_holidays.menu_hr_holidays_root"
+              action="action_hr_leave_waiting_2nd_approve"
+              sequence="20"/>
+
+    <menuitem id="menu_hr_leave_action_all_leaves"
+              name="All Time Off"
+              action="hr_holidays.hr_leave_action_action_approve_department"
+              parent="hr_holidays.menu_hr_holidays_root"
+              sequence="30"/>
+</odoo>

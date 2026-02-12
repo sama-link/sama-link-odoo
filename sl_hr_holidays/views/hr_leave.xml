@@ -1,0 +1,42 @@
+<odoo>
+    <record id="view_hr_leave_payslip_list" model="ir.ui.view">
+        <field name="name">hr.leave.list</field>
+        <field name="model">hr.leave</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <list string="Leaves" create="false" edit="false" delete="false">
+                <field name="holiday_status_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="duration_display"/>
+                <field name="state" widget="badge" decoration-warning="state in ('confirm','validate1')" decoration-success="state == 'validate'" decoration-danger="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="hr_leave_view_form" model="ir.ui.view">
+        <field name="name">hr.leave.form.inherit.payslip</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="arch" type="xml">
+            <field name="request_hour_from" position="attributes">
+                <attribute name="widget">float_civilian_time_selection</attribute>
+            </field>
+            <field name="request_hour_to" position="attributes">
+                <attribute name="widget">float_civilian_time_selection</attribute>
+            </field>
+            <field name="request_unit_hours" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="action_hr_leave_payslip" model="ir.actions.act_window">
+        <field name="name">Late/Early Leaves</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_hr_leave_payslip_list"/>
+        <field name="search_view_id" eval="False"/>
+        <field name="domain">[('employee_id', '=', False)]</field>
+    </record>
+</odoo>

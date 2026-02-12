@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_zk_api_hr_attendance_officer,zk.api,model_zk_api,hr_attendance.group_hr_attendance_officer,1,1,1,1
+access_zk_attendance_hr_attendance_officer,zk.attendance,model_zk_attendance,hr_attendance.group_hr_attendance_officer,1,1,1,1
+access_zk_department_hr_attendance_officer,zk.department,model_zk_department,hr_attendance.group_hr_attendance_officer,1,1,1,1
+access_zk_employee_hr_attendance_officer,zk.employee,model_zk_employee,hr_attendance.group_hr_attendance_officer,1,1,1,1
+access_zk_attendance_period_wizard_hr_attendance_officer,zk.attendance.period.wizard,model_zk_attendance_period_wizard,hr_attendance.group_hr_attendance_officer,1,1,1,1

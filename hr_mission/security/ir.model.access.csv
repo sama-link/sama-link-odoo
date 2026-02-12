@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_mission_user,hr.mission user,model_hr_mission,group_hr_mission_user,1,1,1,0
+access_hr_mission_officer,hr.mission officer,model_hr_mission,group_hr_mission_officer,1,1,1,0
+access_hr_mission_manager,hr.mission manager,model_hr_mission,group_hr_mission_manager,1,1,1,1

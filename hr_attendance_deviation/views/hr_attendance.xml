@@ -1,0 +1,27 @@
+<odoo>
+    <data>
+        <record id="hr_attendance_view_form" model="ir.ui.view">
+            <field name="name">hr.attendance.form.inherit.deviation</field>
+            <field name="model">hr.attendance</field>
+            <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+            <field name="arch" type="xml">
+                <!-- <field name="check_out" position="after"> -->
+                    <!-- <field name="work_entry_id" invisible="not work_entry_id"/> -->
+                <!-- </field> -->
+                <field name="in_mode" position="after">
+                    <!-- <field name="expected_check_in" invisible="not expected_check_in"/> -->
+                    <field name="late_check_in" widget="float_time" invisible="not late_check_in"/>
+                </field>
+                <field name="out_mode" position="after">
+                    <!-- <field name="expected_check_out" invisible="not expected_check_out"/> -->
+                    <field name="early_check_out" widget="float_time" invisible="not early_check_out"/>
+                </field>
+                <sheet position="inside">
+                    <group string="Middleware Information">
+                        <field name="middleware_id" groups="hr_attendance.group_hr_attendance_officer" invisible="not middleware_id"/>
+                    </group>
+                </sheet>
+            </field>
+        </record>
+    </data>
+</odoo>

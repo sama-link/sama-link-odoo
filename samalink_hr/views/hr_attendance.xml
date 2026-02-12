@@ -1,0 +1,60 @@
+<odoo>
+    <record id="view_hr_attendance_payslip_list" model="ir.ui.view">
+        <field name="name">hr.attendance.payslip.list</field>
+        <field name="model">hr.attendance</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <list string="Attendances" create="false" edit="false" delete="false">
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="worked_hours" widget="float_time" sum="Total Worked Hours"/>
+                <field name="late_check_in" widget="float_time" sum="Total Late Check-In"/>
+                <field name="early_check_out" widget="float_time" sum="Total Early Check-Out"/>
+                <field name="has_late_permission" column_invisible="1"/>
+                <button name="action_open_related_leave" string="View Leave" invisible="not has_late_permission" type="object" class="oe_stat_button"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_attendance_list_payslip" model="ir.actions.act_window">
+        <field name="name">Attendances</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_hr_attendance_payslip_list"/>
+        <field name="domain">[('employee_id', '=', False)]</field>
+    </record>
+
+    <record id="hr_attendance_view_form" model="ir.ui.view">
+        <field name="name">hr.attendance.form.payslip.inherit</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <field name="employee_id" position="after">
+                <field name="work_location_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_hr_attendance_tree_inherit" model="ir.ui.view">
+        <field name="name">hr.attendance.tree.inherit.work.location</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <list position="inside">
+                <field name="work_location_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="hr_attendance_view_filter" model="ir.ui.view">
+        <field name="name">hr.attendance.view.filter.inherit</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <field name="work_location_id" string="Work Location" />
+                <filter name="group_work_location" string="Work Location" domain="[]" context="{'group_by': 'work_location_id'}"/>
+            </search>
+        </field>
+    </record>
+</odoo>

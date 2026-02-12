@@ -1,0 +1,9 @@
+<odoo>
+    <record model="ir.rule" id="project_multi_comp_rule">
+        <field name="name">Project: multi-company</field>
+        <field name="model_id" ref="model_project_project"/>
+        <field name="domain_force">[
+            ('company_ids', 'not in', company_ids)
+        ]</field>
+    </record>
+</odoo>

@@ -1,0 +1,22 @@
+<odoo>
+    <data noupdate="1">
+        <record id="hr_rule_late_penalty" model="hr.salary.rule">
+            <field name="name">Late penalty (Days)</field>
+            <field name="code">LATE_PENALTY</field>
+            <field name="sequence" eval="1"/>
+            <field name="category_id" ref="hr_payroll_community.DED"/>
+            <field name="condition_select">python</field>
+            <!-- code -->
+            <field name="condition_python">result = payslip.late_days > 0</field>
+            <!-- code -->
+            <field name="amount_select">code</field>
+            <!-- code -->
+            <field name="amount_python_compute">day_rate = contract.wage / 22.0
+result_qty = payslip.late_days
+result = -day_rate / 2</field>
+            <!-- code -->
+            <field name="active">True</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+    </data>
+</odoo>

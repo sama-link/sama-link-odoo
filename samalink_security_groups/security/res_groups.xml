@@ -1,0 +1,104 @@
+<odoo>
+    <data noupdate="1">
+        <record model="ir.module.category" id="module_category_samalink_hr">
+            <field name="name">SamaLink</field>
+        </record>
+        <record id="group_samalink_employee" model="res.groups">
+            <field name="name">Employee</field>
+            <field name="category_id" ref="module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('hr_attendance.group_hr_attendance_own_reader')),
+                (4, ref('hr_mission.group_hr_mission_user')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('mail.menu_root_discuss')),
+                (4, ref('hr_holidays.hr_leave_menu_new_request')),
+                (4, ref('samalink_security_groups.menu_my_attendances')),
+                (4, ref('samalink_security_groups.menu_my_payslips')),
+                (4, ref('samalink_security_groups.hr_employee_menu_my_info')),
+                (4, ref('ohrms_loan.hr_loan_menu_requests')),
+                (4, ref('hr_mission.menu_hr_mission')),
+            ]" />
+            <field name="menu_access" eval="[
+                (4, ref('samalink_security_groups.menu_my_attendances')),
+                (4, ref('samalink_security_groups.menu_my_payslips')),
+                (4, ref('samalink_security_groups.hr_employee_menu_my_info')),
+            ]" />
+        </record>
+        <record id="group_samalink_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_holidays.group_hr_holidays_responsible')),
+                (4, ref('hr_attendance.group_hr_attendance_officer')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('menu_team_attendances')),
+                (4, ref('hr_employee_menu_my_employees')),
+            ]" />
+            <field name="menu_access" eval="[
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('menu_team_attendances')),
+                (4, ref('hr_employee_menu_my_employees')),
+            ]" />
+        </record>
+        <record id="group_samalink_administrator" model="res.groups">
+            <field name="name">Administrator</field>
+            <field name="category_id" ref="module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('hr_employee_menu_my_employees')),
+                (4, ref('menu_all_attendances')),
+                (4, ref('menu_hr_leave_action_all_leaves')),
+            ]" />
+            <field name="menu_access" eval="[
+                (4, ref('hr_employee_menu_my_employees')),
+                (4, ref('menu_all_attendances')),
+                (4, ref('menu_hr_leave_action_all_leaves')),
+            ]" />
+        </record>
+        <record id="group_samalink_hr_officer" model="res.groups">
+            <field name="name">HR Officer</field>
+            <field name="category_id" ref="module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_holidays.group_hr_holidays_user')),
+                (4, ref('hr.group_hr_user')),
+                (4, ref('hr_payroll_community.group_hr_payroll_community_manager')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('menu_hr_leave_waiting_2nd_approve')),
+                (4, ref('hr_payroll_community.menu_department_tree')),
+                (4, ref('hr_payroll_community.menu_hr_payslip_run')),
+                (4, ref('hr_payroll_community.menu_hr_payroll_community_configuration')),
+                (4, ref('menu_all_attendances')),
+                (4, ref('hr.menu_hr_employee_user')),
+                (4, ref('hr.menu_hr_department_kanban')),
+                (4, ref('hr_skills.hr_employee_skill_report_menu')),
+                (4, ref('hr.menu_hr_work_location_tree')),
+                (4, ref('hr.menu_resource_calendar_view')),
+                (4, ref('hr_contract.hr_menu_contract')),
+            ]" />
+            <field name="menu_access" eval="[
+                (4, ref('menu_hr_leave_waiting_2nd_approve')),
+                (4, ref('menu_all_attendances')),
+            ]" />
+        </record>
+        <record id="group_samalink_accountant" model="res.groups">
+            <field name="name">Accountant</field>
+            <field name="category_id" ref="module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_payroll_community.group_hr_payroll_community_manager')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('hr_payroll_community.menu_hr_payslip_run')),
+                (4, ref('hr_payroll_community.menu_department_tree')),
+            ]" />
+        </record>
+    </data>
+</odoo>

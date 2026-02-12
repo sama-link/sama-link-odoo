@@ -1,0 +1,46 @@
+<odoo>
+    <record id="hr_payslip_export_template" model="ir.exports">
+        <field name="name">Finance</field>
+        <field name="resource">hr.payslip</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__name" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/name</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__pin" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/pin</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__work_location_id__name" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/work_location_id/name</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__bank_account_id__bank_id__name" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/bank_account_id/bank_id/name</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__bank_account_id__bank_bic" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/bank_account_id/bank_bic</field>
+    </record>
+
+    <record id="hr_payslip_export_template_employee_id__bank_account_id__acc_number" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">employee_id/bank_account_id/acc_number</field>
+    </record>
+
+    <record id="hr_payslip_export_template_contract_id__salary_payment_method" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">contract_id/salary_payment_method</field>
+    </record>
+
+    <record id="hr_payslip_export_template_net_amount" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">net_amount</field>
+    </record>
+</odoo>

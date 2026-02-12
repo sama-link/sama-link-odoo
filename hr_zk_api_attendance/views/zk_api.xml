@@ -1,0 +1,53 @@
+<odoo>
+    <record id="view_zk_api_form" model="ir.ui.view">
+        <field name="name">zk.api.form</field>
+        <field name="model">zk.api</field>
+        <field name="arch" type="xml">
+            <form string="ZK API">
+                <header>
+                    <button name="action_generate_token" string="Generate Token"
+                        type="object" class="oe_highlight" invisible="token"/>
+                    <button name="action_first_setup" string="First Setup"
+                        type="object" class="oe_highlight" invisible="is_set_up"/>
+                    <button name="action_sync_departments" invisible="not token" string="Sync Departments"
+                            type="object"/>
+                    <button name="action_sync_employees" invisible="not token" string="Sync Employees"
+                        type="object"/>
+                    <button name="hr_zk_api_attendance.action_zk_attendance_period" invisible="not token or not is_set_up" string="Sync Attendance"
+                        type="action"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="url"/>
+                        <field name="username"/>
+                        <field name="password"/>
+                        <field name="token" invisible="1"/>
+                        <field name="is_set_up" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_zk_api_list" model="ir.ui.view">
+        <field name="name">zk.api.list</field>
+        <field name="model">zk.api</field>
+        <field name="arch" type="xml">
+            <list string="ZK API">
+                <field name="name"/>
+                <field name="url"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_zk_api" model="ir.actions.act_window">
+        <field name="name">ZK API</field>
+        <field name="res_model">zk.api</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <data noupdate="1">
+        <menuitem id="menu_zk_api" name="APIs" parent="menu_zk_api_root" action="action_zk_api" sequence="10"/>
+    </data>
+</odoo>

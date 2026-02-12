@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sl_hr_holidays.FloatCivilianTimeSelectionField" t-inherit="web.FloatTimeField" t-inherit-mode="primary">
+        <xpath expr="//span" position="replace">
+            <span t-if="props.readonly" class="text-muted" t-esc="formattedValue"/>
+            <span t-else="" class="text-primary cursor-pointer" t-esc="formattedValue" t-on-click="onCharHoursClick"/>
+        </xpath>
+        <xpath expr="//input" position="replace">
+        </xpath>
+    </t>
+</templates>
