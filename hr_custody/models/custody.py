@@ -23,6 +23,8 @@ class HrCustody(models.Model):
     date_return = fields.Date(string='Return Date')
     image = fields.Binary(string='Image')
     note = fields.Text(string='Notes')
+    value = fields.Float(string='Estimated Value')
+    active = fields.Boolean(default=True, string='Active')
     state = fields.Selection([
         ('received', 'Received'),
         ('cleared', 'Cleared')

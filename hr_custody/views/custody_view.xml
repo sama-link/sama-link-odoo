@@ -9,7 +9,6 @@
             <list>
                 <field name="name"/>
                 <field name="code"/>
-                <field name="value"/>
             </list>
         </field>
     </record>
@@ -26,7 +25,6 @@
                             <field name="code"/>
                         </group>
                         <group>
-                            <field name="value"/>
                         </group>
                     </group>
                     <notebook>
@@ -56,6 +54,8 @@
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="1"/>
@@ -70,6 +70,7 @@
                         <group>
                             <field name="date_receive"/>
                             <field name="date_return" readonly="state == 'received'"/>
+                            <field name="value"/>
                             <field name="image" widget="image" class="oe_avatar"/>
                         </group>
                     </group>
@@ -108,6 +109,8 @@
                 <field name="custody_type_id"/>
                 <filter string="Received" name="received" domain="[('state', '=', 'received')]"/>
                 <filter string="Cleared" name="cleared" domain="[('state', '=', 'cleared')]"/>
+                <separator/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Employee" name="employee" context="{'group_by': 'employee_id'}"/>
                     <filter string="Type" name="type" context="{'group_by': 'custody_type_id'}"/>

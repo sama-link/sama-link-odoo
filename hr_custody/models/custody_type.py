@@ -6,5 +6,5 @@ class HrCustodyType(models.Model):
 
     name = fields.Char(string='Name', required=True)
     code = fields.Char(string='Code')
-    value = fields.Float(string='Estimated Value')
+    # value = fields.Float(string='Estimated Value')
     description = fields.Text(string='Description')

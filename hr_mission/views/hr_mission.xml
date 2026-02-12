@@ -5,13 +5,15 @@
         <field name="arch" type="xml">
             <form string="HR Mission">
                 <header>
-                    <!-- HR Approval -->
-                    <button name="action_hr_approve" string="Approve" type="object" invisible="state != 'confirmed'" class="btn-primary" groups="hr_mission.group_hr_mission_manager"/>
-                    <button name="action_reject" string="Reject" type="object" invisible="state != 'confirmed'" class="btn-secondary" groups="hr_mission.group_hr_mission_manager"/>
-                    <button name="action_cancel" string="Cancel" type="object" invisible="state != 'hr_approved'" groups="hr_mission.group_hr_mission_manager"/>
-                    <field name="state" widget="statusbar" statusbar_visible="confirmed,hr_approved"/>
+                    <button name="action_hr_approve" string="Approve" type="object" class="oe_highlight" invisible="state != 'confirmed'" groups="hr_mission.group_hr_mission_manager"/>
+                    <button name="action_reject" string="Reject" type="object" class="oe_highlight" invisible="state != 'confirmed'" groups="hr_mission.group_hr_mission_manager"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state != 'hr_approved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="confirmed,hr_approved,rejected,cancelled"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
                     <group>
                         <group string="Employee Information">
                             <field name="employee_id" invisible="1" force_save="1"/>
@@ -78,6 +80,7 @@
                 <field name="employee_id"/>
                 <field name="current_location_id" string="Work Location" />
                 <field name="destination"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                 <filter name="filter_confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
                 <filter name="filter_hr_approved" string="HR Approved" domain="[('state','=','hr_approved')]" />
                 <filter name="filter_hr_pending" string="Waiting for Approval" groups="hr_mission.group_hr_mission_manager" domain="[('state','=','confirmed')]" />
