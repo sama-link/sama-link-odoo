@@ -66,8 +66,8 @@
                             <field name="employee_id"/>
                             <field name="custody_type_id"/>
                             <field name="contract_id"/>
-                            <field name="document" filename="document_name"/>
-                            <field name="document_name" invisible="1"/>
+                            <field name="custody_document" filename="custody_document_name"/>
+                            <field name="custody_document_name" invisible="1" force_save="1"/>
                         </group>
                         <group>
                             <field name="date_receive"/>

@@ -26,8 +26,8 @@ class HrCustody(models.Model):
     value = fields.Float(string='Estimated Value')
     active = fields.Boolean(default=True, string='Active')
     custody_image_ids = fields.One2many('hr.custody.image', 'custody_id', string='Images')
-    document = fields.Binary(string='Document')
-    document_name = fields.Char(string='Document Name')
+    custody_document = fields.Binary(string='Document', attachment=True)
+    custody_document_name = fields.Char(string='Document Name')
     state = fields.Selection([
         ('received', 'Received'),
         ('cleared', 'Cleared')
