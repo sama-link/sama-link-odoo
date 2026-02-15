@@ -64,25 +64,25 @@
                     </div>
                     <group>
                         <group>
-                            <field name="employee_id" readonly="state == 'received'"/>
-                            <field name="custody_type_id" readonly="state == 'received'"/>
-                            <field name="contract_id" readonly="state == 'received'"/>
-                            <field name="custody_document" filename="custody_document_name" readonly="state == 'received'"/>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="custody_type_id" readonly="state != 'draft'"/>
+                            <field name="contract_id" readonly="state != 'draft'"/>
+                            <field name="custody_document" filename="custody_document_name" readonly="state != 'draft'"/>
                             <field name="custody_document_name" invisible="1" force_save="1"/>
                         </group>
                         <group>
-                            <field name="date_receive" readonly="state == 'received'"/>
+                            <field name="date_receive" readonly="state != 'draft'"/>
                             <field name="date_return" readonly="state in ('draft', 'received')"/>
-                            <field name="value" readonly="state == 'received'"/>
-                            <field name="image" widget="image" class="oe_avatar" readonly="state == 'received'"/>
+                            <field name="value" readonly="state != 'draft'"/>
+                            <field name="image" widget="image" class="oe_avatar" readonly="state != 'draft'"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Description">
-                            <field name="note" readonly="state == 'received'"/>
+                            <field name="note" readonly="state != 'draft'"/>
                         </page>
                         <page string="Images">
-                            <field name="custody_image_ids" readonly="state == 'received'">
+                            <field name="custody_image_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
                                     <field name="image" widget="image" options='{"size": [90, 90]}'/>
                                     <field name="name"/>
