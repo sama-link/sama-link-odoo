@@ -12,6 +12,7 @@
     'depends': ['hr', 'hr_contract', 'hr_resignation'],
     'data': [
         'security/ir.model.access.csv',
+        'wizard/custody_return_wizard_view.xml',
         'views/custody_view.xml',
         'views/employee_view.xml',
         'views/contract_view.xml',

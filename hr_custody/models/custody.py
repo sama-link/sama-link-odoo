@@ -29,9 +29,10 @@ class HrCustody(models.Model):
     custody_document = fields.Binary(string='custody document', attachment=True)
     custody_document_name = fields.Char(string='custody document Name')
     state = fields.Selection([
+        ('draft', 'Draft'),
         ('received', 'Received'),
         ('cleared', 'Cleared')
-    ], string='Status', default='received', track_visibility='onchange')
+    ], string='Status', default='draft', track_visibility='onchange')
 
     @api.onchange('employee_id')
     def _onchange_employee_id(self):
@@ -44,10 +45,23 @@ class HrCustody(models.Model):
             if contract:
                 self.contract_id = contract.id
 
-    def action_clear(self):
+    def action_receive(self):
         for rec in self:
-            rec.state = 'cleared'
-            rec.date_return = date.today()
+            rec.state = 'received'
+
+    def action_clear(self):
+        self.ensure_one()
+        return {
+            'name': _('Return / Clear Custody'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.custody.return.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_custody_id': self.id,
+                'default_current_estimated_value': self.value,
+            },
+        }
 
 
 class HrCustodyImage(models.Model):

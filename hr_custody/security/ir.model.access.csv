@@ -5,3 +5,5 @@ access_hr_custody_user,hr.custody.user,model_hr_custody,base.group_user,1,1,1,0
 access_hr_custody_manager,hr.custody.manager,model_hr_custody,hr.group_hr_manager,1,1,1,1
 access_hr_custody_image_user,hr.custody.image.user,model_hr_custody_image,base.group_user,1,1,1,1
 access_hr_custody_image_manager,hr.custody.image.manager,model_hr_custody_image,hr.group_hr_manager,1,1,1,1
+access_hr_custody_return_wizard_user,hr.custody.return.wizard.user,model_hr_custody_return_wizard,base.group_user,1,1,1,1
+access_hr_custody_return_wizard_manager,hr.custody.return.wizard.manager,model_hr_custody_return_wizard,hr.group_hr_manager,1,1,1,1

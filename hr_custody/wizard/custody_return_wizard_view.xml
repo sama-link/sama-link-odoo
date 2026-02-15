@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_custody_return_wizard_form" model="ir.ui.view">
+        <field name="name">hr.custody.return.wizard.form</field>
+        <field name="model">hr.custody.return.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Return / Clear Custody">
+                <group>
+                    <field name="custody_id" invisible="1"/>
+                    <field name="return_status"/>
+                    <field name="current_estimated_value"/>
+                    <field name="description"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -10,7 +10,7 @@ class HrResignation(models.Model):
             if resignation.employee_id:
                 uncleared_custody = self.env['hr.custody'].search([
                     ('employee_id', '=', resignation.employee_id.id),
-                    ('state', '=', 'received')
+                    ('state', 'in', ['draft', 'received'])
                 ])
                 if uncleared_custody:
                     raise ValidationError(_('Cannot approve resignation. The employee has %s uncleared custody items.') % len(uncleared_custody))

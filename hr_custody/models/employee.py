@@ -11,7 +11,7 @@ class HrContract(models.Model):
             for contract in self:
                 uncleared = self.env['hr.custody'].search([
                     ('contract_id', '=', contract.id),
-                    ('state', '=', 'received')
+                    ('state', 'in', ['draft', 'received'])
                 ])
                 if uncleared:
                     raise ValidationError(_('Cannot close or archive contract! The employee has %s uncleared custody items linked to this contract.') % len(uncleared))
@@ -30,7 +30,7 @@ class HrEmployee(models.Model):
             # I will count only uncleared.
             employee.custody_count = self.env['hr.custody'].search_count([
                 ('employee_id', '=', employee.id),
-                ('state', '=', 'received')
+                ('state', 'in', ['draft', 'received'])
             ])
 
     def action_view_custody(self):
@@ -49,7 +49,7 @@ class HrEmployee(models.Model):
              for employee in self:
                 uncleared = self.env['hr.custody'].search([
                     ('employee_id', '=', employee.id),
-                    ('state', '=', 'received')
+                    ('state', 'in', ['draft', 'received'])
                 ])
                 if uncleared:
                     raise ValidationError(_('Cannot archive employee! The employee has %s uncleared custody items.') % len(uncleared))
