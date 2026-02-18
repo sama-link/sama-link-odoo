@@ -4,7 +4,7 @@ name: Deploy to Staging (Dev Container)
 on:
   push:
     branches:
-      - dev
+      - staging
 
 jobs:
   deploy:
