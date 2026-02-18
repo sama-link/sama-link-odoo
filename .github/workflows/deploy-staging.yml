@@ -1,6 +1,6 @@
 name: Deploy to Staging (Dev Container)
 
-# This triggers ONLY when code is merged into the 'staging' branch
+# This triggers ONLY when code is merged into the 'staging' branch.
 on:
   push:
     branches:
