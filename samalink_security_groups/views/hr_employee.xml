@@ -62,30 +62,32 @@
                         </page>
 
                         <!-- ============ Work Information (Read-Only) ============ -->
-                        <page string="Work Information">
-                            <group>
-                                <group string="Position">
-                                    <field name="job_id" readonly="1"/>
-                                    <field name="job_title" readonly="1"/>
-                                    <field name="department_id" readonly="1"/>
-                                    <field name="company_id" readonly="1"/>
-                                </group>
-                                <group string="Management">
-                                    <field name="parent_id" readonly="1"/>
-                                    <field name="coach_id" readonly="1"/>
-                                </group>
-                            </group>
-                            <group>
-                                <group string="Work Contact">
-                                    <field name="work_location_id" readonly="1"/>
-                                    <field name="work_phone" readonly="1" widget="phone"/>
-                                    <field name="work_email" readonly="1" widget="email"/>
-                                </group>
-                                <group string="Schedule">
-                                    <field name="resource_calendar_id" readonly="1"/>
-                                </group>
-                            </group>
-                            <field name="child_ids" widget="hr_org_chart" readonly="1"/>
+                        <page name="public" string="Work Information">
+                            <div id="o_work_employee_container" class="d-lg-flex">
+                                <div id="o_work_employee_main" class="flex-grow-1">
+                                    <group string="Position">
+                                        <field name="job_id" readonly="1"/>
+                                        <field name="job_title" readonly="1"/>
+                                        <field name="department_id" readonly="1"/>
+                                        <field name="company_id" readonly="1"/>
+                                    </group>
+                                    <group string="Management">
+                                        <field name="parent_id" readonly="1"/>
+                                        <field name="coach_id" readonly="1"/>
+                                    </group>
+                                    <group string="Work Contact">
+                                        <field name="work_location_id" readonly="1"/>
+                                        <field name="work_phone" readonly="1" widget="phone"/>
+                                        <field name="work_email" readonly="1" widget="email"/>
+                                    </group>
+                                    <group string="Schedule">
+                                        <field name="resource_calendar_id" readonly="1"/>
+                                    </group>
+                                </div>
+                                <div id="o_work_employee_extra" class="ps-lg-4">
+                                    <field name="child_ids" widget="hr_org_chart" readonly="1"/>
+                                </div>
+                            </div>
                         </page>
 
                         <!-- ============ Received Badges (Read-Only) ============ -->
@@ -115,11 +117,8 @@
                         <!-- ============ Follow-up / CV (Read-Only) ============ -->
                         <page string="Follow-up / CV" name="resume">
                             <group string="Resume" name="resume_group">
-                                <field name="resume_line_ids" nolabel="1" readonly="1" mode="tree"
-                                       widget="one2many" context="{'default_employee_id': id}">
-                                    <list create="false" edit="false" delete="false"
-                                          decoration-italic="display_type == 'line_section'">
-                                        <field name="display_type" column_invisible="1"/>
+                                <field name="resume_line_ids" nolabel="1" readonly="1">
+                                    <list create="false" edit="false" delete="false">
                                         <field name="name" string="Title"/>
                                         <field name="date_start"/>
                                         <field name="date_end"/>
@@ -128,13 +127,11 @@
                                 </field>
                             </group>
                             <group string="Skills" name="skills_group">
-                                <field name="employee_skill_ids" nolabel="1" readonly="1"
-                                       widget="one2many" context="{'default_employee_id': id}">
+                                <field name="employee_skill_ids" nolabel="1" readonly="1">
                                     <list create="false" edit="false" delete="false">
                                         <field name="skill_type_id"/>
                                         <field name="skill_id"/>
                                         <field name="skill_level_id"/>
-                                        <field name="level_progress" widget="progressbar"/>
                                     </list>
                                 </field>
                             </group>
