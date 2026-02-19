@@ -18,6 +18,7 @@
         'hr_mission',
         'hr_gamification',
         'hr_skills',
+        'hr_org_chart',
     ],
     'data': [
         'views/hr_attendance.xml',
