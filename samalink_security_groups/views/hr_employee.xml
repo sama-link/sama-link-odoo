@@ -3,9 +3,10 @@
         <field name="name">hr.employee.view.form.my.info</field>
         <field name="model">hr.employee</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="false" edit="false" delete="false">
                 <sheet>
                     <notebook>
+                        <!-- ============ Private Contact ============ -->
                         <page string="Private Contact">
                             <group name="work_contact" string="Work Contact">
                                 <label for="private_street" string="Private Address"/>
@@ -57,6 +58,79 @@
                                 <field name="work_permit_expiration_date"/>
                                 <field name="work_permit_name" invisible="1"/>
                                 <field name="has_work_permit" widget="work_permit_upload" filename="work_permit_name"/>
+                            </group>
+                        </page>
+
+                        <!-- ============ Work Information (Read-Only) ============ -->
+                        <page string="Work Information">
+                            <group>
+                                <group string="Position">
+                                    <field name="job_id" readonly="1"/>
+                                    <field name="job_title" readonly="1"/>
+                                    <field name="department_id" readonly="1"/>
+                                    <field name="company_id" readonly="1"/>
+                                </group>
+                                <group string="Management">
+                                    <field name="parent_id" readonly="1"/>
+                                    <field name="coach_id" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Work Contact">
+                                    <field name="work_location_id" readonly="1"/>
+                                    <field name="work_phone" readonly="1" widget="phone"/>
+                                    <field name="work_email" readonly="1" widget="email"/>
+                                </group>
+                                <group string="Schedule">
+                                    <field name="resource_calendar_id" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ============ Received Badges (Read-Only) ============ -->
+                        <page string="Received Badges">
+                            <field name="badge_ids" widget="many2many_kanban" readonly="1">
+                                <kanban create="false" edit="false" delete="false">
+                                    <field name="badge_name"/>
+                                    <field name="badge_id"/>
+                                    <field name="create_date"/>
+                                    <field name="sender_id"/>
+                                    <templates>
+                                        <t t-name="card">
+                                            <aside>
+                                                <field name="badge_id" widget="image" options="{'preview_image': 'image_1920'}" class="d-block"/>
+                                            </aside>
+                                            <main>
+                                                <strong><field name="badge_name"/></strong>
+                                                <span class="text-muted">Granted by <field name="sender_id"/></span>
+                                                <span class="text-muted"><field name="create_date"/></span>
+                                            </main>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+
+                        <!-- ============ Follow-up / CV (Read-Only) ============ -->
+                        <page string="Follow-up / CV">
+                            <group string="Resume">
+                                <field name="resume_line_ids" nolabel="1" readonly="1">
+                                    <list create="false" edit="false" delete="false">
+                                        <field name="name" string="Title"/>
+                                        <field name="date_start"/>
+                                        <field name="date_end"/>
+                                        <field name="description"/>
+                                    </list>
+                                </field>
+                            </group>
+                            <group string="Skills">
+                                <field name="employee_skill_ids" nolabel="1" readonly="1">
+                                    <list create="false" edit="false" delete="false">
+                                        <field name="skill_type_id"/>
+                                        <field name="skill_id"/>
+                                        <field name="skill_level_id"/>
+                                    </list>
+                                </field>
                             </group>
                         </page>
                     </notebook>
