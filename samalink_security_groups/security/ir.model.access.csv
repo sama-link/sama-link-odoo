@@ -16,3 +16,5 @@ access_hr_employee_skill_samalink_employee,hr.employee.skill (readonly),hr_skill
 access_hr_skill_samalink_employee,hr.skill (readonly),hr_skills.model_hr_skill,group_samalink_employee,1,0,0,0
 access_hr_skill_type_samalink_employee,hr.skill.type (readonly),hr_skills.model_hr_skill_type,group_samalink_employee,1,0,0,0
 access_hr_skill_level_samalink_employee,hr.skill.level (readonly),hr_skills.model_hr_skill_level,group_samalink_employee,1,0,0,0
+access_hr_employee_public_samalink_employee,hr.employee.public (readonly),hr.model_hr_employee_public,group_samalink_employee,1,0,0,0
+access_hr_resume_line_type_samalink_employee,hr.resume.line.type (readonly),hr_skills.model_hr_resume_line_type,group_samalink_employee,1,0,0,0
