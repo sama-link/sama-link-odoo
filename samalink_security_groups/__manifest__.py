@@ -16,6 +16,9 @@
         'hr_work_entry',
         'ohrms_loan',
         'hr_mission',
+        'hr_gamification',
+        'hr_skills',
+        'hr_org_chart',
     ],
     'data': [
         'views/hr_attendance.xml',
