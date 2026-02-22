@@ -10,7 +10,6 @@ class HrContractInherit(models.Model):
     ], string="Salary Payment Method", default='bank_transfer', required=True)
     not_listed_payment_method = fields.Char(string="If Other, specify")
     work_location_id = fields.Many2one(related="employee_id.work_location_id", domain="[('address_id', '=', address_id)]")
-<<<<<<< HEAD
 
     def write(self, vals):
         if 'active' in vals and not vals['active']:
@@ -18,5 +17,3 @@ class HrContractInherit(models.Model):
                 from odoo.exceptions import UserError
                 raise UserError("Only Administrators can archive contracts.")
         return super(HrContractInherit, self).write(vals)
-=======
->>>>>>> 4717772238b15978793a2220ea43cb98d4ca4deb

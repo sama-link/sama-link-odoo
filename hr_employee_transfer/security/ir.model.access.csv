@@ -1,11 +1,4 @@
-<<<<<<< HEAD
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_employee_transfer_user,access.employee.transfer.user,model_employee_transfer,hr.group_hr_user,1,1,0,0
 access_employee_transfer_manager_user,access.employee.transfer.manager.user,model_employee_transfer,hr.group_hr_manager,1,1,1,0
 access_employee_transfer_company_user,access.employee.company.manager.user,base.model_res_company,hr.group_hr_manager,1,1,1,0
-=======
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_employee_transfer_user,access.employee.transfer.user,model_employee_transfer,hr.group_hr_user,1,1,0,0
-access_employee_transfer_manager_user,access.employee.transfer.manager.user,model_employee_transfer,hr.group_hr_manager,1,1,1,0
-access_employee_transfer_company_user,access.employee.company.manager.user,base.model_res_company,hr.group_hr_manager,1,1,1,0
->>>>>>> 4717772238b15978793a2220ea43cb98d4ca4deb

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <odoo>
     <data noupdate="1">
         <record model="ir.module.category"
@@ -29,35 +28,3 @@
         </record>
     </data>
 </odoo>
-=======
-<odoo>
-    <data noupdate="1">
-        <record model="ir.module.category"
-                id="module_category_hr_transfer">
-            <field name="name">Employee Transfers</field>
-            <field name="description">Helps you manage HR transfers.</field>
-            <field name="sequence">18</field>
-        </record>
-        <record id="group_hr_transfer_user" model="res.groups">
-            <field name="name">HR Transfer User (readonly)</field>
-            <field name="category_id" ref="module_category_hr_transfer"/>
-            <field name="whitelisted_menu_ids" eval="[(4, ref('menu_hr_transfer'))]"/>
-            <field name="menu_access" eval="[(4, ref('menu_hr_transfer'))]" />
-        </record>
-        <record id="group_hr_transfer_officer" model="res.groups">
-            <field name="name">HR Transfer Officer</field>
-            <field name="category_id" ref="module_category_hr_transfer"/>
-            <field name="implied_ids"
-                   eval="[(4, ref('group_hr_transfer_user'))]"/>
-        </record>
-        <record id="group_hr_transfer_manager" model="res.groups">
-            <field name="name">HR Transfer Manager</field>
-            <field name="category_id" ref="module_category_hr_transfer"/>
-            <field name="implied_ids"
-                   eval="[(4, ref('group_hr_transfer_officer'))]"/>
-            <field name="users"
-                   eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
-        </record>
-    </data>
-</odoo>
->>>>>>> 4717772238b15978793a2220ea43cb98d4ca4deb
