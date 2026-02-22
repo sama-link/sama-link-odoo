@@ -9,3 +9,12 @@ access_hr_work_entry_samalink_employee,hr.work.entry (readonly),hr_work_entry.mo
 access_hr_work_entry_type_samalink_employee,hr.work.entry.type (readonly),hr_work_entry.model_hr_work_entry_type,group_samalink_employee,1,0,0,0
 access_hr_leave_type_samalink_employee,hr.leave.type (readonly),hr_holidays.model_hr_leave_type,group_samalink_employee,1,0,0,0
 access_mail_activity_samalink_employee,mail.activity (readonly),calendar.model_mail_activity,group_samalink_employee,1,0,0,0
+access_gamification_badge_user_samalink_employee,gamification.badge.user (readonly),gamification.model_gamification_badge_user,group_samalink_employee,1,0,0,0
+access_gamification_badge_samalink_employee,gamification.badge (readonly),gamification.model_gamification_badge,group_samalink_employee,1,0,0,0
+access_hr_resume_line_samalink_employee,hr.resume.line (readonly),hr_skills.model_hr_resume_line,group_samalink_employee,1,0,0,0
+access_hr_employee_skill_samalink_employee,hr.employee.skill (readonly),hr_skills.model_hr_employee_skill,group_samalink_employee,1,0,0,0
+access_hr_skill_samalink_employee,hr.skill (readonly),hr_skills.model_hr_skill,group_samalink_employee,1,0,0,0
+access_hr_skill_type_samalink_employee,hr.skill.type (readonly),hr_skills.model_hr_skill_type,group_samalink_employee,1,0,0,0
+access_hr_skill_level_samalink_employee,hr.skill.level (readonly),hr_skills.model_hr_skill_level,group_samalink_employee,1,0,0,0
+access_hr_employee_public_samalink_employee,hr.employee.public (readonly),hr.model_hr_employee_public,group_samalink_employee,1,0,0,0
+access_hr_resume_line_type_samalink_employee,hr.resume.line.type (readonly),hr_skills.model_hr_resume_line_type,group_samalink_employee,1,0,0,0
