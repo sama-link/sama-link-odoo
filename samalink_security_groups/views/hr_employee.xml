@@ -3,7 +3,7 @@
         <field name="name">hr.employee.view.form.my.info</field>
         <field name="model">hr.employee</field>
         <field name="arch" type="xml">
-            <form create="false" edit="false" delete="false" js_class="hr_employee_form">
+            <form create="false" delete="false" js_class="hr_employee_form">
                 <field name="active" invisible="1"/>
                 <field name="user_id" invisible="1"/>
                 <field name="company_id" invisible="1"/>
@@ -13,6 +13,9 @@
                     <notebook>
                         <!-- ============ Private Contact ============ -->
                         <page string="Private Contact">
+                            <group string="Employee Photo">
+                                <field name="image_1920" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>
+                            </group>
                             <group name="work_contact" string="Work Contact">
                                 <label for="private_street" string="Private Address"/>
                                 <div class="o_address_format">
