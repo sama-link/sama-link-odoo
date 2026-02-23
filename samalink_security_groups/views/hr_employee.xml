@@ -19,53 +19,53 @@
                             <group name="work_contact" string="Work Contact">
                                 <label for="private_street" string="Private Address"/>
                                 <div class="o_address_format">
-                                    <field name="private_street" placeholder="Street..." class="o_address_street"/>
-                                    <field name="private_street2" placeholder="Street 2..." class="o_address_street"/>
-                                    <field name="private_city" placeholder="City" class="o_address_city"/>
-                                    <field name="private_state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'default_country_id': private_country_id}"/>
-                                    <field name="private_zip" placeholder="ZIP" class="o_address_zip"/>
-                                    <field name="private_country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                    <field name="private_street" placeholder="Street..." class="o_address_street" readonly="1"/>
+                                    <field name="private_street2" placeholder="Street 2..." class="o_address_street" readonly="1"/>
+                                    <field name="private_city" placeholder="City" class="o_address_city" readonly="1"/>
+                                    <field name="private_state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'default_country_id': private_country_id}" readonly="1"/>
+                                    <field name="private_zip" placeholder="ZIP" class="o_address_zip" readonly="1"/>
+                                    <field name="private_country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}" readonly="1"/>
                                 </div>
-                                <field name="private_email" placeholder="e.g. myprivateemail@example.com"/>
-                                <field name="private_phone"/>
-                                <field name="bank_account_id" context="{'default_partner_id': work_contact_id}" options="{'no_quick_create': True}" readonly="not id"/>
+                                <field name="private_email" placeholder="e.g. myprivateemail@example.com" readonly="1"/>
+                                <field name="private_phone" readonly="1"/>
+                                <field name="bank_account_id" context="{'default_partner_id': work_contact_id}" options="{'no_quick_create': True}" readonly="1"/>
                                 <label for="distance_home_work"/>
                                 <div class="o_row" name="div_km_home_work">
-                                    <field name="distance_home_work" class="o_hr_narrow_field"/>
-                                    <span><field name="distance_home_work_unit"/></span>
+                                    <field name="distance_home_work" class="o_hr_narrow_field" readonly="1"/>
+                                    <span><field name="distance_home_work_unit" readonly="1"/></span>
                                 </div>
-                                <field name="private_car_plate"/>
+                                <field name="private_car_plate" readonly="1"/>
                             </group>
                             <group string="Citizenship">
-                                <field name="country_id" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
-                                <field name="identification_id"/>
-                                <field name="ssnid"/>
-                                <field name="passport_id"/>
-                                <field name="gender"/>
-                                <field name="birthday"/>
-                                <field name="place_of_birth"/>
-                                <field name="country_of_birth"/>
+                                <field name="country_id" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}" readonly="1"/>
+                                <field name="identification_id" readonly="1"/>
+                                <field name="ssnid" readonly="1"/>
+                                <field name="passport_id" readonly="1"/>
+                                <field name="gender" readonly="1"/>
+                                <field name="birthday" readonly="1"/>
+                                <field name="place_of_birth" readonly="1"/>
+                                <field name="country_of_birth" readonly="1"/>
                             </group>
                             <group string="Emergency" name="emergency">
-                                <field name="emergency_contact"/>
-                                <field name="emergency_phone" class="o_force_ltr"/>
+                                <field name="emergency_contact" readonly="1"/>
+                                <field name="emergency_phone" class="o_force_ltr" readonly="1"/>
                                 <separator string="Family Status"/>
-                                <field name="marital"/>
-                                <field name="spouse_complete_name" invisible="marital not in ['married', 'cohabitant']"/>
-                                <field name="spouse_birthdate" invisible="marital not in ['married', 'cohabitant']"/>
-                                <field name="children"/>
+                                <field name="marital" readonly="1"/>
+                                <field name="spouse_complete_name" invisible="marital not in ['married', 'cohabitant']" readonly="1"/>
+                                <field name="spouse_birthdate" invisible="marital not in ['married', 'cohabitant']" readonly="1"/>
+                                <field name="children" readonly="1"/>
                             </group>
                             <group string="Education">
-                                <field name="certificate"/>
-                                <field name="study_field"/>
-                                <field name="study_school"/>
+                                <field name="certificate" readonly="1"/>
+                                <field name="study_field" readonly="1"/>
+                                <field name="study_school" readonly="1"/>
                                 <separator name="has_work_permit" string="Work Permit"/>
-                                <field name="visa_no"/>
-                                <field name="permit_no"/>
-                                <field name="visa_expire"/>
-                                <field name="work_permit_expiration_date"/>
+                                <field name="visa_no" readonly="1"/>
+                                <field name="permit_no" readonly="1"/>
+                                <field name="visa_expire" readonly="1"/>
+                                <field name="work_permit_expiration_date" readonly="1"/>
                                 <field name="work_permit_name" invisible="1"/>
-                                <field name="has_work_permit" widget="work_permit_upload" filename="work_permit_name"/>
+                                <field name="has_work_permit" widget="work_permit_upload" filename="work_permit_name" readonly="1"/>
                             </group>
                         </page>
 
