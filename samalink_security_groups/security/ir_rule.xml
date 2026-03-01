@@ -166,4 +166,15 @@
         <!-- <field name="perm_create" eval="1"/> -->
         <!-- <field name="perm_unlink" eval="1"/> -->
     <!-- </record> -->
+        <!-- Allow HR Users full access to all attachments (fixes access error on employee documents) -->
+    <record id="ir_attachment_rule_hr_user_full" model="ir.rule">
+        <field name="name">IR Attachment: HR User Full Access</field>
+        <field name="model_id" ref="base.model_ir_attachment"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
 </odoo>
