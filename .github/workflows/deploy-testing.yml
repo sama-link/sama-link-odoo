@@ -26,4 +26,4 @@ jobs:
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --tunnel-through-iap \
             "${{ secrets.GCP_VM_NAME }}" \
-            --command="sudo bash /opt/samalink/scripts/refresh_test.sh"
+            --command="sudo bash /opt/samalink/scripts/refresh_test_env.sh ${{ github.ref_name }}"
