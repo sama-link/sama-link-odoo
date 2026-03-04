@@ -1,22 +1,29 @@
 name: Deploy to testing (TEST Container)
 
-# This triggers ONLY when code is merged into any branch except 'main & staging' branchs
+# This triggers ONLY when code is merged into any branch except 'main' & 'staging'
 on:
   push:
     branches-ignore:
-          - main
-          - staging
+      - main
+      - staging
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH into GCP and Refresh Dev Environment
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USERNAME }}
-          key: ${{ secrets.GCP_SSH_KEY }}
-          # This executes the script we will put on the server
-          script: |
-            bash /opt/samalink/scripts/refresh_test.sh
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: SSH via IAP and Execute Refresh Script
+        run: |
+          gcloud compute ssh --quiet \
+            --zone="${{ secrets.GCP_ZONE }}" \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --tunnel-through-iap \
+            "${{ secrets.GCP_VM_NAME }}" \
+            --command="sudo bash /opt/samalink/scripts/refresh_test_env.sh"
