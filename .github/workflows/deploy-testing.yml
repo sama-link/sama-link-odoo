@@ -1,0 +1,22 @@
+name: Deploy to testing (TEST Container)
+
+# This triggers ONLY when code is merged into any branch except 'main & staging' branchs
+on:
+  push:
+    branches-ignore:
+          - main
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into GCP and Refresh Dev Environment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USERNAME }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          # This executes the script we will put on the server
+          script: |
+            bash /opt/samalink/scripts/refresh_test.sh
