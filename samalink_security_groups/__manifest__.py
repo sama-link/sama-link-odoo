@@ -21,6 +21,7 @@
         'hr_org_chart',
         'hr_incentives',
         'hr_attendance_deviation',
+        'hr_contract',
     ],
     'data': [
         'views/hr_attendance.xml',
