@@ -1,6 +1,18 @@
 from odoo import models, api, fields
 from odoo.exceptions import UserError
 
+import logging
+_logger = logging.getLogger(__name__)
+
+# Mapping: employee field → security group XML ID
+MANAGER_FIELD_TO_GROUP = {
+    'parent_id': 'samalink_security_groups.group_sl_general_manager',
+    'coach_id': 'samalink_security_groups.group_sl_coach_manager',
+    'leave_manager_id': 'samalink_security_groups.group_sl_timeoff_manager',
+    'attendance_manager_id': 'samalink_security_groups.group_sl_attendance_manager',
+}
+
+
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
@@ -24,3 +36,50 @@ class HrEmployee(models.Model):
         action = self.env.ref('samalink_security_groups.hr_open_view_employee_form_my').sudo().read()[0]
         action['res_id'] = employee.id
         return action
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._auto_assign_manager_groups(vals)
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for vals in vals_list:
+            records._auto_assign_manager_groups(vals)
+        return records
+
+    def _auto_assign_manager_groups(self, vals):
+        """Auto-assign security groups when manager fields are set on employees."""
+        for field_name, group_xmlid in MANAGER_FIELD_TO_GROUP.items():
+            if field_name not in vals:
+                continue
+            manager_value = vals[field_name]
+            if not manager_value:
+                continue
+
+            try:
+                group = self.env.ref(group_xmlid)
+            except ValueError:
+                _logger.warning("Group %s not found, skipping auto-assign.", group_xmlid)
+                continue
+
+            # Resolve the user from the field value
+            if field_name in ('leave_manager_id', 'attendance_manager_id'):
+                # These are res.users fields — the value IS the user ID
+                user = self.env['res.users'].sudo().browse(manager_value)
+            elif field_name == 'parent_id':
+                # parent_id is an hr.employee field — get the user from the employee
+                employee = self.env['hr.employee'].sudo().browse(manager_value)
+                user = employee.user_id
+            elif field_name == 'coach_id':
+                # coach_id is an hr.employee field — get the user from the employee
+                employee = self.env['hr.employee'].sudo().browse(manager_value)
+                user = employee.user_id
+
+            if user and user.exists() and not user.has_group(group_xmlid):
+                _logger.info(
+                    "Auto-assigning group '%s' to user '%s' (set as %s)",
+                    group.name, user.name, field_name,
+                )
+                group.sudo().write({'users': [(4, user.id)]})

@@ -30,17 +30,11 @@
             <field name="category_id" ref="module_category_samalink_hr" />
             <field name="implied_ids" eval="[
                 (4, ref('group_samalink_employee')),
-                (4, ref('hr_holidays.group_hr_holidays_responsible')),
-                (4, ref('hr_attendance.group_hr_attendance_officer')),
             ]" />
             <field name="whitelisted_menu_ids" eval="[
-                (4, ref('menu_hr_leave_waiting_1st_approve')),
-                (4, ref('menu_team_attendances')),
                 (4, ref('hr_employee_menu_my_employees')),
             ]" />
             <field name="menu_access" eval="[
-                (4, ref('menu_hr_leave_waiting_1st_approve')),
-                (4, ref('menu_team_attendances')),
                 (4, ref('hr_employee_menu_my_employees')),
             ]" />
         </record>
@@ -115,6 +109,9 @@
             <field name="whitelisted_menu_ids" eval="[
                 (4, ref('hr_incentives.menu_hr_incentives_root')),
             ]" />
+            <field name="menu_access" eval="[
+                (4, ref('hr_incentives.menu_hr_incentives_root')),
+            ]" />
         </record>
 
         <record id="group_sl_timeoff_manager" model="res.groups">
@@ -130,6 +127,10 @@
                 (4, ref('menu_hr_leave_waiting_1st_approve')),
                 (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
             ]" />
+            <field name="menu_access" eval="[
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
+            ]" />
         </record>
 
         <record id="group_sl_attendance_manager" model="res.groups">
@@ -141,6 +142,9 @@
                 (4, ref('hr_attendance.group_hr_attendance_officer')),
             ]" />
             <field name="whitelisted_menu_ids" eval="[
+                (4, ref('menu_team_attendances')),
+            ]" />
+            <field name="menu_access" eval="[
                 (4, ref('menu_team_attendances')),
             ]" />
         </record>

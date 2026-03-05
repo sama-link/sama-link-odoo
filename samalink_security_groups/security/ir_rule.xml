@@ -12,23 +12,11 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
-    <record id="hr_attendance_rule_group_samalink_manager_team_attendance" model="ir.rule">
-        <field name="name">HR Attendance Samalink Manager (Team Attendance)</field>
-        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
-        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_manager'))]"/>
-        <field name="domain_force">
-            ['|', ('employee_id.parent_id', '=', user.employee_id.id), ('employee_id.user_id', '=', user.id)]
-        </field>
-        <field name="perm_read" eval="1"/>
-        <field name="perm_write" eval="0"/>
-        <field name="perm_create" eval="0"/>
-        <field name="perm_unlink" eval="0"/>
-    </record>
-
-    <record id="hr_employee_rule_group_samalink_manager_team_employees" model="ir.rule">
-        <field name="name">HR Employee Samalink Manager (Team Employees)</field>
+    <!-- General Manager: can see their direct reports -->
+    <record id="hr_employee_rule_group_sl_general_manager_team" model="ir.rule">
+        <field name="name">HR Employee SL General Manager (Direct Reports)</field>
         <field name="model_id" ref="hr.model_hr_employee"/>
-        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_manager'))]"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_general_manager'))]"/>
         <field name="domain_force">
             ['|', ('parent_id', '=', user.employee_id.id), ('user_id', '=', user.id)]
         </field>
