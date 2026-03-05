@@ -96,7 +96,37 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
-    
+
+    <!-- ============ Manager-Type Record Rules ============ -->
+
+    <!-- Time Off Manager: can read leaves for employees they manage -->
+    <record id="hr_leave_rule_group_sl_timeoff_manager" model="ir.rule">
+        <field name="name">HR Leave SL Time Off Manager (Team Leaves)</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_timeoff_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('employee_id.leave_manager_id', '=', user.id), ('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- Attendance Manager: can read attendance for employees they manage -->
+    <record id="hr_attendance_rule_group_sl_attendance_manager" model="ir.rule">
+        <field name="name">HR Attendance SL Attendance Manager (Team)</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_attendance_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('employee_id.attendance_manager_id', '=', user.id), ('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
     <!-- <record id="hr_payslip_line_rule_group_samalink_employee" model="ir.rule"> -->
         <!-- <field name="name">Payslip Line Samalink Employee (OWN Lines)</field> -->
         <!-- <field name="model_id" ref="hr_payroll_community.model_hr_payslip_line"/> -->

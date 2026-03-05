@@ -19,6 +19,8 @@
         'hr_gamification',
         'hr_skills',
         'hr_org_chart',
+        'hr_incentives',
+        'hr_attendance_deviation',
     ],
     'data': [
         'views/hr_attendance.xml',

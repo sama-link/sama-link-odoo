@@ -101,4 +101,63 @@
             ]" />
         </record>
     </data>
+    <data noupdate="0">
+        <!-- ============ Manager-Type Groups ============ -->
+
+        <record id="group_sl_coach_manager" model="res.groups">
+            <field name="name">Coach Manager</field>
+            <field name="comment">Responsible for bonus/incentives approval of managed employees (via coach_id field)</field>
+            <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_incentives.group_hr_incentives_officer')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('hr_incentives.menu_hr_incentives_root')),
+            ]" />
+        </record>
+
+        <record id="group_sl_timeoff_manager" model="res.groups">
+            <field name="name">Time Off Manager</field>
+            <field name="comment">Responsible for time off, late check-in, and early check-out approval (via leave_manager_id field)</field>
+            <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_holidays.group_hr_holidays_responsible')),
+                (4, ref('hr_attendance_deviation.group_hr_attendance_middleware_user')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
+            ]" />
+        </record>
+
+        <record id="group_sl_attendance_manager" model="res.groups">
+            <field name="name">Attendance Manager</field>
+            <field name="comment">Responsible for overtime approval (via attendance_manager_id field)</field>
+            <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_employee')),
+                (4, ref('hr_attendance.group_hr_attendance_officer')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('menu_team_attendances')),
+            ]" />
+        </record>
+
+        <record id="group_sl_general_manager" model="res.groups">
+            <field name="name">General Manager</field>
+            <field name="comment">Full managerial access — implies all three other manager types (via parent_id field / org chart)</field>
+            <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
+            <field name="implied_ids" eval="[
+                (4, ref('group_samalink_manager')),
+                (4, ref('group_sl_coach_manager')),
+                (4, ref('group_sl_timeoff_manager')),
+                (4, ref('group_sl_attendance_manager')),
+            ]" />
+            <field name="whitelisted_menu_ids" eval="[
+                (4, ref('hr_employee_menu_my_employees')),
+            ]" />
+        </record>
+    </data>
 </odoo>
