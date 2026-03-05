@@ -85,6 +85,12 @@ class HrIncentive(models.Model):
         self.write({'state': 'draft'})
 
     def action_validate(self):
+        is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
+        if not is_manager:
+            for record in self:
+                coach_user = record.employee_id.coach_id.user_id
+                if coach_user and self.env.user != coach_user:
+                    raise ValidationError("You cannot validate incentives for employees you are not coaching.")
         self.write({'state': 'validated'})
 
     def action_approve(self):

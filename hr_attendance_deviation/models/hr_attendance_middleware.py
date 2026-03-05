@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import pytz
 from odoo import models, fields, api, Command, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.addons.hr_attendance_deviation.tools import Converter
 
 _logger = logging.getLogger(__name__)
@@ -471,7 +471,16 @@ class HrAttendanceMiddleware(models.Model):
         _logger.info(f"Adjusted or created HR attendance for {len(records)} HR attendance middleware records.")
         return zk_attendance_ids
 
+    def _check_leave_manager_permission(self):
+        is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
+        if not is_sl_admin:
+            for record in self:
+                leave_manager = record.sudo().employee_id.leave_manager_id
+                if leave_manager and self.env.user != leave_manager:
+                    raise UserError("You cannot approve late/early for employees you do not manage (Time Off).")
+
     def action_confirm_late_check_in(self):
+        self._check_leave_manager_permission()
         for record in self.filtered(lambda r: r.late_check_in_state == 'late'):
             vals = {
                 'late_check_in': record.force_late_check_in or record.late_check_in,
@@ -482,6 +491,7 @@ class HrAttendanceMiddleware(models.Model):
             record.hr_attendance_id.write(vals)
 
     def action_cancel_late_check_in_approval(self):
+        self._check_leave_manager_permission()
         for record in self.filtered(lambda r: r.late_check_in_state == 'approved'):
             vals = {
                 'late_check_in_approved': False,
@@ -492,6 +502,7 @@ class HrAttendanceMiddleware(models.Model):
             record.hr_attendance_id.write(vals)
 
     def action_confirm_early_check_out(self):
+        self._check_leave_manager_permission()
         for record in self.filtered(lambda r: r.early_check_out_state == 'early'):
             vals = {
                 'early_check_out': record.force_early_check_out or record.early_check_out,
@@ -502,6 +513,7 @@ class HrAttendanceMiddleware(models.Model):
             record.hr_attendance_id.write(vals)
 
     def action_cancel_early_check_out_approval(self):
+        self._check_leave_manager_permission()
         for record in self.filtered(lambda r: r.early_check_out_state == 'approved'):
             vals = {
                 'early_check_out_approved': False,

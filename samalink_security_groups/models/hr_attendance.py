@@ -7,7 +7,9 @@ class HrAttendance(models.Model):
 
     def action_approve_overtime(self):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
-        current_employee_manager = self.sudo().employee_id.attendance_manager_id
-        if is_sl_admin and self.env.user != current_employee_manager:
-            raise UserError("You cannot approve overtime for employees you do not manage.")
+        if not is_sl_admin:
+            for record in self:
+                current_employee_manager = record.sudo().employee_id.attendance_manager_id
+                if current_employee_manager and self.env.user != current_employee_manager:
+                    raise UserError("You cannot approve overtime for employees you do not manage.")
         return super().action_approve_overtime()

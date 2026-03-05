@@ -82,6 +82,8 @@
                                     <group string="Management">
                                         <field name="parent_id" readonly="1"/>
                                         <field name="coach_id" readonly="1"/>
+                                        <field name="leave_manager_id" readonly="1"/>
+                                        <field name="attendance_manager_id" readonly="1"/>
                                     </group>
                                     <group string="Work Contact">
                                         <field name="work_location_id" readonly="1"/>
