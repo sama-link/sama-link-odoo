@@ -86,15 +86,18 @@ class HrIncentive(models.Model):
 
     def action_validate(self):
         is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
-        if not is_manager:
+        is_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
+        if not is_manager and not is_general_manager:
             for record in self:
-                coach_user = record.employee_id.coach_id.user_id
+                coach_user = record.sudo().employee_id.coach_id.user_id
                 if coach_user and self.env.user != coach_user:
                     raise ValidationError("You cannot validate incentives for employees you are not coaching.")
         self.write({'state': 'validated'})
 
     def action_approve(self):
-        if not self.env.user.has_group('hr_incentives.group_hr_incentives_manager'):
+        is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
+        is_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
+        if not is_manager and not is_general_manager:
             self.action_validate()
         else:
             self.write({'state': 'approved'})
