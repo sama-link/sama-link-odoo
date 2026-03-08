@@ -8,7 +8,7 @@
     <record id="hr_incentive_officer_rule_team" model="ir.rule">
         <field name="name">hr.incentive (Team Only)</field>
         <field name="model_id" ref="model_hr_incentive"/>
-        <field name="domain_force">[('employee_id.coach_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">['|', ('employee_id.coach_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('hr_incentives.group_hr_incentives_officer'))]"/>
     </record>
 
