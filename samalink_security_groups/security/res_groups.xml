@@ -128,12 +128,6 @@
                 (4, ref('group_samalink_employee')),
                 (4, ref('hr_attendance.group_hr_attendance_officer')),
             ]" />
-            <field name="whitelisted_menu_ids" eval="[
-                (4, ref('menu_team_attendances')),
-            ]" />
-            <field name="menu_access" eval="[
-                (4, ref('menu_team_attendances')),
-            ]" />
         </record>
 
         <record id="group_sl_general_manager" model="res.groups">
@@ -150,14 +144,12 @@
                 (4, ref('hr_employee_menu_my_employees')),
                 (4, ref('hr_incentives.menu_hr_incentives_root')),
                 (4, ref('menu_hr_leave_waiting_1st_approve')),
-                (4, ref('menu_team_attendances')),
                 (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
             ]" />
             <field name="menu_access" eval="[
                 (4, ref('hr_employee_menu_my_employees')),
                 (4, ref('hr_incentives.menu_hr_incentives_root')),
                 (4, ref('menu_hr_leave_waiting_1st_approve')),
-                (4, ref('menu_team_attendances')),
                 (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
             ]" />
         </record>

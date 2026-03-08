@@ -95,9 +95,7 @@ class HrIncentive(models.Model):
         self.write({'state': 'validated'})
 
     def action_approve(self):
-        is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
-        is_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
-        if not is_manager and not is_general_manager:
+        if not self.env.user.has_group('hr_incentives.group_hr_incentives_manager'):
             self.action_validate()
         else:
             self.write({'state': 'approved'})
