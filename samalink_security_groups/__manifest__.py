@@ -1,6 +1,6 @@
 {
-    'name': 'Samalink Security Groups v2.1.0',
-    'version': '2.1.0',
+    'name': 'Samalink Security Groups v2.2.0',
+    'version': '2.2.0',
     'summary': 'Manage security groups for Samalink',
     'description': 'Module to manage security groups and permissions in Samalink.',
     'author': '46-d-006',

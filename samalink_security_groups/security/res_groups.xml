@@ -145,19 +145,27 @@
 
         <record id="group_sl_general_manager" model="res.groups">
             <field name="name">General Manager</field>
-            <field name="comment">Full managerial access — implies all three other manager types (via parent_id field / org chart)</field>
+            <field name="comment">Full managerial access — has direct access to attendance, incentives, time off (via parent_id field / org chart)</field>
             <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
             <field name="implied_ids" eval="[
                 (4, ref('group_samalink_employee')),
-                (4, ref('group_sl_coach_manager')),
                 (4, ref('group_sl_timeoff_manager')),
                 (4, ref('group_sl_attendance_manager')),
+                (4, ref('hr_incentives.group_hr_incentives_officer')),
             ]" />
             <field name="whitelisted_menu_ids" eval="[
                 (4, ref('hr_employee_menu_my_employees')),
+                (4, ref('hr_incentives.menu_hr_incentives_root')),
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('menu_team_attendances')),
+                (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
             ]" />
             <field name="menu_access" eval="[
                 (4, ref('hr_employee_menu_my_employees')),
+                (4, ref('hr_incentives.menu_hr_incentives_root')),
+                (4, ref('menu_hr_leave_waiting_1st_approve')),
+                (4, ref('menu_team_attendances')),
+                (4, ref('hr_attendance_deviation.menu_hr_attendance_middleware_team')),
             ]" />
         </record>
     </data>

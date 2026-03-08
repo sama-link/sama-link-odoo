@@ -138,7 +138,7 @@
             ['|', ('employee_id.parent_id', '=', user.employee_id.id), ('employee_id.user_id', '=', user.id)]
         </field>
         <field name="perm_read" eval="1"/>
-        <field name="perm_write" eval="0"/>
+        <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
