@@ -14,14 +14,6 @@ MANAGER_FIELD_TO_GROUP = {
     'attendance_manager_id': ('samalink_security_groups.group_sl_attendance_manager', 'user'),
 }
 
-# Reverse mapping: field → search domain field for checking remaining references
-MANAGER_FIELD_SEARCH = {
-    'parent_id': 'parent_id',
-    'coach_id': 'coach_id',
-    'leave_manager_id': 'leave_manager_id',
-    'attendance_manager_id': 'attendance_manager_id',
-}
-
 
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
@@ -48,26 +40,16 @@ class HrEmployee(models.Model):
         return action
 
     def write(self, vals):
-        # Capture OLD manager values before write for removal logic
-        old_managers = {}
-        for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
-            if field_name in vals:
-                old_managers[field_name] = {}
-                for rec in self:
-                    old_val = rec.sudo()[field_name]
-                    if old_val:
-                        if field_type == 'user':
-                            old_managers[field_name][rec.id] = old_val  # res.users record
-                        else:
-                            old_managers[field_name][rec.id] = old_val.user_id  # hr.employee → user
+        # Capture OLD manager users before write (for ALL four fields, not just changed ones)
+        old_manager_users = self._collect_old_manager_users(vals)
 
         res = super().write(vals)
 
         # Auto-assign new managers
         self._auto_assign_manager_groups(vals)
 
-        # Auto-remove old managers who no longer manage anyone
-        self._auto_remove_manager_groups(vals, old_managers)
+        # Auto-remove: for every old manager user, check ALL four fields
+        self._auto_remove_orphan_groups(old_manager_users)
 
         return res
 
@@ -77,6 +59,22 @@ class HrEmployee(models.Model):
         for vals in vals_list:
             records._auto_assign_manager_groups(vals)
         return records
+
+    def _collect_old_manager_users(self, vals):
+        """Collect the old manager users for fields that are being changed."""
+        old_users = set()
+        for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
+            if field_name not in vals:
+                continue
+            for rec in self:
+                old_val = rec.sudo()[field_name]
+                if old_val:
+                    if field_type == 'user':
+                        old_users.add(old_val)  # res.users record
+                    else:
+                        if old_val.user_id:
+                            old_users.add(old_val.user_id)  # hr.employee → user
+        return old_users
 
     def _auto_assign_manager_groups(self, vals):
         """Auto-assign security groups when manager fields are set on employees."""
@@ -107,48 +105,60 @@ class HrEmployee(models.Model):
                 )
                 group.sudo().write({'users': [(4, user.id)]})
 
-    def _auto_remove_manager_groups(self, vals, old_managers):
-        """Remove security groups from old managers who no longer manage any employee."""
-        for field_name, old_values in old_managers.items():
-            group_xmlid, field_type = MANAGER_FIELD_TO_GROUP[field_name]
+    def _auto_remove_orphan_groups(self, old_manager_users):
+        """For each old manager user, check ALL four manager fields.
+        If the user is no longer referenced in ANY employee for a given field,
+        remove the corresponding group.
+        Also handle group_samalink_manager: remove it if the user has no
+        remaining manager role at all."""
+        if not old_manager_users:
+            return
 
-            # Collect unique old users that were replaced
-            old_users = set()
-            for rec_id, old_user in old_values.items():
-                if old_user and old_user.exists():
-                    old_users.add(old_user)
+        Employee = self.env['hr.employee'].sudo()
 
-            if not old_users:
+        for old_user in old_manager_users:
+            if not old_user or not old_user.exists():
                 continue
 
-            try:
-                group = self.env.ref(group_xmlid)
-            except ValueError:
-                continue
+            # Find the employee record for this user (needed for parent_id/coach_id checks)
+            manager_employee = Employee.search([('user_id', '=', old_user.id)], limit=1)
 
-            for old_user in old_users:
-                # Check if this user is still a manager for ANY employee in this field
+            any_role_remaining = False
+
+            for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
+                try:
+                    group = self.env.ref(group_xmlid)
+                except ValueError:
+                    continue
+
+                # Check if user still manages anyone via this field
                 if field_type == 'user':
-                    # leave_manager_id / attendance_manager_id are res.users fields
-                    remaining = self.env['hr.employee'].sudo().search_count([
-                        (field_name, '=', old_user.id),
-                    ])
+                    remaining = Employee.search_count([(field_name, '=', old_user.id)])
                 else:
-                    # parent_id / coach_id are hr.employee fields
-                    # Find the employee record for this user
-                    manager_employee = self.env['hr.employee'].sudo().search([
-                        ('user_id', '=', old_user.id),
-                    ], limit=1)
-                    if not manager_employee:
-                        remaining = 0
+                    if manager_employee:
+                        remaining = Employee.search_count([(field_name, '=', manager_employee.id)])
                     else:
-                        remaining = self.env['hr.employee'].sudo().search_count([
-                            (field_name, '=', manager_employee.id),
-                        ])
+                        remaining = 0
 
-                if remaining == 0 and old_user.has_group(group_xmlid):
+                if remaining > 0:
+                    any_role_remaining = True
+                elif old_user.has_group(group_xmlid):
                     _logger.info(
                         "Auto-removing group '%s' from user '%s' (no longer %s for any employee)",
                         group.name, old_user.name, field_name,
                     )
                     group.sudo().write({'users': [(3, old_user.id)]})
+
+            # Also remove group_samalink_manager if no role remains
+            if not any_role_remaining:
+                manager_xmlid = 'samalink_security_groups.group_samalink_manager'
+                if old_user.has_group(manager_xmlid):
+                    try:
+                        manager_group = self.env.ref(manager_xmlid)
+                        _logger.info(
+                            "Auto-removing group 'Manager' from user '%s' (no manager role remaining)",
+                            old_user.name,
+                        )
+                        manager_group.sudo().write({'users': [(3, old_user.id)]})
+                    except ValueError:
+                        pass

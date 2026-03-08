@@ -199,6 +199,7 @@
 
     <menuitem id="hr_employee_menu_my_employees"
             name="My Employees"
+            parent="hr.menu_hr_root"
             action="action_my_team_employees"
-            sequence="10"/>
+            sequence="5"/>
 </odoo>
