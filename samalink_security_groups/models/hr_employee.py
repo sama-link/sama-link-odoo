@@ -4,12 +4,22 @@ from odoo.exceptions import UserError
 import logging
 _logger = logging.getLogger(__name__)
 
-# Mapping: employee field → security group XML ID
+# Mapping: employee field → (security group XML ID, field type)
+# field type: 'user' means the field stores res.users ID directly
+#             'employee' means the field stores hr.employee ID (need to get user_id)
 MANAGER_FIELD_TO_GROUP = {
-    'parent_id': 'samalink_security_groups.group_sl_general_manager',
-    'coach_id': 'samalink_security_groups.group_sl_coach_manager',
-    'leave_manager_id': 'samalink_security_groups.group_sl_timeoff_manager',
-    'attendance_manager_id': 'samalink_security_groups.group_sl_attendance_manager',
+    'parent_id': ('samalink_security_groups.group_sl_general_manager', 'employee'),
+    'coach_id': ('samalink_security_groups.group_sl_coach_manager', 'employee'),
+    'leave_manager_id': ('samalink_security_groups.group_sl_timeoff_manager', 'user'),
+    'attendance_manager_id': ('samalink_security_groups.group_sl_attendance_manager', 'user'),
+}
+
+# Reverse mapping: field → search domain field for checking remaining references
+MANAGER_FIELD_SEARCH = {
+    'parent_id': 'parent_id',
+    'coach_id': 'coach_id',
+    'leave_manager_id': 'leave_manager_id',
+    'attendance_manager_id': 'attendance_manager_id',
 }
 
 
@@ -38,8 +48,27 @@ class HrEmployee(models.Model):
         return action
 
     def write(self, vals):
+        # Capture OLD manager values before write for removal logic
+        old_managers = {}
+        for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
+            if field_name in vals:
+                old_managers[field_name] = {}
+                for rec in self:
+                    old_val = rec.sudo()[field_name]
+                    if old_val:
+                        if field_type == 'user':
+                            old_managers[field_name][rec.id] = old_val  # res.users record
+                        else:
+                            old_managers[field_name][rec.id] = old_val.user_id  # hr.employee → user
+
         res = super().write(vals)
+
+        # Auto-assign new managers
         self._auto_assign_manager_groups(vals)
+
+        # Auto-remove old managers who no longer manage anyone
+        self._auto_remove_manager_groups(vals, old_managers)
+
         return res
 
     @api.model_create_multi
@@ -51,7 +80,7 @@ class HrEmployee(models.Model):
 
     def _auto_assign_manager_groups(self, vals):
         """Auto-assign security groups when manager fields are set on employees."""
-        for field_name, group_xmlid in MANAGER_FIELD_TO_GROUP.items():
+        for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
             if field_name not in vals:
                 continue
             manager_value = vals[field_name]
@@ -65,15 +94,9 @@ class HrEmployee(models.Model):
                 continue
 
             # Resolve the user from the field value
-            if field_name in ('leave_manager_id', 'attendance_manager_id'):
-                # These are res.users fields — the value IS the user ID
+            if field_type == 'user':
                 user = self.env['res.users'].sudo().browse(manager_value)
-            elif field_name == 'parent_id':
-                # parent_id is an hr.employee field — get the user from the employee
-                employee = self.env['hr.employee'].sudo().browse(manager_value)
-                user = employee.user_id
-            elif field_name == 'coach_id':
-                # coach_id is an hr.employee field — get the user from the employee
+            else:
                 employee = self.env['hr.employee'].sudo().browse(manager_value)
                 user = employee.user_id
 
@@ -83,3 +106,49 @@ class HrEmployee(models.Model):
                     group.name, user.name, field_name,
                 )
                 group.sudo().write({'users': [(4, user.id)]})
+
+    def _auto_remove_manager_groups(self, vals, old_managers):
+        """Remove security groups from old managers who no longer manage any employee."""
+        for field_name, old_values in old_managers.items():
+            group_xmlid, field_type = MANAGER_FIELD_TO_GROUP[field_name]
+
+            # Collect unique old users that were replaced
+            old_users = set()
+            for rec_id, old_user in old_values.items():
+                if old_user and old_user.exists():
+                    old_users.add(old_user)
+
+            if not old_users:
+                continue
+
+            try:
+                group = self.env.ref(group_xmlid)
+            except ValueError:
+                continue
+
+            for old_user in old_users:
+                # Check if this user is still a manager for ANY employee in this field
+                if field_type == 'user':
+                    # leave_manager_id / attendance_manager_id are res.users fields
+                    remaining = self.env['hr.employee'].sudo().search_count([
+                        (field_name, '=', old_user.id),
+                    ])
+                else:
+                    # parent_id / coach_id are hr.employee fields
+                    # Find the employee record for this user
+                    manager_employee = self.env['hr.employee'].sudo().search([
+                        ('user_id', '=', old_user.id),
+                    ], limit=1)
+                    if not manager_employee:
+                        remaining = 0
+                    else:
+                        remaining = self.env['hr.employee'].sudo().search_count([
+                            (field_name, '=', manager_employee.id),
+                        ])
+
+                if remaining == 0 and old_user.has_group(group_xmlid):
+                    _logger.info(
+                        "Auto-removing group '%s' from user '%s' (no longer %s for any employee)",
+                        group.name, old_user.name, field_name,
+                    )
+                    group.sudo().write({'users': [(3, old_user.id)]})

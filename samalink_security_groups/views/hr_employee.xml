@@ -179,8 +179,26 @@
               action="action_open_my_employee"
               sequence="10"/>
 
+    <record id="action_my_team_employees" model="ir.actions.act_window">
+        <field name="name">My Employees</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[
+            '|', '|', '|',
+            ('parent_id.user_id', '=', uid),
+            ('coach_id.user_id', '=', uid),
+            ('leave_manager_id', '=', uid),
+            ('attendance_manager_id', '=', uid)
+        ]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No employees in your team.
+            </p>
+        </field>
+    </record>
+
     <menuitem id="hr_employee_menu_my_employees"
             name="My Employees"
-            action="hr.open_view_employee_list_my"
+            action="action_my_team_employees"
             sequence="10"/>
 </odoo>
