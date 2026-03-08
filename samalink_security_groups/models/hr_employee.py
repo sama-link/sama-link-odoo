@@ -148,17 +148,3 @@ class HrEmployee(models.Model):
                         group.name, old_user.name, field_name,
                     )
                     group.sudo().write({'users': [(3, old_user.id)]})
-
-            # Also remove group_samalink_manager if no role remains
-            if not any_role_remaining:
-                manager_xmlid = 'samalink_security_groups.group_samalink_manager'
-                if old_user.has_group(manager_xmlid):
-                    try:
-                        manager_group = self.env.ref(manager_xmlid)
-                        _logger.info(
-                            "Auto-removing group 'Manager' from user '%s' (no manager role remaining)",
-                            old_user.name,
-                        )
-                        manager_group.sudo().write({'users': [(3, old_user.id)]})
-                    except ValueError:
-                        pass

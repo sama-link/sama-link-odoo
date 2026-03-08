@@ -26,16 +26,10 @@
             ]" />
         </record>
         <record id="group_samalink_manager" model="res.groups">
-            <field name="name">Manager</field>
+            <field name="name">Manager (Legacy)</field>
             <field name="category_id" ref="module_category_samalink_hr" />
             <field name="implied_ids" eval="[
                 (4, ref('group_samalink_employee')),
-            ]" />
-            <field name="whitelisted_menu_ids" eval="[
-                (4, ref('hr_employee_menu_my_employees')),
-            ]" />
-            <field name="menu_access" eval="[
-                (4, ref('hr_employee_menu_my_employees')),
             ]" />
         </record>
         <record id="group_samalink_administrator" model="res.groups">
@@ -154,12 +148,15 @@
             <field name="comment">Full managerial access — implies all three other manager types (via parent_id field / org chart)</field>
             <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr" />
             <field name="implied_ids" eval="[
-                (4, ref('group_samalink_manager')),
+                (4, ref('group_samalink_employee')),
                 (4, ref('group_sl_coach_manager')),
                 (4, ref('group_sl_timeoff_manager')),
                 (4, ref('group_sl_attendance_manager')),
             ]" />
             <field name="whitelisted_menu_ids" eval="[
+                (4, ref('hr_employee_menu_my_employees')),
+            ]" />
+            <field name="menu_access" eval="[
                 (4, ref('hr_employee_menu_my_employees')),
             ]" />
         </record>
