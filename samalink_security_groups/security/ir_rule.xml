@@ -115,6 +115,48 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
+    <!-- Coach Manager: can see employees they coach -->
+    <record id="hr_employee_rule_group_sl_coach_manager_team" model="ir.rule">
+        <field name="name">HR Employee SL Coach Manager (Coached Employees)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_coach_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('coach_id', '=', user.employee_id.id), ('user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- Coach Manager: can read contracts of employees they coach -->
+    <record id="hr_contract_rule_group_sl_coach_manager" model="ir.rule">
+        <field name="name">HR Contract SL Coach Manager (Coached Employees)</field>
+        <field name="model_id" ref="hr_contract.model_hr_contract"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_coach_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('employee_id.coach_id', '=', user.employee_id.id), ('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- General Manager: can read contracts of direct reports -->
+    <record id="hr_contract_rule_group_sl_general_manager" model="ir.rule">
+        <field name="name">HR Contract SL General Manager (Direct Reports)</field>
+        <field name="model_id" ref="hr_contract.model_hr_contract"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_general_manager'))]"/>
+        <field name="domain_force">
+            ['|', ('employee_id.parent_id', '=', user.employee_id.id), ('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
     <!-- General Manager: can see leaves for direct reports -->
     <record id="hr_leave_rule_group_sl_general_manager" model="ir.rule">
         <field name="name">HR Leave SL General Manager (Direct Reports)</field>

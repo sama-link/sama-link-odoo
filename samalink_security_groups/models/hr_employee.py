@@ -108,9 +108,7 @@ class HrEmployee(models.Model):
     def _auto_remove_orphan_groups(self, old_manager_users):
         """For each old manager user, check ALL four manager fields.
         If the user is no longer referenced in ANY employee for a given field,
-        remove the corresponding group.
-        Also handle group_samalink_manager: remove it if the user has no
-        remaining manager role at all."""
+        remove the corresponding group."""
         if not old_manager_users:
             return
 

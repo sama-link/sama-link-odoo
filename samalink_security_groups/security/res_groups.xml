@@ -25,13 +25,6 @@
                 (4, ref('samalink_security_groups.hr_employee_menu_my_info')),
             ]" />
         </record>
-        <record id="group_samalink_manager" model="res.groups">
-            <field name="name">Manager (Legacy)</field>
-            <field name="category_id" ref="module_category_samalink_hr" />
-            <field name="implied_ids" eval="[
-                (4, ref('group_samalink_employee')),
-            ]" />
-        </record>
         <record id="group_samalink_administrator" model="res.groups">
             <field name="name">Administrator</field>
             <field name="category_id" ref="module_category_samalink_hr" />
