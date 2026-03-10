@@ -81,12 +81,26 @@ class HrIncentive(models.Model):
             if not record.current_contract_id or record.current_contract_id.wage <= 0:
                 raise ValidationError("The employee must have a current contract with a positive wage.")
 
+    @api.constrains('employee_id')
+    def _check_self_incentive(self):
+        is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
+        if not is_manager:
+            for record in self:
+                if record.employee_id.user_id == self.env.user:
+                    raise ValidationError("You cannot create or hold an incentive for yourself.")
+
     def action_draft(self):
         self.write({'state': 'draft'})
 
     def action_validate(self):
         is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
         is_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
+        
+        if not is_manager:
+            for record in self:
+                if record.employee_id.user_id == self.env.user:
+                    raise ValidationError("You cannot validate your own incentive.")
+
         if not is_manager and not is_general_manager:
             for record in self:
                 coach_user = record.sudo().employee_id.coach_id.user_id

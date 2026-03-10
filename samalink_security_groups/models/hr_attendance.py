@@ -9,6 +9,11 @@ class HrAttendance(models.Model):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
 
+        if not is_sl_admin:
+            for record in self:
+                if record.employee_id.user_id == self.env.user:
+                    raise UserError("You cannot approve overtime for yourself.")
+
         if not is_sl_admin and not is_sl_general_manager:
             for record in self:
                 current_employee_manager = record.sudo().employee_id.attendance_manager_id
