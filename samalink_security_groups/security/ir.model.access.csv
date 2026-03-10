@@ -22,7 +22,6 @@ access_hr_resume_line_type_samalink_employee,hr.resume.line.type (readonly),hr_s
 access_hr_leave_sl_timeoff_manager,hr.leave (Time Off Manager),hr_holidays.model_hr_leave,group_sl_timeoff_manager,1,1,0,0
 access_hr_leave_allocation_sl_timeoff_manager,hr.leave.allocation (Time Off Manager),hr_holidays.model_hr_leave_allocation,group_sl_timeoff_manager,1,1,0,0
 access_hr_attendance_sl_attendance_manager,hr.attendance (Attendance Manager),hr_attendance.model_hr_attendance,group_sl_attendance_manager,1,1,0,0
-access_hr_attendance_middleware_sl_attendance_manager,hr.attendance.middleware (Attendance Manager),hr_attendance_deviation.model_hr_attendance_middleware,group_sl_attendance_manager,1,1,1,0
 access_hr_contract_sl_general_manager,hr.contract (General Manager),hr_contract.model_hr_contract,group_sl_general_manager,1,1,0,0
 access_hr_incentive_sl_general_manager,hr.incentive (General Manager),hr_incentives.model_hr_incentive,group_sl_general_manager,1,1,1,0
 access_hr_leave_sl_general_manager,hr.leave (General Manager),hr_holidays.model_hr_leave,group_sl_general_manager,1,1,0,0
