@@ -135,7 +135,7 @@
                 (4, ref('group_samalink_employee')),
                 (4, ref('group_sl_timeoff_manager')),
                 (4, ref('group_sl_attendance_manager')),
-                (4, ref('hr_incentives.group_hr_incentives_officer')),
+                (4, ref('group_sl_coach_manager')),
             ]" />
             <field name="whitelisted_menu_ids" eval="[
                 (4, ref('hr_employee_menu_my_employees')),

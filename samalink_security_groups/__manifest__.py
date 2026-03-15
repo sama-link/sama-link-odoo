@@ -24,6 +24,7 @@
         'hr_contract',
     ],
     'data': [
+        'data/server_action.xml',
         'views/hr_attendance.xml',
         'views/hr_payslip.xml',
         'views/hr_employee.xml',
