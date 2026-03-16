@@ -48,7 +48,10 @@ class HrIncentive(models.Model):
         return super(HrIncentive, self).action_unarchive()
 
     def unlink(self):
+        is_hr_manager = self.env.user.has_group('samalink_security_groups.group_samalink_hr_manager')
         for record in self:
+            if record.employee_id.user_id == self.env.user and not is_hr_manager:
+                raise ValidationError("You cannot delete your own incentive.")
             if record.state not in ['draft', 'cancelled']:
                 raise ValidationError("You cannot delete an incentive which is not in draft or cancelled state.")
         self.write({'active': False, 'deleted': True})
@@ -83,23 +86,22 @@ class HrIncentive(models.Model):
 
     @api.constrains('employee_id')
     def _check_self_incentive(self):
-        is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
-        if not is_manager:
-            for record in self:
-                if record.employee_id.user_id == self.env.user:
-                    raise ValidationError("You cannot create or hold an incentive for yourself.")
+        is_hr_manager = self.env.user.has_group('samalink_security_groups.group_samalink_hr_manager')
+        for record in self:
+            if record.employee_id.user_id == self.env.user and not is_hr_manager:
+                raise ValidationError("You cannot create or hold an incentive for yourself.")
 
     def action_draft(self):
         self.write({'state': 'draft'})
 
     def action_validate(self):
+        is_hr_manager = self.env.user.has_group('samalink_security_groups.group_samalink_hr_manager')
         is_manager = self.env.user.has_group('hr_incentives.group_hr_incentives_manager')
         is_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
         
-        if not is_manager:
-            for record in self:
-                if record.employee_id.user_id == self.env.user:
-                    raise ValidationError("You cannot validate your own incentive.")
+        for record in self:
+            if record.employee_id.user_id == self.env.user and not is_hr_manager:
+                raise ValidationError("You cannot validate your own incentive.")
 
         if not is_manager and not is_general_manager:
             for record in self:
@@ -109,6 +111,11 @@ class HrIncentive(models.Model):
         self.write({'state': 'validated'})
 
     def action_approve(self):
+        is_hr_manager = self.env.user.has_group('samalink_security_groups.group_samalink_hr_manager')
+        for record in self:
+            if record.employee_id.user_id == self.env.user and not is_hr_manager:
+                raise ValidationError("You cannot approve your own incentive.")
+        
         if not self.env.user.has_group('hr_incentives.group_hr_incentives_manager'):
             self.action_validate()
         else:
