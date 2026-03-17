@@ -17,6 +17,12 @@ class HrEmployee(models.Model):
     activity_type_icon = fields.Char(groups="hr.group_hr_user,samalink_security_groups.group_samalink_employee")
     activity_type_id = fields.Many2one(groups="hr.group_hr_user,samalink_security_groups.group_samalink_employee")
 
+    # Override manager fields to ensure they are readable by all internal users 
+    # to prevent Access Errors during record rule evaluation
+    attendance_manager_id = fields.Many2one('res.users', string='Attendance Manager', groups="base.group_user")
+    leave_manager_id = fields.Many2one('res.users', string='Time Off Manager', groups="base.group_user")
+    coach_id = fields.Many2one('hr.employee', string='Coach', groups="base.group_user")
+
     @api.model
     def action_open_my_employee(self):
         employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
