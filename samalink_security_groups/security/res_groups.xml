@@ -93,12 +93,6 @@
                 (4, ref('group_samalink_employee')),
                 (4, ref('hr_incentives.group_hr_incentives_officer')),
             ]" />
-            <field name="whitelisted_menu_ids" eval="[
-                (4, ref('hr_incentives.menu_hr_incentives_root')),
-            ]" />
-            <field name="menu_access" eval="[
-                (4, ref('hr_incentives.menu_hr_incentives_root')),
-            ]" />
         </record>
 
         <record id="group_sl_timeoff_manager" model="res.groups">

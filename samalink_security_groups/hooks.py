@@ -69,5 +69,18 @@ def post_init_hook(cr, registry):
         _logger.info("Sync: Cleared old Manager (Legacy) group.")
     except ValueError:
         _logger.warning("Old Manager group not found, skipping migration.")
+    # Safely assign hr_incentives menu to Coach Manager, bypassing strict XML errors
+    try:
+        coach_group = env.ref('samalink_security_groups.group_sl_coach_manager', raise_if_not_found=False)
+        inc_menu = env.ref('hr_incentives.menu_hr_incentives_root', raise_if_not_found=False)
+        if coach_group and inc_menu:
+            _logger.info("Sync: Linking hr_incentives menu to Coach Manager.")
+            # Use sudo to bypass any restrictive rules during hook execution
+            coach_group.sudo().write({
+                'whitelisted_menu_ids': [(4, inc_menu.id)],
+                'menu_access': [(4, inc_menu.id)]
+            })
+    except Exception as e:
+        _logger.warning("Failed to link hr_incentives menu safely in python hook: %s", e)
 
     _logger.info("=== Manager group sync complete ===")
