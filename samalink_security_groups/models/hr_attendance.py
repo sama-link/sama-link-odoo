@@ -12,12 +12,9 @@ class HrAttendance(models.Model):
         if modifying_restricted:
             is_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
             
-            if not is_admin:
-                for att in self:
-                    # Allow standard operations if the attendance belongs to the user themselves
-                    # But prevent managers and HR from editing other people's punch times
-                    if att.employee_id.user_id != self.env.user:
-                        raise UserError("Only Administrators are allowed to manually edit employee Check-In or Check-Out times.")
+            # Allow system operations (like native check-out) which use sudo()
+            if not is_admin and not self.env.su:
+                raise UserError("Only Administrators are allowed to manually edit the Employee, Check-In, or Check-Out fields.")
         
         return super().write(vals)
 
