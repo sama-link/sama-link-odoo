@@ -5,6 +5,23 @@ from odoo.exceptions import UserError
 class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
+    def write(self, vals):
+        restricted_fields = {'check_in', 'check_out', 'employee_id'}
+        modifying_restricted = any(f in vals for f in restricted_fields)
+
+        if modifying_restricted:
+            is_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
+            
+            if not is_admin:
+                for att in self:
+                    # Allow standard operations if the attendance belongs to the user themselves
+                    # But prevent managers and HR from editing other people's punch times
+                    if att.employee_id.user_id != self.env.user:
+                        raise UserError("Only Administrators are allowed to manually edit employee Check-In or Check-Out times.")
+        
+        return super().write(vals)
+
+
     def action_approve_overtime(self):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
