@@ -21,6 +21,7 @@
 #
 #############################################################################
 from odoo import fields, models
+from odoo.exceptions import AccessError
 
 
 class IrAttachment(models.Model):
@@ -42,3 +43,14 @@ class IrAttachment(models.Model):
                                   string="Attachment", invisible=1,
                                   help='This field allows you to attach HR '
                                        'documents to the record.')
+
+    def check(self, mode, values=None):
+        """Override to allow HR users full access to all attachments.
+
+        Odoo's default check() method enforces Python-level security
+        on ir.attachment that is independent of ir.rule record rules.
+        This override bypasses that check for users in hr.group_hr_user.
+        """
+        if self.env.user.has_group('hr.group_hr_user'):
+            return
+        return super().check(mode, values)

@@ -41,3 +41,11 @@ class HrLoanLine(models.Model):
     payslip_id = fields.Many2one('hr.payslip', string="Payslip Ref.",
                                  help="Reference to the associated "
                                       "payslip, if any.")
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'paid' in vals:
+            loans = self.mapped('loan_id')
+            loans.check_fully_paid()
+        return res
+

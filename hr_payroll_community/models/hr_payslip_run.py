@@ -20,9 +20,12 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+import logging
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from odoo import fields, models, _, api
+
+_logger = logging.getLogger(__name__)
 
 
 class HrPayslipRun(models.Model):
@@ -95,7 +98,30 @@ class HrPayslipRun(models.Model):
         return action
 
     def action_bulk_compute_payslips(self):
-        self.slip_ids.action_compute_sheet()
+        failed = []
+        for slip in self.slip_ids:
+            try:
+                savepoint = self.env.cr.savepoint()
+                slip.action_compute_sheet()
+                savepoint.close()
+            except Exception as e:
+                savepoint.rollback()
+                _logger.warning(
+                    "Failed to compute payslip for %s (ID: %s): %s",
+                    slip.employee_id.name, slip.id, e
+                )
+                failed.append(slip.employee_id.name or str(slip.id))
+        if failed:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Partial Success"),
+                    'type': 'warning',
+                    'message': _("Computed successfully except for: %s") % ', '.join(failed),
+                    'sticky': True,
+                }
+            }
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

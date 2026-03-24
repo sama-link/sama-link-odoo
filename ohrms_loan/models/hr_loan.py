@@ -111,9 +111,12 @@ class HrLoan(models.Model):
 
     def check_fully_paid(self):
         self._compute_total_amount()
-        to_archive = self.filtered(lambda r: r.state == 'approve' and r.balance_amount == 0)
-        to_archive.write({'state': 'paid'})
-        to_archive.action_archive()
+        for loan in self:
+            if loan.state == 'approve' and loan.balance_amount == 0:
+                loan.write({'state': 'paid'})
+                loan.action_archive()
+            elif loan.state == 'paid' and loan.balance_amount > 0:
+                loan.write({'state': 'approve', 'active': True})
 
     def action_mark_as_paid(self):
         self.loan_lines.filtered(lambda line: not line.paid).write({'paid': True})
@@ -243,6 +246,7 @@ class HrLoan(models.Model):
             else:
                 return True
 
+    @api.depends('loan_lines.paid', 'loan_lines.amount', 'loan_amount')
     def _compute_total_amount(self):
         """ Compute total loan amount,balance amount and total paid amount"""
         total_paid = 0.0
