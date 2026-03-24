@@ -474,13 +474,14 @@ class HrAttendanceMiddleware(models.Model):
     def _check_leave_manager_permission(self):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
+        is_sl_hr_officer = self.env.user.has_group('samalink_security_groups.group_samalink_hr_officer')
 
-        if not is_sl_admin:
+        if not is_sl_admin and not is_sl_hr_officer:
             for record in self:
                 if record.employee_id.user_id == self.env.user:
                     raise UserError("You cannot approve late/early for yourself.")
 
-        if not is_sl_admin and not is_sl_general_manager:
+        if not is_sl_admin and not is_sl_general_manager and not is_sl_hr_officer:
             for record in self:
                 leave_manager = record.sudo().employee_id.leave_manager_id
                 if leave_manager and self.env.user != leave_manager:

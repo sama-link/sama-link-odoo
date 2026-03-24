@@ -12,14 +12,15 @@ class HrLeave(models.Model):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
         is_sl_timeoff_mgr = self.env.user.has_group('samalink_security_groups.group_sl_timeoff_manager')
+        is_sl_hr_officer = self.env.user.has_group('samalink_security_groups.group_samalink_hr_officer')
 
-        if not is_sl_admin:
+        if not is_sl_admin and not is_sl_hr_officer:
             for record in self:
                 if record.employee_id.user_id == self.env.user:
                     raise UserError("You cannot approve your own time off.")
 
-        # Check: only the leave_manager_id or parent_id (General Manager) can approve
-        if not is_sl_admin and not is_sl_general_manager:
+        # Check: only the leave_manager_id or parent_id (General Manager) or HR Officer can approve
+        if not is_sl_admin and not is_sl_general_manager and not is_sl_hr_officer:
             for record in self:
                 emp = record.sudo().employee_id
                 current_leave_mgr = emp.leave_manager_id
