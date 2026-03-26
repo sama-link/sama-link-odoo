@@ -35,15 +35,15 @@
                             name="action_cancel_resignation"
                             invisible="state != 'draft'"/>
                     <button string="Approve" type="object"
-                            groups="hr.group_hr_user"
+                            groups="hr.group_hr_user,samalink_security_groups.group_sl_general_manager"
                             name="action_approve_resignation"
                             invisible="state != 'confirm'"/>
                     <button string="Reject" type="object"
-                            groups="hr.group_hr_user"
+                            groups="hr.group_hr_user,samalink_security_groups.group_sl_general_manager"
                             name="action_reject_resignation"
                             invisible="state != 'confirm'"/>
                     <button string="Set to Draft" type="object"
-                            groups="hr.group_hr_manager"
+                            groups="hr.group_hr_manager,samalink_security_groups.group_sl_general_manager"
                             name="action_reset_to_draft"
                             invisible="state != 'approved'"/>
                     <field name="state" widget="statusbar"
@@ -71,12 +71,12 @@
                             <field name="expected_revealing_date"
                                    readonly="state == 'approved'"/>
                             <field name="approved_revealing_date" readonly="1"
-                                   groups="hr.group_hr_user"/>
+                                   groups="hr.group_hr_user,samalink_security_groups.group_sl_general_manager"/>
                             <field name="notice_period"/>
                         </group>
                         <group string="Resignation Details">
                             <field name="resignation_type" string="Type"
-                                   groups="hr.group_hr_user"
+                                   groups="hr.group_hr_user,samalink_security_groups.group_sl_general_manager"
                                    readonly="state == 'approved'"/>
                             <field name="reason"
                                    readonly="state == 'approved'"/>
@@ -113,19 +113,19 @@
     </record>
     <!-- Root menu item for Resignation -->
     <menuitem id="hr_resignation_menu_root" name="Resignation"
-              groups="base.group_user"
+              groups="samalink_security_groups.group_samalink_employee"
               web_icon="hr_resignation,static/description/icon.png"
               sequence="21"/>
     <!-- Menu item for Resignation Request -->
     <menuitem id="hr_resignation_menu_request"
               parent="hr_resignation_menu_root" name="Resignation Request"
-              action="hr_resignation_action" groups="base.group_user"
+              action="hr_resignation_action" groups="samalink_security_groups.group_samalink_employee"
               sequence="4"/>
     <!-- Menu item for Approved Resignation -->
     <menuitem id="hr_resignation_menu_approved_request"
               parent="hr_resignation_menu_root"
               name="Approved Resignation"
               action="hr_resignation_approved_action"
-              groups="hr.group_hr_user"
+              groups="hr.group_hr_user,samalink_security_groups.group_sl_general_manager"
               sequence="4"/>
 </odoo>

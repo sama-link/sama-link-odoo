@@ -6,7 +6,7 @@
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
         <field name="domain_force">[('employee_id.user_id','=',user.id)]
         </field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
     </record>
     <!--    Manager permission to view all record   -->
     <record id="hr_resignation_rule_manager" model="ir.rule">
@@ -15,7 +15,7 @@
         <field name="domain_force">
             ['|',('employee_id.user_id','!=',user.id),('employee_id.user_id','=',False)]
         </field>
-        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user')), (4, ref('samalink_security_groups.group_sl_general_manager'))]"/>
     </record>
     <!-- Access to their own contracts-->
     <record id="hr_contract_rule_user" model="ir.rule">
@@ -23,6 +23,6 @@
         <field name="model_id" ref="hr_contract.model_hr_contract"/>
         <field name="domain_force">[('employee_id.user_id','=',user.id)]
         </field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
     </record>
 </odoo>

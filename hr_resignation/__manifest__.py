@@ -31,7 +31,7 @@
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
     'website': 'https://www.openhrms.com',
-    'depends': ['hr_employee_updation'],
+    'depends': ['hr_employee_updation', 'samalink_security_groups'],
     'data': [
         'security/hr_resignation_security.xml',
         'security/ir.model.access.csv',

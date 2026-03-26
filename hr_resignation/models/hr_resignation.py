@@ -86,7 +86,7 @@ class HrResignation(models.Model):
     def _compute_change_employee(self):
         """ Check whether the user has the permission to change the employee"""
         res_user = self.env['res.users'].browse(self._uid)
-        self.change_employee = res_user.has_group('hr.group_hr_user')
+        self.change_employee = res_user.has_group('hr.group_hr_user') or res_user.has_group('samalink_security_groups.group_sl_general_manager')
 
     @api.constrains('employee_id')
     def _check_employee_id(self):
@@ -94,7 +94,7 @@ class HrResignation(models.Model):
              to create a resignation request for the specified employee.
         """
         for resignation in self:
-            if not self.env.user.has_group('hr.group_hr_user'):
+            if not (self.env.user.has_group('hr.group_hr_user') or self.env.user.has_group('samalink_security_groups.group_sl_general_manager')):
                 if (resignation.employee_id.user_id.id and
                         resignation.employee_id.user_id.id != self.env.uid):
                     raise ValidationError(
@@ -202,6 +202,7 @@ class HrResignation(models.Model):
                     # Cancelling contract
                     contract.state = 'cancel' if contract.state == "open" else \
                         contract.state
+                    contract.active = False
                 # Changing state of the employee if resigning today
                 if (resignation.expected_revealing_date <= fields.Date.today()
                         and resignation.employee_id.active):
