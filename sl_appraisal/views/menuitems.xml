@@ -46,28 +46,4 @@
         ]"/>
     </record>
 
-    <!-- Add main Appraisal menus to General Manager whitelist (for survey access) -->
-    <record id="samalink_security_groups.group_sl_general_manager" model="res.groups">
-        <field name="whitelisted_menu_ids" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-        ]"/>
-        <field name="menu_access" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-        ]"/>
-    </record>
-
-    <!-- Add main Appraisal menus to Coach Manager whitelist (for survey access) -->
-    <record id="samalink_security_groups.group_sl_coach_manager" model="res.groups">
-        <field name="whitelisted_menu_ids" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-        ]"/>
-        <field name="menu_access" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-        ]"/>
-    </record>
-
 </odoo>
