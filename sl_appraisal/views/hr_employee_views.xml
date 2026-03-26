@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         EMPLOYEE FORM — add Appraisals stat button + history tab
+         ============================================================ -->
+    <record id="sl_view_employee_form_appraisal" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.sl.appraisal</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Stat button for appraisals -->
+            <div name="button_box" position="inside">
+                <button name="action_open_appraisals"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-trophy"
+                        groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
+                    <div class="o_stat_info">
+                        <field name="appraisal_count" class="o_stat_value"/>
+                        <span class="o_stat_text">Appraisals</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Last appraisal date in work info -->
+            <field name="coach_id" position="after">
+                <field name="last_appraisal_date" readonly="1"
+                       groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         EMPLOYEE MY INFO — add Appraisals tab (read-only)
+         ============================================================ -->
+    <record id="sl_view_employee_my_info_appraisal" model="ir.ui.view">
+        <field name="name">hr.employee.my.info.inherit.sl.appraisal</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="samalink_security_groups.hr_employee_my_info_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Add Appraisal History tab to My Info notebook -->
+            <page name="skills_resume" position="after">
+                <page string="🎯 My Appraisals" name="my_appraisals">
+                    <div class="alert alert-info mb-3" role="alert">
+                        <i class="fa fa-info-circle me-1"/>
+                        Your appraisal history and skill progression.
+                        Finalized appraisals show approved skill changes.
+                    </div>
+                    <field name="appraisal_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false"
+                              decoration-success="state == 'hr_finalization'"
+                              decoration-warning="state == 'published'"
+                              decoration-bf="state == 'draft'">
+                            <field name="appraisal_deadline" string="Date"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'hr_finalization'"
+                                   decoration-warning="state == 'published'"
+                                   decoration-info="state == 'draft'"/>
+                            <field name="skill_line_count" string="Skills Evaluated"/>
+                            <field name="tot_comp_survey" string="Survey Answers"/>
+                            <field name="creater_id" string="Created By"/>
+                        </list>
+                    </field>
+
+                    <!-- Skills progression summary -->
+                    <separator string="Latest Skill Levels"/>
+                    <field name="employee_skill_ids" readonly="1" nolabel="1"
+                           widget="skills_one2many">
+                        <list create="false" edit="false" delete="false">
+                            <field name="skill_type_id"/>
+                            <field name="skill_id"/>
+                            <field name="skill_level_id"/>
+                            <field name="level_progress" widget="progressbar"/>
+                        </list>
+                    </field>
+                </page>
+            </page>
+        </field>
+    </record>
+
+</odoo>
