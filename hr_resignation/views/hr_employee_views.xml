@@ -9,7 +9,7 @@
             <field name="joining_date" position="after">
                 <field name="resign_date" invisible="active != False"/>
             </field>
-            <xpath expr="//group[@string='Management']" position="inside">
+            <xpath expr="//field[@name='coach_id']" position="after">
                 <field name="administrative_manager_id"/>
             </xpath>
         </field>
