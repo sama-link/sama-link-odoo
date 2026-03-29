@@ -8,30 +8,43 @@
         <field name="category_id" ref="module_category_resignation"/>
     </record>
 
-    <!-- Master Global Rule: Overrides everything, guarantees absolute isolation -->
+    <!--To view their own record only-->
     <record id="hr_resignation_rule_user" model="ir.rule">
-        <field name="name">Employee Resignation Master Security Security</field>
+        <field name="name">Employee Resignation User</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
-        <field name="groups" eval="[(6, 0, [])]"/>
-        <field name="global" eval="True"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('hr.group_hr_user') or user.has_group('samalink_security_groups.group_sl_general_manager') or user.has_group('hr_resignation.group_resignation_hr') else ['|', ('employee_id.user_id', '=', user.id), ('employee_id.administrative_manager_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_samalink_employee')])]"/>
+        <field name="global" eval="False"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
 
-    <!-- Nullify obsolete rules from database -->
+    <!-- Administrative Manager view of suboordinates (no create/unlink) -->
     <record id="hr_resignation_rule_administrative_manager" model="ir.rule">
-        <field name="name">Obsolete Admin Rule</field>
+        <field name="name">Employee Resignation Administrative Manager</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
-        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="domain_force">[('employee_id.administrative_manager_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_sl_administrative_manager')])]"/>
+        <field name="global" eval="False"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
-
+    
+    <!--    Manager permission to view all record   -->
     <record id="hr_resignation_rule_manager" model="ir.rule">
-        <field name="name">Obsolete Manager Rule</field>
+        <field name="name">Employee Resignation Manager</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
-        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr.group_hr_user'), ref('samalink_security_groups.group_sl_general_manager'), ref('hr_resignation.group_resignation_hr')])]"/>
+        <field name="global" eval="False"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
     </record>
     <!-- Access to their own contracts-->
     <record id="hr_contract_rule_user" model="ir.rule">
