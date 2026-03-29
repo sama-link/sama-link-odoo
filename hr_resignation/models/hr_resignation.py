@@ -144,8 +144,8 @@ class HrResignation(models.Model):
     def action_first_approve(self):
         """ Method triggered by the First Approve button """
         for resignation in self:
-            if self.env.user.employee_id != resignation.employee_id.administrative_manager_id and not self.env.user.has_group('hr_resignation.group_resignation_hr') and not self.env.user.has_group('hr.group_hr_user') and not self.env.user.has_group('samalink_security_groups.group_sl_general_manager'):
-                raise ValidationError(_('You are not authorized for the first approve.'))
+            if self.env.user.employee_id != resignation.employee_id.administrative_manager_id:
+                raise ValidationError(_('You are not authorized for the first approve. Only the designated Administrative Manager can approve this step.'))
             if resignation.joined_date:
                 if (resignation.joined_date >=
                         resignation.expected_revealing_date):

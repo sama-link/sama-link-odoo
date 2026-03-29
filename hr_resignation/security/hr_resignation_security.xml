@@ -12,9 +12,24 @@
     <record id="hr_resignation_rule_user" model="ir.rule">
         <field name="name">Employee Resignation User</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
-        <field name="domain_force">['|', ('employee_id.user_id', '=', user.id), ('employee_id.administrative_manager_id.user_id', '=', user.id)]
-        </field>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
+
+    <!-- Administrative Manager view of suboordinates (no create/unlink) -->
+    <record id="hr_resignation_rule_administrative_manager" model="ir.rule">
+        <field name="name">Employee Resignation Administrative Manager</field>
+        <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
+        <field name="domain_force">[('employee_id.administrative_manager_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_administrative_manager'))]"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
     </record>
     <!--    Manager permission to view all record   -->
     <record id="hr_resignation_rule_manager" model="ir.rule">
