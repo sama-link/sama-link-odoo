@@ -95,8 +95,7 @@ class HrResignation(models.Model):
         """
         for resignation in self:
             if not (self.env.user.has_group('hr.group_hr_user') or self.env.user.has_group('samalink_security_groups.group_sl_general_manager') or self.env.user.has_group('hr_resignation.group_resignation_hr')):
-                if (resignation.employee_id.user_id.id and
-                        resignation.employee_id.user_id.id != self.env.uid):
+                if resignation.employee_id.user_id.id != self.env.uid:
                     raise ValidationError(
                         _('You cannot create a request for other employees'))
 

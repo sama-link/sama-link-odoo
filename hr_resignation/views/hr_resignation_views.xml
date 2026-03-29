@@ -60,7 +60,8 @@
                         <group string="Employee Details">
                             <field name="change_employee" invisible="1"/>
                             <field name="employee_id"
-                                   readonly="change_employee == False or state == 'second_approve'"/>
+                                   readonly="change_employee == False or state == 'second_approve'"
+                                   domain="[('user_id', '=', uid)]"/>
                             <field name="department_id"/>
                             <field name="employee_contract"/>
                         </group>
