@@ -9,6 +9,9 @@
             <field name="joining_date" position="after">
                 <field name="resign_date" invisible="active != False"/>
             </field>
+            <xpath expr="//group[@string='Management']" position="inside">
+                <field name="administrative_manager_id"/>
+            </xpath>
         </field>
     </record>
     <!-- Extends the 'hr.employee' search view to include filters for resigned and fired employees.-->

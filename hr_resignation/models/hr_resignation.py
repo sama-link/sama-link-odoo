@@ -69,7 +69,7 @@ class HrResignation(models.Model):
     notice_period = fields.Char(string="Notice Period",
                                 help="Notice Period of the employee.")
     state = fields.Selection(
-        [('draft', 'Draft'), ('confirm', 'Confirm'), ('approved', 'Approved'),
+        [('draft', 'Draft'), ('first_approve', 'First Approve'), ('second_approve', 'Second Approve'),
          ('cancel', 'Rejected')],
         string='Status', default='draft', track_visibility="always")
     resignation_type = fields.Selection(selection=RESIGNATION_TYPE,
@@ -86,7 +86,7 @@ class HrResignation(models.Model):
     def _compute_change_employee(self):
         """ Check whether the user has the permission to change the employee"""
         res_user = self.env['res.users'].browse(self._uid)
-        self.change_employee = res_user.has_group('hr.group_hr_user') or res_user.has_group('samalink_security_groups.group_sl_general_manager')
+        self.change_employee = res_user.has_group('hr.group_hr_user') or res_user.has_group('samalink_security_groups.group_sl_general_manager') or res_user.has_group('hr_resignation.group_resignation_hr')
 
     @api.constrains('employee_id')
     def _check_employee_id(self):
@@ -108,7 +108,7 @@ class HrResignation(models.Model):
         for resignation in self:
             resignation_request = self.env['hr.resignation'].search(
                 [('employee_id', '=', resignation.employee_id.id),
-                 ('state', 'in', ['confirm', 'approved'])])
+                 ('state', 'in', ['first_approve', 'second_approve'])])
             if resignation_request:
                 raise ValidationError(
                     _('There is a resignation request in confirmed or'
@@ -121,7 +121,7 @@ class HrResignation(models.Model):
         if self.employee_id:
             resignation_request = self.env['hr.resignation'].search(
                 [('employee_id', '=', self.employee_id.id),
-                 ('state', 'in', ['confirm', 'approved'])])
+                 ('state', 'in', ['first_approve', 'second_approve'])])
             if resignation_request:
                 raise ValidationError(
                     _('There is a resignation request in confirmed or'
@@ -141,10 +141,11 @@ class HrResignation(models.Model):
                 'hr.resignation') or _('New')
         return super(HrResignation, self).create(vals)
 
-    def action_confirm_resignation(self):
-        """ Method triggered by the 'Confirm' button to confirm the
-        resignation request."""
+    def action_first_approve(self):
+        """ Method triggered by the First Approve button """
         for resignation in self:
+            if self.env.user.employee_id != resignation.employee_id.administrative_manager_id and not self.env.user.has_group('hr_resignation.group_resignation_hr') and not self.env.user.has_group('hr.group_hr_user') and not self.env.user.has_group('samalink_security_groups.group_sl_general_manager'):
+                raise ValidationError(_('You are not authorized for the first approve.'))
             if resignation.joined_date:
                 if (resignation.joined_date >=
                         resignation.expected_revealing_date):
@@ -154,7 +155,7 @@ class HrResignation(models.Model):
             else:
                 raise ValidationError(
                     _('Please set a Joining Date for employee'))
-            resignation.state = 'confirm'
+            resignation.state = 'first_approve'
             resignation.resign_confirm_date = str(fields.Datetime.now())
 
     def action_cancel_resignation(self):
@@ -178,9 +179,8 @@ class HrResignation(models.Model):
             resignation.employee_id.resigned = False
             resignation.employee_id.fired = False
 
-    def action_approve_resignation(self):
-        """ Method triggered by the 'Approve' button to
-               approve the resignation."""
+    def action_second_approve(self):
+        """ Method triggered by the Second Approve button """
         for resignation in self:
             if (resignation.expected_revealing_date and
                     resignation.resign_confirm_date):
@@ -192,7 +192,7 @@ class HrResignation(models.Model):
                 for contract in employee_contract:
                     if contract.state == 'open':
                         resignation.employee_contract = contract.name
-                        resignation.state = 'approved'
+                        resignation.state = 'second_approve'
                         resignation.approved_revealing_date = (
                                 resignation.resign_confirm_date + timedelta(
                             days=contract.notice_days))
