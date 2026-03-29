@@ -161,7 +161,23 @@ class HrResignation(models.Model):
         """ Method triggered by the 'Cancel' button to cancel the resignation
             request."""
         for resignation in self:
+            if resignation.employee_id.user_id != self.env.user and not self.env.user.has_group('hr.group_hr_user') and not self.env.user.has_group('samalink_security_groups.group_sl_general_manager') and not self.env.user.has_group('hr_resignation.group_resignation_hr'):
+                raise ValidationError(_('You can only cancel your own resignation request.'))
             resignation.state = 'cancel'
+            
+    def write(self, vals):
+        for resignation in self:
+            if not self.env.user.has_group('hr.group_hr_user') and not self.env.user.has_group('samalink_security_groups.group_sl_general_manager') and not self.env.user.has_group('hr_resignation.group_resignation_hr') and not self.env.user.has_group('samalink_security_groups.group_sl_administrative_manager'):
+                if resignation.employee_id.user_id != self.env.user:
+                    raise ValidationError(_('You can only modify your own resignation request.'))
+        return super(HrResignation, self).write(vals)
+
+    def unlink(self):
+        for resignation in self:
+            if not self.env.user.has_group('hr.group_hr_user') and not self.env.user.has_group('samalink_security_groups.group_sl_general_manager') and not self.env.user.has_group('hr_resignation.group_resignation_hr'):
+                if resignation.employee_id.user_id != self.env.user:
+                    raise ValidationError(_('You can only delete your own resignation request.'))
+        return super(HrResignation, self).unlink()
 
     def action_reject_resignation(self):
         """ Method triggered by the 'Reject' button to reject the

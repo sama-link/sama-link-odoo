@@ -18,11 +18,15 @@
                 (4, ref('samalink_security_groups.hr_employee_menu_my_info')),
                 (4, ref('ohrms_loan.hr_loan_menu_requests')),
                 (4, ref('hr_mission.menu_hr_mission')),
+                (4, ref('hr_resignation.hr_resignation_menu_root')),
+                (4, ref('hr_resignation.hr_resignation_menu_request')),
             ]" />
             <field name="menu_access" eval="[
                 (4, ref('samalink_security_groups.menu_my_attendances')),
                 (4, ref('samalink_security_groups.menu_my_payslips')),
                 (4, ref('samalink_security_groups.hr_employee_menu_my_info')),
+                (4, ref('hr_resignation.hr_resignation_menu_root')),
+                (4, ref('hr_resignation.hr_resignation_menu_request')),
             ]" />
         </record>
         <record id="group_samalink_administrator" model="res.groups">

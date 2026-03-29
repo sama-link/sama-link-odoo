@@ -13,7 +13,7 @@
         <field name="name">Employee Resignation User</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
         <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_samalink_employee')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
@@ -25,7 +25,7 @@
         <field name="name">Employee Resignation Administrative Manager</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
         <field name="domain_force">[('employee_id.administrative_manager_id.user_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('samalink_security_groups.group_sl_administrative_manager'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_sl_administrative_manager')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="False"/>
@@ -38,7 +38,7 @@
         <field name="domain_force">
             ['|',('employee_id.user_id','!=',user.id),('employee_id.user_id','=',False)]
         </field>
-        <field name="groups" eval="[(4, ref('hr.group_hr_user')), (4, ref('samalink_security_groups.group_sl_general_manager')), (4, ref('hr_resignation.group_resignation_hr'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('hr.group_hr_user'), ref('samalink_security_groups.group_sl_general_manager'), ref('hr_resignation.group_resignation_hr')])]"/>
     </record>
     <!-- Access to their own contracts-->
     <record id="hr_contract_rule_user" model="ir.rule">
@@ -46,6 +46,6 @@
         <field name="model_id" ref="hr_contract.model_hr_contract"/>
         <field name="domain_force">[('employee_id.user_id','=',user.id)]
         </field>
-        <field name="groups" eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_samalink_employee')])]"/>
     </record>
 </odoo>
