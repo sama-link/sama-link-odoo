@@ -3,8 +3,8 @@ from odoo import models
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
 
-    def action_compute_sheet(self):
-        res = super().action_compute_sheet()
+    def compute_sheet(self):
+        res = super().compute_sheet()
         grouped_payslip_batches = self.grouped('payslip_run_id')
         for batch, payslips in grouped_payslip_batches.items():
             if not batch:

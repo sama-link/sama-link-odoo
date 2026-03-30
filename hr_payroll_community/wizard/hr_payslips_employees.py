@@ -70,5 +70,5 @@ class HrPayslipEmployees(models.TransientModel):
             }
             # employee.action_generate_absent_entries(from_date, to_date)
             payslips += self.env['hr.payslip'].create(res)
-        payslips.action_compute_sheet()
+        payslips.compute_sheet()
         return {'type': 'ir.actions.act_window_close'}

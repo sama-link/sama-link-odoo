@@ -102,7 +102,7 @@ class HrPayslipRun(models.Model):
         for slip in self.slip_ids:
             try:
                 with self.env.cr.savepoint():
-                    slip.action_compute_sheet()
+                    slip.compute_sheet()
             except Exception as e:
                 _logger.warning(
                     "Failed to compute payslip for %s (ID: %s): %s",
