@@ -648,8 +648,18 @@ class HrPayslip(models.Model):
         self.worked_days_line_ids = worked_days_lines
         input_line_ids = self.get_inputs(contracts, date_from, date_to)
         input_lines = self.input_line_ids.browse([])
+        
+        # 1. Preserve existing manual inputs
+        for manual in self.input_line_ids:
+            if manual.amount != 0:
+                input_lines += manual
+                
+        # 2. Append new structure inputs if they aren't duplicates
+        manual_codes = input_lines.mapped('code')
         for r in input_line_ids:
-            input_lines += input_lines.new(r)
+            if r.get('code') not in manual_codes:
+                input_lines += input_lines.new(r)
+                
         self.input_line_ids = input_lines
         return
 
