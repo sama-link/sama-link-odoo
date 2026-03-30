@@ -102,6 +102,7 @@ class HrPayslipRun(models.Model):
         for slip in self.slip_ids:
             try:
                 with self.env.cr.savepoint():
+                    slip.invalidate_recordset()
                     slip.onchange_employee()
                     slip.action_compute_sheet()
             except Exception as e:
