@@ -39,7 +39,7 @@ for employee in records:
         group_sl_attendance_manager.sudo().write({'users': [(4, employee.attendance_manager_id.id)]})
         
     # 5. Administrative Manager (via administrative_manager_id)
-    if hasattr(employee, 'administrative_manager_id') and employee.administrative_manager_id and employee.administrative_manager_id.user_id:
+    if 'administrative_manager_id' in employee._fields and employee.administrative_manager_id and employee.administrative_manager_id.user_id:
         group_sl_administrative_manager.sudo().write({'users': [(4, employee.administrative_manager_id.user_id.id)]})
     
     count += 1
