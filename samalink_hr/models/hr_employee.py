@@ -78,12 +78,12 @@ class HrEmployee(models.Model):
     def _get_grouped_attendece_dates(self, date_from, date_to):
         date_midnight = datetime.combine(date_from, time.min)
         end_of_date = datetime.combine(date_to, time.max)
-        domain = [('check_in', '>=', date_midnight), ('check_in', '<=', end_of_date)]
-        attendance_records = self.env['hr.attendance'].search([
+        domain = [
             ('employee_id', 'in', self.ids),
-            ('check_in', '>=', date_from),
-            ('check_out', '<=', date_to)
-        ])
+            ('check_in', '>=', date_midnight),
+            ('check_in', '<=', end_of_date)
+        ]
+        attendance_records = self.env['hr.attendance'].search(domain)
         grouped_attendance = attendance_records.grouped('employee_id')
         attendance_mapped = defaultdict(list)
         for employee, attendance in grouped_attendance.items():
