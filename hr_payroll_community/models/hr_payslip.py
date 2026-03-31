@@ -705,10 +705,22 @@ class HrPayslip(models.Model):
             worked_days_lines += worked_days_lines.new(r)
         self.worked_days_line_ids = worked_days_lines
         input_line_ids = self.get_inputs(contracts, date_from, date_to)
-        input_lines = self.input_line_ids.browse([])
+        commands = [(5, 0, 0)]
+        manual_codes = []
+        for manual in self.input_line_ids:
+            if manual.amount != 0:
+                commands.append((0, 0, {
+                    'name': manual.name,
+                    'code': manual.code,
+                    'amount': manual.amount,
+                    'contract_id': manual.contract_id.id,
+                    'sequence': manual.sequence,
+                }))
+                manual_codes.append(manual.code)
         for r in input_line_ids:
-            input_lines += input_lines.new(r)
-        self.input_line_ids = input_lines
+            if r.get('code') not in manual_codes:
+                commands.append((0, 0, r))
+        self.input_line_ids = commands
         if self.line_ids.search([('name', '=', 'Meal Voucher')]):
             self.line_ids.search(
                 [('name', '=', 'Meal Voucher')]).salary_rule_id.write(
@@ -734,10 +746,22 @@ class HrPayslip(models.Model):
             worked_days_lines += worked_days_lines.new(r)
         self.worked_days_line_ids = worked_days_lines
         input_line_ids = self.get_inputs(contracts, date_from, date_to)
-        input_lines = self.input_line_ids.browse([])
+        commands = [(5, 0, 0)]
+        manual_codes = []
+        for manual in self.input_line_ids:
+            if manual.amount != 0:
+                commands.append((0, 0, {
+                    'name': manual.name,
+                    'code': manual.code,
+                    'amount': manual.amount,
+                    'contract_id': manual.contract_id.id,
+                    'sequence': manual.sequence,
+                }))
+                manual_codes.append(manual.code)
         for r in input_line_ids:
-            input_lines += input_lines.new(r)
-        self.input_line_ids = input_lines
+            if r.get('code') not in manual_codes:
+                commands.append((0, 0, r))
+        self.input_line_ids = commands
         if self.line_ids.search([('name', '=', 'Meal Voucher')]):
             self.line_ids.search(
                 [('name', '=', 'Meal Voucher')]).salary_rule_id.write(
