@@ -63,18 +63,15 @@
                                    readonly="change_employee == False or state == 'second_approve'"
                                    domain="[('user_id', '=', uid)]"/>
                             <field name="department_id"/>
-                            <field name="employee_contract"/>
+                            <field name="employee_contract" readonly="1"/>
                         </group>
                         <group string="Dates">
-                            <field name="joined_date"/>
-                            <field name="resign_confirm_date"
-                                   readonly="1"
-                                   invisible="resign_confirm_date == False"/>
+                            <field name="joined_date" readonly="1"/>
                             <field name="expected_revealing_date"
                                    readonly="state == 'second_approve'"/>
                             <field name="approved_revealing_date" readonly="1"
                                    groups="hr_resignation.group_resignation_hr,samalink_security_groups.group_sl_general_manager"/>
-                            <field name="notice_period"/>
+                            <field name="notice_period" readonly="1"/>
                         </group>
                         <group string="Resignation Details">
                             <field name="resignation_type" string="Type"
@@ -82,6 +79,9 @@
                                    readonly="state == 'second_approve'"/>
                             <field name="reason"
                                    readonly="state == 'second_approve'"/>
+                            <field name="resign_confirm_date"
+                                   readonly="1"
+                                   invisible="resign_confirm_date == False"/>
                         </group>
                     </group>
                 </sheet>

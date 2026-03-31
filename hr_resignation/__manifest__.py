@@ -39,6 +39,7 @@
         'data/ir_cron_data.xml',
         'views/hr_employee_views.xml',
         'views/hr_resignation_views.xml',
+        'views/res_config_settings_views.xml',
     ],
     'live_test_url': 'https://youtu.be/BorJthxY_VI',
     'images': ['static/description/banner.jpg'],

@@ -66,8 +66,8 @@ class HrResignation(models.Model):
                                                'from the company.')
     reason = fields.Text(string="Reason", required=True,
                          help='Specify reason for leaving the company')
-    notice_period = fields.Char(string="Notice Period",
-                                help="Notice Period of the employee.")
+    notice_period = fields.Integer(string="Notice Period", compute='_compute_notice_period', store=True,
+                                help="Notice Period of the employee in days.")
     state = fields.Selection(
         [('draft', 'Draft'), ('first_approve', 'First Approve'), ('second_approve', 'Second Approve'),
          ('cancel', 'Rejected')],
@@ -88,6 +88,26 @@ class HrResignation(models.Model):
         res_user = self.env['res.users'].browse(self._uid)
         self.change_employee = res_user.has_group('samalink_security_groups.group_sl_general_manager') or res_user.has_group(
             'hr_resignation.group_resignation_hr')
+
+    @api.depends('expected_revealing_date')
+    def _compute_notice_period(self):
+        for rec in self:
+            if rec.expected_revealing_date:
+                # Calculate days between expected leaving date and submission date
+                start_date = rec.create_date.date() if rec.create_date else fields.Date.context_today(self)
+                delta = rec.expected_revealing_date - start_date
+                rec.notice_period = delta.days
+            else:
+                rec.notice_period = 0
+
+    @api.constrains('expected_revealing_date')
+    def _check_notice_period_minimum(self):
+        min_notice_period = int(self.env['ir.config_parameter'].sudo().get_param('hr_resignation.min_notice_period', default=0))
+        for rec in self:
+            if rec.expected_revealing_date and min_notice_period > 0:
+                start_date = rec.create_date.date() if rec.create_date else fields.Date.context_today(self)
+                if (rec.expected_revealing_date - start_date).days < min_notice_period:
+                    raise ValidationError(_("The Last Day of Employee must be at least %s days from the submission date (Minimum Notice Period Configuration).") % min_notice_period)
 
     @api.constrains('employee_id')
     def _check_employee_id(self):
@@ -132,7 +152,6 @@ class HrResignation(models.Model):
             for contracts in employee_contract:
                 if contracts.state == 'open':
                     self.employee_contract = contracts.name
-                    self.notice_period = contracts.notice_days
 
     @api.model
     def create(self, vals):
