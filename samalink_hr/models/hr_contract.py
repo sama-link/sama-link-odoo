@@ -23,12 +23,15 @@ class HrContractInherit(models.Model):
                         continue
                     pending_loans = self.env['hr.loan'].search_count([
                         ('employee_id', '=', contract.employee_id.id),
+                        '|',
+                        ('state', 'in', ['draft', 'waiting_approval_1']),
+                        '&',
                         ('state', '=', 'approve'),
-                        ('balance_amount', '!=', 0),
+                        ('balance_amount', '>', 0),
                     ])
                     if pending_loans:
                         raise ValidationError(
-                            _("Cannot close or archive contract! The employee has %s unpaid loan(s).") % pending_loans
+                            _("Cannot close or archive contract! The employee has %s unpaid or pending loan(s).") % pending_loans
                         )
 
         if is_archiving:

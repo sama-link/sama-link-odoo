@@ -139,3 +139,21 @@ class HrEmployee(models.Model):
     def action_bulk_add_data_from_job_position(self):
         for employee in self:
             employee.action_add_data_from_job_position()
+
+    def write(self, vals):
+        if 'active' in vals and not vals['active']:
+            if 'hr.loan' in self.env.registry.models:
+                for employee in self:
+                    pending_loans = self.env['hr.loan'].search_count([
+                        ('employee_id', '=', employee.id),
+                        '|',
+                        ('state', 'in', ['draft', 'waiting_approval_1']),
+                        '&',
+                        ('state', '=', 'approve'),
+                        ('balance_amount', '>', 0),
+                    ])
+                    if pending_loans:
+                        raise ValidationError(
+                            _("Cannot archive employee! The employee has %s unpaid or pending loan(s).") % pending_loans
+                        )
+        return super(HrEmployee, self).write(vals)
