@@ -82,6 +82,27 @@ class HrResignation(models.Model):
                                           " to change the employee")
     employee_contract = fields.Char(String="Contract")
 
+    def _prepare_employee_resignation_vals(self, vals, employee_id):
+        """Ensure joined_date + employee_contract are persisted.
+
+        These values were previously set only in @api.onchange, which doesn't
+        always get persisted for readonly fields.
+        """
+        if not employee_id:
+            return vals
+        employee = self.env['hr.employee'].browse(employee_id)
+        if not employee:
+            return vals
+
+        vals['joined_date'] = employee.joining_date
+
+        open_contract = self.env['hr.contract'].search(
+            [('employee_id', '=', employee_id), ('state', '=', 'open')],
+            limit=1
+        )
+        vals['employee_contract'] = open_contract.name if open_contract else False
+        return vals
+
     @api.depends('employee_id')
     def _compute_change_employee(self):
         """ Check whether the user has the permission to change the employee"""
@@ -159,11 +180,25 @@ class HrResignation(models.Model):
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code(
                 'hr.resignation') or _('New')
+        # Ensure default employee and required fields are persisted server-side.
+        if not vals.get('employee_id') and self.env.user.employee_id:
+            vals['employee_id'] = self.env.user.employee_id.id
+        if vals.get('employee_id'):
+            vals = self._prepare_employee_resignation_vals(vals, vals['employee_id'])
         return super(HrResignation, self).create(vals)
 
     def action_first_approve(self):
         """ Method triggered by the First Approve button """
         for resignation in self:
+            # Safety net: joined_date/contract are required for validations,
+            # but they may still be empty if created before this fix.
+            if (not resignation.joined_date or not resignation.employee_contract) and resignation.employee_id:
+                resignation.joined_date = resignation.employee_id.joining_date
+                open_contract = self.env['hr.contract'].search(
+                    [('employee_id', '=', resignation.employee_id.id), ('state', '=', 'open')],
+                    limit=1
+                )
+                resignation.employee_contract = open_contract.name if open_contract else False
             if self.env.user.employee_id != resignation.employee_id.administrative_manager_id:
                 raise ValidationError(_('You are not authorized for the first approve. Only the designated Administrative Manager can approve this step.'))
             if resignation.joined_date:
@@ -189,6 +224,10 @@ class HrResignation(models.Model):
             resignation.state = 'cancel'
             
     def write(self, vals):
+        # If employee is changed, ensure joined_date/contract are persisted
+        # server-side (onchange may not persist readonly cache values).
+        if vals.get('employee_id'):
+            vals = self._prepare_employee_resignation_vals(vals, vals['employee_id'])
         for resignation in self:
             if (not self.env.user.has_group('samalink_security_groups.group_sl_general_manager') and
                     not self.env.user.has_group('hr_resignation.group_resignation_hr') and
