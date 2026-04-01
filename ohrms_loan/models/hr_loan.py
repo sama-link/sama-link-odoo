@@ -98,9 +98,9 @@ class HrLoan(models.Model):
                                      help="The total amount that has been "
                                           "paid towards the loan.", tracking=True)
     state = fields.Selection(
-        [('draft', 'Draft'), ('waiting_approval_1', 'Submitted'),
+        [('waiting_approval_1', 'Submitted'),
          ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled'), ('paid', 'Fully Paid')
-         ], string="State", default='draft', help="The current state of the "
+         ], string="State", default='waiting_approval_1', help="The current state of the "
                                                   "loan request.", copy=False, tracking=True)
     work_location_id = fields.Many2one(related="employee_id.work_location_id", domain="[('address_id', '=', address_id)]")
     active = fields.Boolean(default=True, tracking=True)
@@ -122,6 +122,21 @@ class HrLoan(models.Model):
         self.loan_lines.filtered(lambda line: not line.paid).write({'paid': True})
         self.check_fully_paid()
 
+    def action_batch_mark_as_paid(self):
+        """Batch action to mark multiple loans as fully paid from list view.
+        Only works on approved loans with zero balance."""
+        self._compute_total_amount()
+        invalid = self.filtered(lambda l: l.state != 'approve' or l.balance_amount != 0)
+        if invalid:
+            names = ', '.join(invalid.mapped('name'))
+            raise UserError(_(
+                "The following loans cannot be marked as fully paid because "
+                "they are not in 'Approved' state or still have a remaining balance:\n%s"
+            ) % names)
+        for loan in self:
+            loan.write({'state': 'paid'})
+            loan.action_archive()
+
     def action_pay_amount(self):
         return {
             'name': _('Pay Loan Amount'),
@@ -136,8 +151,8 @@ class HrLoan(models.Model):
 
     def action_archive(self):
         for record in self:
-            if record.state not in ['draft', 'cancel', 'paid']:
-                raise ValidationError("You cannot delete a loan which is not in draft, cancelled, or fully paid state.")
+            if record.state not in ['cancel', 'paid', 'refuse']:
+                raise ValidationError("You cannot archive a loan which is not in cancelled, refused, or fully paid state.")
         return super(HrLoan, self).action_archive()
 
     def action_unarchive(self):
@@ -176,14 +191,14 @@ class HrLoan(models.Model):
                 else:
                     loan.multi_request_warning_shown = True
                     continue
-            draft_loan_count = self.env['hr.loan'].search_count([
+            submitted_loan_count = self.env['hr.loan'].search_count([
                 ('employee_id', '=', loan.employee_id.id),
-                ('state', '=', 'draft')
+                ('state', '=', 'waiting_approval_1')
             ])
-            if draft_loan_count > 1:
+            if submitted_loan_count > 1:
                 if raise_error:
                     raise ValidationError(
-                        _("The Employee has already a draft loan request"))
+                        _("The Employee has already a submitted loan request"))
                 else:
                     loan.multi_request_warning_shown = True
                     continue
@@ -287,16 +302,19 @@ class HrLoan(models.Model):
         return True
 
     def action_refuse(self):
-        """ Function to reject loan request"""
-        return self.write({'state': 'refuse'})
+        """ Function to reject loan request - also archives the record"""
+        self.write({'state': 'refuse'})
+        self.action_archive()
+        return True
 
     def action_submit(self):
         """ Function to submit loan request"""
         self.write({'state': 'waiting_approval_1'})
 
     def action_cancel(self):
-        """ Function to cancel loan request"""
+        """ Function to cancel loan request - automatically archives the record"""
         self.write({'state': 'cancel'})
+        return self.action_archive()
 
     def action_approve(self):
         """ Function to approve loan request"""
@@ -307,14 +325,5 @@ class HrLoan(models.Model):
                 self.write({'state': 'approve'})
 
     def unlink(self):
-        """ Function which restrict the deletion of approved or submitted
-                loan request"""
-        for loan in self:
-            if loan.state not in ('draft', 'cancel'):
-                raise UserError(_(
-                    'You cannot delete a loan which is not in draft '
-                    'or cancelled state'))
-        for record in self:
-            record.message_post(body="Loan record has been deleted.")
-        self.write({'active': False, 'deleted': True})
-        return True
+        """ Block deletion of loan requests in any state"""
+        raise UserError(_('You cannot delete loan requests. Use cancel or archive instead.'))
