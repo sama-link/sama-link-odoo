@@ -264,8 +264,8 @@ class HrLoan(models.Model):
     @api.depends('loan_lines.paid', 'loan_lines.amount', 'loan_amount')
     def _compute_total_amount(self):
         """ Compute total loan amount,balance amount and total paid amount"""
-        total_paid = 0.0
         for loan in self:
+            total_paid = 0.0
             for line in loan.loan_lines:
                 if line.paid:
                     total_paid += line.amount

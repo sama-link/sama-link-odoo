@@ -86,24 +86,24 @@
                         </h1>
                     </div>
                     <group col="4">
-                        <field name="employee_id" readonly="state in ('approve', 'refuse')" force_save="1" groups="ohrms_loan.group_loan_officer"/>
+                        <field name="employee_id" readonly="state in ('approve', 'refuse', 'cancel')" force_save="1" groups="ohrms_loan.group_loan_officer"/>
                         <field name="employee_id" invisible="1" force_save="1"/>
                         <field name="date"/>
                         <field name="department_id" groups="ohrms_loan.group_loan_officer"/>
                         <field name="work_location_id" groups="ohrms_loan.group_loan_officer"/>
                         <field name="job_position_id" groups="ohrms_loan.group_loan_officer"/>
-                        <field name="loan_amount" readonly="state in ('approve', 'refuse')"/>
-                        <field name="installment" readonly="state in ('approve', 'refuse')"/>
-                        <field name="payment_date" readonly="state in ('approve', 'refuse')"/>
+                        <field name="loan_amount" readonly="state in ('approve', 'refuse', 'cancel')"/>
+                        <field name="installment" readonly="state in ('approve', 'refuse', 'cancel')"/>
+                        <field name="payment_date" readonly="state in ('approve', 'refuse', 'cancel')"/>
                         <field name="company_id" options="{'no_create': True}"
                                readonly="state != 'waiting_approval_1'"
                                groups="base.group_multi_company"/>
                         <field name="currency_id"
-                               options="{'no_create': True}" readonly="state in ('approve', 'refuse')" groups="ohrms_loan.group_loan_officer"/>
+                               options="{'no_create': True}" readonly="state in ('approve', 'refuse', 'cancel')" groups="ohrms_loan.group_loan_officer"/>
                     </group>
                     <notebook>
                         <page string="Installments">
-                            <field name="loan_lines" readonly="state == 'refuse'">
+                            <field name="loan_lines" readonly="state in ('refuse', 'cancel')">
                                 <list string="Installments" editable="bottom" create="false" delete="false">
                                     <field name="date"/>
                                     <field name="amount"/>
