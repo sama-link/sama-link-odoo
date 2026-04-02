@@ -1,6 +1,6 @@
 name: Deploy to Production
 
-# This triggers ONLY when code is merged into the 'main' branch
+# This triggers ONLY when code is merged into the 'main' branch.
 on:
   push:
     branches:
