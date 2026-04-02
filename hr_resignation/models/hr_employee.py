@@ -36,3 +36,4 @@ class HrEmployee(models.Model):
                               help="If checked then employee has resigned")
     fired = fields.Boolean(string="Fired", default=False,
                            help="If checked then employee has fired")
+    administrative_manager_id = fields.Many2one('hr.employee', string="Administrative", help="First approver for resignation.")

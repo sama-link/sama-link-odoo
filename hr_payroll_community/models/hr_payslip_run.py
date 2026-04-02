@@ -20,9 +20,12 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+import logging
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from odoo import fields, models, _, api
+
+_logger = logging.getLogger(__name__)
 
 
 class HrPayslipRun(models.Model):
@@ -63,6 +66,14 @@ class HrPayslipRun(models.Model):
                                    string="Payslip Computation Details",
                                    help="Set Payslip Count")
 
+    @api.onchange('date_start', 'date_end')
+    def _onchange_period_sync(self):
+        """Instantly visually sync batch dates to all child payslips in UI"""
+        if self.date_start and self.date_end:
+            for slip in self.slip_ids:
+                slip.date_from = self.date_start
+                slip.date_to = self.date_end
+
     @api.depends('date_start', 'date_end')
     def _compute_duration(self):
         for record in self:
@@ -95,7 +106,58 @@ class HrPayslipRun(models.Model):
         return action
 
     def action_bulk_compute_payslips(self):
-        self.slip_ids.action_compute_sheet()
+        failed = []
+        for slip in self.slip_ids:
+            try:
+                with self.env.cr.savepoint():
+                    slip.invalidate_recordset()
+                    
+                    # 1. Back up any manual inputs
+                    saved_inputs = []
+                    for il in slip.input_line_ids:
+                        if il.amount != 0:
+                            saved_inputs.append({
+                                'name': il.name,
+                                'code': il.code,
+                                'amount': il.amount,
+                                'contract_id': il.contract_id.id,
+                                'sequence': il.sequence,
+                            })
+                            
+                    # 2. Sync physical dates to match any fresh batch changes
+                    slip.date_from = self.date_start
+                    slip.date_to = self.date_end
+                    
+                    # 3. Regen working days / schedules / generic inputs for the NEW dates
+                    slip.onchange_employee()
+                    
+                    # 4. Inject backed-up custom manual inputs securely 
+                    for s_input in saved_inputs:
+                        match = slip.input_line_ids.filtered(lambda l: l.code == s_input['code'])
+                        if match:
+                            match[0].amount = s_input['amount']
+                        else:
+                            slip.input_line_ids = [(0, 0, s_input)]
+                            
+                    # 5. Execute computation math with all perfect dates, manual values, and new rules
+                    slip.action_compute_sheet()
+            except Exception as e:
+                _logger.warning(
+                    "Failed to compute payslip for %s (ID: %s): %s",
+                    slip.employee_id.name, slip.id, e
+                )
+                failed.append(slip.employee_id.name or str(slip.id))
+        if failed:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Partial Success"),
+                    'type': 'warning',
+                    'message': _("Computed successfully except for: %s") % ', '.join(failed),
+                    'sticky': True,
+                }
+            }
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

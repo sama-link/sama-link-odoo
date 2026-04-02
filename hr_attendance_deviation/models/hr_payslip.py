@@ -84,11 +84,19 @@ class HrPayslip(models.Model):
         compute='_compute_timeoff_days',
     )
 
-    @api.depends('days_attended', 'timeoff_days', 'weekend_days')
+    @api.depends('employee_id', 'date_from', 'date_to')
     def _compute_absent_days(self):
         for payslip in self:
-            total_days = (payslip.date_to - payslip.date_from).days + 1
-            payslip.absent_days = max(total_days - (payslip.days_attended + payslip.timeoff_days + payslip.weekend_days), 0)
+            if not payslip.employee_id or not payslip.date_from or not payslip.date_to:
+                payslip.absent_days = 0
+                continue
+            absent_count = self.env['hr.absent.entry'].search_count([
+                ('employee_id', '=', payslip.employee_id.id),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+                ('leave_entry_id', '=', False),
+            ])
+            payslip.absent_days = absent_count
 
     def _compute_timeoff_days(self):
         attendance_type = self.env.ref('hr_work_entry.work_entry_type_attendance')

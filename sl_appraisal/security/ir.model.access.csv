@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_appraisal_skill_line_employee,appraisal.skill.line.employee,model_appraisal_skill_line,samalink_security_groups.group_samalink_employee,1,0,0,0
+access_appraisal_skill_line_hr,appraisal.skill.line.hr,model_appraisal_skill_line,samalink_security_groups.group_samalink_hr_officer,1,1,1,1
+access_appraisal_skill_line_admin,appraisal.skill.line.admin,model_appraisal_skill_line,base.group_system,1,1,1,1
+access_appraisal_skill_line_user,appraisal.skill.line.user,model_appraisal_skill_line,base.group_user,1,1,0,0

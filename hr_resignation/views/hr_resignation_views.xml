@@ -27,27 +27,28 @@
         <field name="arch" type="xml">
             <form string="Employee Resignation">
                 <header>
-                    <button string="Confirm" type="object"
-                            name="action_confirm_resignation"
+                    <button string="First Approve" type="object"
+                            name="action_first_approve"
                             invisible="state != 'draft'"
                             class="oe_highlight"/>
                     <button string="Cancel" type="object"
                             name="action_cancel_resignation"
                             invisible="state != 'draft'"/>
-                    <button string="Approve" type="object"
-                            groups="hr.group_hr_user"
-                            name="action_approve_resignation"
-                            invisible="state != 'confirm'"/>
+                    <button string="Second Approve" type="object"
+                            groups="hr_resignation.group_resignation_hr,samalink_security_groups.group_sl_general_manager"
+                            name="action_second_approve"
+                            class="oe_highlight"
+                            invisible="state != 'first_approve'"/>
                     <button string="Reject" type="object"
-                            groups="hr.group_hr_user"
+                            groups="hr_resignation.group_resignation_hr,samalink_security_groups.group_sl_general_manager"
                             name="action_reject_resignation"
-                            invisible="state != 'confirm'"/>
+                            invisible="state not in ('draft', 'first_approve')"/>
                     <button string="Set to Draft" type="object"
-                            groups="hr.group_hr_manager"
+                            groups="hr.group_hr_manager,samalink_security_groups.group_sl_general_manager"
                             name="action_reset_to_draft"
-                            invisible="state != 'approved'"/>
+                            invisible="state != 'second_approve'"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,confirm"/>
+                           statusbar_visible="draft,first_approve,second_approve"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -59,27 +60,28 @@
                         <group string="Employee Details">
                             <field name="change_employee" invisible="1"/>
                             <field name="employee_id"
-                                   readonly="change_employee == False or state == 'approved'"/>
+                                   readonly="change_employee == False or state == 'second_approve'"
+                                   domain="[('user_id', '=', uid)]"/>
                             <field name="department_id"/>
-                            <field name="employee_contract"/>
+                            <field name="employee_contract" readonly="1"/>
                         </group>
                         <group string="Dates">
-                            <field name="joined_date"/>
-                            <field name="resign_confirm_date"
-                                   readonly="1"
-                                   invisible="resign_confirm_date == False"/>
+                            <field name="joined_date" readonly="1"/>
                             <field name="expected_revealing_date"
-                                   readonly="state == 'approved'"/>
+                                   readonly="state == 'second_approve'"/>
                             <field name="approved_revealing_date" readonly="1"
-                                   groups="hr.group_hr_user"/>
-                            <field name="notice_period"/>
+                                   groups="hr_resignation.group_resignation_hr,samalink_security_groups.group_sl_general_manager"/>
+                            <field name="notice_period" readonly="1"/>
                         </group>
                         <group string="Resignation Details">
                             <field name="resignation_type" string="Type"
-                                   groups="hr.group_hr_user"
-                                   readonly="state == 'approved'"/>
+                                   groups="hr_resignation.group_resignation_hr,samalink_security_groups.group_sl_general_manager"
+                                   readonly="state == 'second_approve'"/>
                             <field name="reason"
-                                   readonly="state == 'approved'"/>
+                                   readonly="state == 'second_approve'"/>
+                            <field name="resign_confirm_date"
+                                   readonly="1"
+                                   invisible="resign_confirm_date == False"/>
                         </group>
                     </group>
                 </sheet>
@@ -87,45 +89,24 @@
             </form>
         </field>
     </record>
-    <!--Action for the 'hr.resignation' model.-->
     <record id="hr_resignation_action" model="ir.actions.act_window">
         <field name="name">Employee Resignation</field>
         <field name="res_model">hr.resignation</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('state', 'in', ('draft',
-            'confirm','cancel'))]
-        </field>
+        <field name="domain">[]</field>
         <field name="help" type="html">
             <p class="oe_view_nocontent_create">Create the First Resignation
             </p>
         </field>
     </record>
-    <!--Action for the 'hr.resignation' model, specifically for viewing approved resignations.-->
-    <record id="hr_resignation_approved_action" model="ir.actions.act_window">
-        <field name="name">Approved Resignation</field>
-        <field name="res_model">hr.resignation</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('state', '=', 'approved')]</field>
-        <field name="help" type="html">
-            <p class="oe_view_nocontent_create">Approved Resignation
-            </p>
-        </field>
-    </record>
     <!-- Root menu item for Resignation -->
     <menuitem id="hr_resignation_menu_root" name="Resignation"
-              groups="base.group_user"
+              groups="samalink_security_groups.group_samalink_employee"
               web_icon="hr_resignation,static/description/icon.png"
               sequence="21"/>
     <!-- Menu item for Resignation Request -->
     <menuitem id="hr_resignation_menu_request"
-              parent="hr_resignation_menu_root" name="Resignation Request"
-              action="hr_resignation_action" groups="base.group_user"
-              sequence="4"/>
-    <!-- Menu item for Approved Resignation -->
-    <menuitem id="hr_resignation_menu_approved_request"
-              parent="hr_resignation_menu_root"
-              name="Approved Resignation"
-              action="hr_resignation_approved_action"
-              groups="hr.group_hr_user"
+              parent="hr_resignation_menu_root" name="All Resignations"
+              action="hr_resignation_action" groups="samalink_security_groups.group_samalink_employee"
               sequence="4"/>
 </odoo>

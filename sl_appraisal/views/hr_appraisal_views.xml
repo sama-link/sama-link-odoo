@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         APPRAISAL FORM VIEW — overrides oh_appraisal form
+         ============================================================ -->
+    <record id="sl_hr_appraisal_view_form" model="ir.ui.view">
+        <field name="name">hr.appraisal.view.form.sl</field>
+        <field name="model">hr.appraisal</field>
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- Workflow buttons -->
+                    <button name="action_populate_skills"
+                            string="📋 Populate Skills"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'draft' or skills_populated == True"
+                            confirm="This will populate skills from the employee's current skill profile. Continue?"/>
+                    <button name="action_publish"
+                            string="📤 Publish &amp; Send Surveys"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'draft'"
+                            confirm="This will publish the appraisal and send survey forms to evaluators. Continue?"/>
+                    <button name="action_hr_finalize"
+                            string="✅ HR Finalize &amp; Apply Skills"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'published'"
+                            confirm="This will finalize the appraisal and apply approved skill levels to the employee card. Continue?"/>
+                    <button name="action_reset_to_draft"
+                            string="↩ Reset to Draft"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state == 'draft'"
+                            confirm="This will reset the appraisal to Draft state. Continue?"/>
+                    <!-- Status bar -->
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,published,hr_finalization"/>
+                </header>
+                <sheet>
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_get_answers"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o"
+                                invisible="state == 'draft'">
+                            <field string="Answers" name="tot_comp_survey"
+                                   widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="oe_title">
+                        <label for="employee_id"/>
+                        <h1>
+                            <field name="employee_id" class="oe_inline"
+                                   placeholder="Employee's Name"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                        </h1>
+                    </div>
+
+                    <!-- Main info -->
+                    <group>
+                        <group>
+                            <field name="appraisal_deadline"
+                                   readonly="state != 'draft'"/>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                            <field name="creater_id" string="Created By"
+                                   readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="final_interview"
+                                   invisible="state != 'hr_finalization'"/>
+                            <field name="skill_line_count" string="Skills Evaluated"/>
+                        </group>
+                    </group>
+
+                    <!-- Hidden technical fields -->
+                    <field name="is_hr_or_admin" invisible="1"/>
+                    <field name="skills_populated" invisible="1"/>
+                    <field name="response_id" invisible="1"/>
+                    <field name="app_period_from" invisible="1"/>
+                    <field name="tot_sent_survey" invisible="1"/>
+                    <field name="check_draft" invisible="1"/>
+                    <field name="check_sent" invisible="1"/>
+                    <field name="check_done" invisible="1"/>
+                    <field name="check_cancel" invisible="1"/>
+                    <field name="stage_id" invisible="1"/>
+
+                    <notebook>
+                        <!-- ── Skills Evaluation Tab ── -->
+                        <page string="🎯 Skills Evaluation" name="skills_evaluation">
+                            <field name="appraisal_skill_line_ids" nolabel="1"
+                                   context="{'default_appraisal_id': id}">
+                                <list editable="bottom"
+                                      create="false"
+                                      delete="false"
+                                      decoration-success="level_change == 'improved'"
+                                      decoration-danger="level_change == 'declined'"
+                                      decoration-info="level_change == 'new'">
+                                    <field name="skill_type_id" readonly="1"/>
+                                    <field name="skill_id" readonly="1"/>
+                                    <field name="current_skill_level_id" readonly="1"/>
+                                    <field name="current_level_progress"
+                                           widget="progressbar" readonly="1"
+                                           string="Current %"/>
+                                    <field name="proposed_skill_level_id"
+                                           readonly="state != 'published'"
+                                           string="Manager Proposed"/>
+                                    <field name="proposed_level_progress"
+                                           widget="progressbar" readonly="1"
+                                           string="Proposed %"/>
+                                    <field name="final_skill_level_id"
+                                           readonly="state != 'published'"
+                                           string="HR Final"/>
+                                    <field name="final_level_progress"
+                                           widget="progressbar" readonly="1"
+                                           string="Final %"/>
+                                    <field name="level_change" readonly="1"
+                                           string="Δ Change"/>
+                                    <field name="manager_notes"
+                                           readonly="state != 'published'"/>
+                                    <field name="hr_notes"
+                                           readonly="state == 'hr_finalization'"/>
+                                    <field name="survey_question_id" optional="hidden"/>
+                                    <field name="state" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <div class="alert alert-info mt-3" role="alert"
+                                 invisible="state != 'draft'">
+                                <strong>📋 Draft Mode:</strong>
+                                Click "Populate Skills" to load the employee's current skills.
+                                You can also manually add skills to evaluate.
+                            </div>
+                            <div class="alert alert-warning mt-3" role="alert"
+                                 invisible="state != 'published'">
+                                <strong>📝 Published:</strong>
+                                Managers can now propose new skill levels.
+                                HR can set the final approved levels.
+                            </div>
+                            <div class="alert alert-success mt-3" role="alert"
+                                 invisible="state != 'hr_finalization'">
+                                <strong>✅ Finalized:</strong>
+                                Approved skill levels have been applied to the employee card.
+                            </div>
+                        </page>
+
+                        <!-- ── Plan Tab (survey assignments) ── -->
+                        <page string="📝 Survey Plan" name="plan">
+                            <group>
+                                <group>
+                                    <field name="hr_manager"
+                                           readonly="state != 'draft'"/>
+                                    <field name="hr_manager_ids"
+                                           widget="many2many_tags"
+                                           required="hr_manager == True"
+                                           invisible="hr_manager == False"
+                                           readonly="state != 'draft'"
+                                           domain="[('user_id', '!=', False)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="manager_survey_id"
+                                           required="hr_manager == True"
+                                           invisible="hr_manager == False"
+                                           readonly="state != 'draft'"/>
+                                    <field name="hr_emp"
+                                           readonly="state != 'draft'"/>
+                                    <field name="emp_survey_id"
+                                           required="hr_emp == True"
+                                           invisible="hr_emp == False"
+                                           readonly="state != 'draft'"/>
+                                </group>
+                                <group>
+                                    <field name="hr_collaborator"
+                                           readonly="state != 'draft'"/>
+                                    <field name="hr_collaborator_ids"
+                                           widget="many2many_tags"
+                                           required="hr_collaborator == True"
+                                           invisible="hr_collaborator == False"
+                                           readonly="state != 'draft'"
+                                           options="{'no_create': True}"/>
+                                    <field name="collaborator_survey_id"
+                                           required="hr_collaborator == True"
+                                           invisible="hr_collaborator == False"
+                                           readonly="state != 'draft'"/>
+                                    <field name="hr_colleague"
+                                           readonly="state != 'draft'"/>
+                                    <field name="hr_colleague_ids"
+                                           required="hr_colleague == True"
+                                           widget="many2many_tags"
+                                           invisible="hr_colleague == False"
+                                           readonly="state != 'draft'"
+                                           options="{'no_create': True}"/>
+                                    <field name="colleague_survey_id"
+                                           invisible="hr_colleague == False"
+                                           required="hr_colleague == True"
+                                           readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── Final Evaluation Tab ── -->
+                        <page string="📊 Final Evaluation" name="final_eval"
+                              invisible="state != 'hr_finalization'">
+                            <field name="final_evaluation" nolabel="1"
+                                   placeholder="Enter the final evaluation summary..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         APPRAISAL LIST VIEW
+         ============================================================ -->
+    <record id="sl_hr_appraisal_view_tree" model="ir.ui.view">
+        <field name="name">hr.appraisal.view.list.sl</field>
+        <field name="model">hr.appraisal</field>
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'hr_finalization'"
+                  decoration-info="state == 'published'"
+                  decoration-bf="state == 'draft'">
+                <field name="employee_id"/>
+                <field name="appraisal_deadline"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'hr_finalization'"
+                       decoration-warning="state == 'published'"
+                       decoration-info="state == 'draft'"/>
+                <field name="skill_line_count" string="Skills"/>
+                <field name="tot_comp_survey" string="Answers"/>
+                <field name="creater_id" string="Created By" optional="show"/>
+                <field name="company_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         APPRAISAL KANBAN VIEW
+         ============================================================ -->
+    <record id="sl_hr_appraisal_view_kanban" model="ir.ui.view">
+        <field name="name">hr.appraisal.view.kanban.sl</field>
+        <field name="model">hr.appraisal</field>
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false"
+                    records_draggable="false" class="o_kanban_small_column">
+                <field name="color"/>
+                <field name="state"/>
+                <field name="employee_id"/>
+                <field name="appraisal_deadline"/>
+                <field name="tot_comp_survey"/>
+                <field name="skill_line_count"/>
+                <progressbar field="state"
+                             colors='{"draft": "info", "published": "warning", "hr_finalization": "success"}'/>
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <aside>
+                            <field name="employee_id" widget="image"
+                                   options="{'preview_image': 'avatar_128'}"/>
+                        </aside>
+                        <main>
+                            <field name="employee_id" class="fw-bold fs-5"/>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="text-muted">
+                                    <i class="fa fa-calendar-o me-1"/>
+                                    <field name="appraisal_deadline"/>
+                                </span>
+                            </div>
+                            <div class="d-flex gap-3 mt-2">
+                                <span class="badge rounded-pill text-bg-primary">
+                                    <i class="fa fa-star me-1"/>
+                                    <field name="skill_line_count"/> Skills
+                                </span>
+                                <span class="badge rounded-pill text-bg-secondary">
+                                    <i class="fa fa-pencil me-1"/>
+                                    <field name="tot_comp_survey"/> Answers
+                                </span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         SEARCH VIEW
+         ============================================================ -->
+    <record id="sl_hr_appraisal_view_search" model="ir.ui.view">
+        <field name="name">hr.appraisal.view.search.sl</field>
+        <field name="model">hr.appraisal</field>
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="creater_id" string="Created By"/>
+                <separator/>
+                <filter name="filter_draft" string="Draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_published" string="Published"
+                        domain="[('state', '=', 'published')]"/>
+                <filter name="filter_finalized" string="HR Finalized"
+                        domain="[('state', '=', 'hr_finalization')]"/>
+                <separator/>
+                <filter name="filter_my_appraisals" string="My Appraisals"
+                        domain="[('employee_id.user_id', '=', uid)]"/>
+                <filter name="filter_my_team" string="My Team"
+                        domain="['|', ('hr_manager_ids.user_id', '=', uid),
+                                      ('employee_id.parent_id.user_id', '=', uid)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_employee" string="Employee"
+                            context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_deadline" string="Deadline"
+                            context="{'group_by': 'appraisal_deadline:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         ACTION (replace existing oh_appraisal action)
+         ============================================================ -->
+    <record id="sl_hr_appraisal_action" model="ir.actions.act_window">
+        <field name="name">Appraisals</field>
+        <field name="res_model">hr.appraisal</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="sl_hr_appraisal_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first appraisal
+            </p>
+            <p>
+                Appraisals help evaluate employee skills and performance.
+                Only HR Officers and Administrators can create appraisals.
+            </p>
+        </field>
+    </record>
+
+</odoo>
