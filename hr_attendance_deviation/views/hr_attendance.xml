@@ -8,6 +8,16 @@
                 <!-- <field name="check_out" position="after"> -->
                     <!-- <field name="work_entry_id" invisible="not work_entry_id"/> -->
                 <!-- </field> -->
+                <xpath expr="//field[@name='check_in']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='check_out']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='employee_id']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+
                 <field name="in_mode" position="after">
                     <!-- <field name="expected_check_in" invisible="not expected_check_in"/> -->
                     <field name="late_check_in" widget="float_time" invisible="not late_check_in"/>

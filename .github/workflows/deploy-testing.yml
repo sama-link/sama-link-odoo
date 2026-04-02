@@ -19,6 +19,14 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Empty OS Login Keychain (Fix 32 KiB Limit)
+        run: |
+          echo "Clearing old SSH keys to make room..."
+          gcloud compute os-login describe-profile --format="json" | jq -r '.sshPublicKeys | keys[]?' | while read key; do
+            echo "Deleting key: $key"
+            gcloud compute os-login ssh-keys remove --key="$key" --quiet || true
+          done
+
       - name: SSH via IAP and Execute Refresh Script
         run: |
           gcloud compute ssh --quiet \

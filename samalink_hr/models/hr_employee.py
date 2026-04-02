@@ -78,12 +78,12 @@ class HrEmployee(models.Model):
     def _get_grouped_attendece_dates(self, date_from, date_to):
         date_midnight = datetime.combine(date_from, time.min)
         end_of_date = datetime.combine(date_to, time.max)
-        domain = [('check_in', '>=', date_midnight), ('check_in', '<=', end_of_date)]
-        attendance_records = self.env['hr.attendance'].search([
+        domain = [
             ('employee_id', 'in', self.ids),
-            ('check_in', '>=', date_from),
-            ('check_out', '<=', date_to)
-        ])
+            ('check_in', '>=', date_midnight),
+            ('check_in', '<=', end_of_date)
+        ]
+        attendance_records = self.env['hr.attendance'].search(domain)
         grouped_attendance = attendance_records.grouped('employee_id')
         attendance_mapped = defaultdict(list)
         for employee, attendance in grouped_attendance.items():
@@ -139,3 +139,21 @@ class HrEmployee(models.Model):
     def action_bulk_add_data_from_job_position(self):
         for employee in self:
             employee.action_add_data_from_job_position()
+
+    def write(self, vals):
+        if 'active' in vals and not vals['active']:
+            if 'hr.loan' in self.env.registry.models:
+                for employee in self:
+                    pending_loans = self.env['hr.loan'].search_count([
+                        ('employee_id', '=', employee.id),
+                        '|',
+                        ('state', 'in', ['draft', 'waiting_approval_1']),
+                        '&',
+                        ('state', '=', 'approve'),
+                        ('balance_amount', '>', 0),
+                    ])
+                    if pending_loans:
+                        raise ValidationError(
+                            _("Cannot archive employee! The employee has %s unpaid or pending loan(s).") % pending_loans
+                        )
+        return super(HrEmployee, self).write(vals)

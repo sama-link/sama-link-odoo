@@ -33,7 +33,7 @@
     'maintainer': 'Cybrosys Techno Solutions',
     'live_test_url': 'https://youtu.be/lAT5cqVZTZI',
     'website': "https://cybrosys.com, https://www.openhrms.com",
-    'depends': ['hr', 'account', 'hr_payroll_community'],
+    'depends': ['hr', 'account', 'hr_payroll_community', 'hr_contract'],
     'data': [
         'security/res_groups.xml',
         'security/hr_loan_security.xml',

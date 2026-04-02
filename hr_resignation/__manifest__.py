@@ -31,7 +31,7 @@
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
     'website': 'https://www.openhrms.com',
-    'depends': ['hr_employee_updation'],
+    'depends': ['hr_employee_updation', 'samalink_security_groups'],
     'data': [
         'security/hr_resignation_security.xml',
         'security/ir.model.access.csv',
@@ -39,6 +39,7 @@
         'data/ir_cron_data.xml',
         'views/hr_employee_views.xml',
         'views/hr_resignation_views.xml',
+        'views/res_config_settings_views.xml',
     ],
     'live_test_url': 'https://youtu.be/BorJthxY_VI',
     'images': ['static/description/banner.jpg'],

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         MAIN APPRAISALS MENU (replaces oh_appraisal menu)
+         ============================================================ -->
+
+    <!-- Override the existing oh_appraisal action on the main menu -->
+    <record id="oh_appraisal.hr_appraisal_menu" model="ir.ui.menu">
+        <field name="action" ref="sl_appraisal.sl_hr_appraisal_action"/>
+    </record>
+
+    <!-- ============================================================
+         MY APPRAISALS MENU — for employees
+         ============================================================ -->
+    <menuitem id="sl_menu_my_appraisals"
+              name="My Appraisals"
+              action="sl_action_my_appraisals"
+              sequence="15"/>
+
+    <!-- ============================================================
+         WHITELIST for samalink_security_groups
+         ============================================================ -->
+
+    <!-- Add My Appraisals to Employee group whitelist -->
+    <record id="samalink_security_groups.group_samalink_employee" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('sl_menu_my_appraisals')),
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('sl_menu_my_appraisals')),
+        ]"/>
+    </record>
+
+    <!-- Add main Appraisal menus to HR Officer whitelist -->
+    <record id="samalink_security_groups.group_samalink_hr_officer" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
+        ]"/>
+    </record>
+
+</odoo>
