@@ -124,6 +124,17 @@ class ZkApi(models.Model):
             try:
                 attendance_ids = api.action_sync_attendance(cron=True)
                 _logger.info(f"Attendance records synced: {len(attendance_ids)}")
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code == 401:
+                    _logger.warning("Token expired, renewing and retrying...")
+                    try:
+                        api.action_generate_token()
+                        attendance_ids = api.action_sync_attendance(cron=True)
+                        _logger.info(f"Attendance records synced after token renewal: {len(attendance_ids)}")
+                    except Exception as retry_error:
+                        _logger.error(f"Error during retry after token renewal: {retry_error}")
+                else:
+                    _logger.error(f"HTTP error during cron auto sync attendance: {e}")
             except Exception as e:
                 _logger.error(f"Error during cron auto sync attendance: {e}")
 
