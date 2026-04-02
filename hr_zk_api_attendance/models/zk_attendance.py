@@ -49,7 +49,7 @@ class ZkAttendance(models.Model):
         start_date = start_date or yesterday.strftime('%Y-%m-%d')
         end_date = end_date or today.strftime('%Y-%m-%d')
         zk_departments = ','.join(str(dep.zk_id) for dep in (departments or self.env['zk.department'].search([])))
-        zk_employees = ','.join(str(emp.zk_id) for emp in employees) or '-1'
+        zk_employees = ','.join(str(emp.zk_id) for emp in employees) if employees else '-1'
         endpoint = f"/att/api/transactionReport/?page=1&page_size=200&start_date={start_date}&end_date={end_date}&departments={quote(zk_departments)}&areas=-1&groups=-1&employees={quote(zk_employees)}"
         url = f"{api_url}{endpoint}"
         response = requests.get(url, headers=headers)
@@ -92,6 +92,7 @@ class ZkAttendance(models.Model):
             attendance_records = self.create(data)
             _logger.info("Attendance successfully synced from ZK API.")
             return attendance_records
+        return self.env['zk.attendance']
 
     def action_link_hr_attendance(self):
         _logger.info("Linking ZK attendance records to HR attendance.")
