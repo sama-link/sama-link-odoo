@@ -8,6 +8,9 @@
                 <!-- <field name="check_out" position="after"> -->
                     <!-- <field name="work_entry_id" invisible="not work_entry_id"/> -->
                 <!-- </field> -->
+                <xpath expr="//form" position="attributes">
+                    <attribute name="edit">0</attribute>
+                </xpath>
                 <xpath expr="//field[@name='check_in']" position="attributes">
                     <attribute name="readonly">1</attribute>
                 </xpath>
@@ -31,6 +34,27 @@
                         <field name="middleware_id" groups="hr_attendance.group_hr_attendance_officer" invisible="not middleware_id"/>
                     </group>
                 </sheet>
+            </field>
+        </record>
+        
+        <record id="hr_attendance_view_form_deviation_admin" model="ir.ui.view">
+            <field name="name">hr.attendance.form.inherit.deviation.admin</field>
+            <field name="model">hr.attendance</field>
+            <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+            <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="attributes">
+                    <attribute name="edit">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='check_in']" position="attributes">
+                    <attribute name="readonly">0</attribute>
+                </xpath>
+                <xpath expr="//field[@name='check_out']" position="attributes">
+                    <attribute name="readonly">0</attribute>
+                </xpath>
+                <xpath expr="//field[@name='employee_id']" position="attributes">
+                    <attribute name="readonly">0</attribute>
+                </xpath>
             </field>
         </record>
     </data>
