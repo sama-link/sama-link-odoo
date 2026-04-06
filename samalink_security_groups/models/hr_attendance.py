@@ -10,7 +10,7 @@ class HrAttendance(models.Model):
         modifying_restricted = any(f in vals for f in restricted_fields)
 
         if modifying_restricted:
-            is_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
+            is_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator') or self.env.user.has_group('base.group_system')
             
             # Allow system operations (like native check-out) which use sudo()
             if not is_admin and not self.env.su:
