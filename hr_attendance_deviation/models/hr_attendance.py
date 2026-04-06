@@ -9,6 +9,17 @@ _logger = logging.getLogger(__name__)
 class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
+    is_admin_user = fields.Boolean(
+        string='Is Admin User',
+        compute='_compute_is_admin_user',
+        default=False,
+    )
+
+    @api.depends_context('uid')
+    def _compute_is_admin_user(self):
+        for record in self:
+            record.is_admin_user = self.env.user.has_group('base.group_system')
+
     middleware_id = fields.Many2one(
         'hr.attendance.middleware',
         string='Middleware Record',
