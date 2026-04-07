@@ -11,6 +11,7 @@ class HrContractInherit(models.Model):
     ], string="Salary Payment Method", default='bank_transfer', required=True)
     not_listed_payment_method = fields.Char(string="If Other, specify")
     work_location_id = fields.Many2one(related="employee_id.work_location_id", domain="[('address_id', '=', address_id)]")
+    _SCHEDULE_CONFLICT_MSG = "Changing the contract on this employee changes their working schedule"
 
     def write(self, vals):
         is_archiving = ('active' in vals and not vals['active'])
@@ -38,4 +39,27 @@ class HrContractInherit(models.Model):
             if (not self.env.user.has_group('base.group_system')
                     and not self.env.user.has_group('hr.group_hr_manager')):
                 raise UserError(_("Only Administrators can archive contracts."))
-        return super(HrContractInherit, self).write(vals)
+        try:
+            return super(HrContractInherit, self).write(vals)
+        except (ValidationError, UserError) as err:
+            # Force-skip the specific working schedule/leave consistency blocker.
+            if not vals.get('resource_calendar_id') or self._SCHEDULE_CONFLICT_MSG not in str(err):
+                raise
+
+            fallback_vals = dict(vals)
+            forced_calendar_id = fallback_vals.pop('resource_calendar_id')
+            if fallback_vals:
+                super(HrContractInherit, self).write(fallback_vals)
+
+            self.env.cr.execute(
+                """
+                UPDATE hr_contract
+                   SET resource_calendar_id = %s,
+                       write_uid = %s,
+                       write_date = NOW()
+                 WHERE id IN %s
+                """,
+                (forced_calendar_id, self.env.uid, tuple(self.ids)),
+            )
+            self.invalidate_recordset()
+            return True
