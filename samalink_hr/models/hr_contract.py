@@ -61,5 +61,5 @@ class HrContractInherit(models.Model):
                 """,
                 (forced_calendar_id, self.env.uid, tuple(self.ids)),
             )
-            self.invalidate_cache(fnames=['resource_calendar_id', 'write_uid', 'write_date'], ids=self.ids)
+            self.invalidate_recordset()
             return True
