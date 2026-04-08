@@ -7,7 +7,7 @@
 
     <!-- Override the existing oh_appraisal action on the main menu -->
     <record id="oh_appraisal.hr_appraisal_menu" model="ir.ui.menu">
-        <field name="action" ref="sl_appraisal.sl_hr_appraisal_action"/>
+        <field name="action" ref="oh_appraisal.hr_appraisal_action"/>
     </record>
 
     <!-- ============================================================

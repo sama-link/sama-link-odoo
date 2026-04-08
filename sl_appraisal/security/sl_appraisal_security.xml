@@ -124,38 +124,8 @@
             <field name="perm_unlink" eval="True"/>
         </record>
 
-        <!-- ============================================================
-             SURVEY ANSWER ACCESS RULES (appraisal related)
-             ============================================================ -->
-        <record id="sl_survey_answer_rule_manager_coach" model="ir.rule">
-            <field name="name">Survey Answers: Appraisal manager/coach access</field>
-            <field name="model_id" ref="survey.model_survey_user_input"/>
-            <field name="domain_force">['|',
-                ('appraisal_id', '=', False),
-                '|', '|',
-                ('appraisal_id.hr_manager_ids.user_id', '=', user.id),
-                ('appraisal_id.employee_id.parent_id.user_id', '=', user.id),
-                ('appraisal_id.employee_id.coach_id.user_id', '=', user.id)
-            ]</field>
-            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
-        <record id="sl_survey_answer_rule_hr_admin" model="ir.rule">
-            <field name="name">Survey Answers: HR/Admin full access</field>
-            <field name="model_id" ref="survey.model_survey_user_input"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups"
-                   eval="[(4, ref('samalink_security_groups.group_samalink_hr_officer')),
-                          (4, ref('base.group_system'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_unlink" eval="True"/>
-        </record>
+        <!-- Keep survey.user_input rules from upstream modules to avoid
+             blocking generic survey access in non-appraisal contexts. -->
 
         <!-- ============================================================
              DISABLE OLD oh_appraisal GLOBAL RULES
