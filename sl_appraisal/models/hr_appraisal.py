@@ -38,6 +38,14 @@ class HrAppraisal(models.Model):
         string='Allowed Evaluators',
         help="Employees that can be selected as manager evaluators.")
 
+    access_user_ids = fields.Many2many(
+        'res.users',
+        compute='_compute_access_user_ids',
+        compute_sudo=True,
+        store=True,
+        string='Allowed Access Users',
+        help="Users allowed to access this appraisal as evaluator/manager/coach.")
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
@@ -61,6 +69,23 @@ class HrAppraisal(models.Model):
                 managers |= rec.employee_id.parent_id
                 managers |= rec.employee_id.coach_id
             rec.allowed_manager_ids = managers.filtered(lambda e: e.user_id)
+
+    @api.depends('employee_id', 'employee_id.user_id', 'employee_id.parent_id.user_id',
+                 'employee_id.coach_id.user_id', 'hr_manager_ids.user_id')
+    def _compute_access_user_ids(self):
+        for rec in self:
+            users = self.env['res.users']
+            if rec.employee_id and rec.employee_id.user_id:
+                users |= rec.employee_id.user_id
+            if rec.employee_id and rec.employee_id.parent_id.user_id:
+                users |= rec.employee_id.parent_id.user_id
+            if rec.employee_id and rec.employee_id.coach_id.user_id:
+                users |= rec.employee_id.coach_id.user_id
+            users |= rec.hr_manager_ids.mapped('user_id')
+            # Always include creator for traceability access.
+            if rec.creater_id:
+                users |= rec.creater_id
+            rec.access_user_ids = users
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 

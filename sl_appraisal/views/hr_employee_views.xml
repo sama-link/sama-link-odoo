@@ -80,10 +80,10 @@
                         </list>
                     </field>
 
-                    <!-- Skills progression summary -->
+                    <!-- Skills progression summary (plain list to avoid
+                         timeline widget JS crash in My Info custom tab) -->
                     <separator string="Latest Skill Levels"/>
-                    <field name="employee_skill_ids" readonly="1" nolabel="1"
-                           widget="skills_one2many">
+                    <field name="employee_skill_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false">
                             <field name="skill_type_id"/>
                             <field name="skill_id"/>
