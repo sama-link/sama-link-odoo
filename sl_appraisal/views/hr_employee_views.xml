@@ -63,6 +63,23 @@
                         </list>
                     </field>
 
+                    <separator string="Skills Management Timeline"/>
+                    <field name="appraisal_skill_history_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false"
+                              default_order="appraisal_date desc">
+                            <field name="appraisal_date" string="Date"/>
+                            <field name="skill_type_id"/>
+                            <field name="skill_id"/>
+                            <field name="old_level_id" string="Before"/>
+                            <field name="new_level_id" string="After"/>
+                            <field name="change_state" widget="badge"
+                                   decoration-success="change_state == 'improved'"
+                                   decoration-warning="change_state == 'same'"
+                                   decoration-danger="change_state == 'declined'"
+                                   decoration-info="change_state == 'new'"/>
+                        </list>
+                    </field>
+
                     <!-- Skills progression summary -->
                     <separator string="Latest Skill Levels"/>
                     <field name="employee_skill_ids" readonly="1" nolabel="1"

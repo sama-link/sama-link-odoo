@@ -24,6 +24,12 @@
                             class="oe_highlight"
                             invisible="state != 'draft'"
                             confirm="This will publish the appraisal and send survey forms to evaluators. Continue?"/>
+                    <button name="action_sync_skills_from_surveys"
+                            string="🔄 Sync Skills From Surveys"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state == 'draft'"
+                            confirm="This will map completed survey answers to manager proposed skill levels. Continue?"/>
                     <button name="action_hr_finalize"
                             string="✅ HR Finalize &amp; Apply Skills"
                             type="object"
@@ -83,6 +89,7 @@
 
                     <!-- Hidden technical fields -->
                     <field name="is_hr_or_admin" invisible="1"/>
+                    <field name="allowed_manager_ids" invisible="1"/>
                     <field name="skills_populated" invisible="1"/>
                     <field name="response_id" invisible="1"/>
                     <field name="app_period_from" invisible="1"/>
@@ -162,7 +169,7 @@
                                            required="hr_manager == True"
                                            invisible="hr_manager == False"
                                            readonly="state != 'draft'"
-                                           domain="[('user_id', '!=', False)]"
+                                           domain="[('id', 'in', allowed_manager_ids)]"
                                            options="{'no_create': True}"/>
                                     <field name="manager_survey_id"
                                            required="hr_manager == True"

@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import AccessError
 
 
 class AppraisalSkillLine(models.Model):
@@ -102,3 +103,16 @@ class AppraisalSkillLine(models.Model):
         self.skill_id = False
         self.proposed_skill_level_id = False
         self.final_skill_level_id = False
+
+    def write(self, vals):
+        for rec in self:
+            appraisal = rec.appraisal_id
+            if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
+                raise AccessError(_("Only HR/Admin can edit skill lines in Draft."))
+            if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
+                raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
+            if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
+                allowed = {'proposed_skill_level_id', 'manager_notes'}
+                if not set(vals).issubset(allowed):
+                    raise AccessError(_("Managers/coach can edit only proposed level and manager notes in Published."))
+        return super().write(vals)

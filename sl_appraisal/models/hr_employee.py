@@ -18,6 +18,12 @@ class HrEmployee(models.Model):
         compute='_compute_last_appraisal_date',
         help="Date of the most recent finalized appraisal")
 
+    appraisal_skill_history_ids = fields.One2many(
+        'appraisal.skill.history',
+        'employee_id',
+        string='Skill Timeline',
+        help="Timeline of skill changes approved from appraisals.")
+
     @api.depends('appraisal_ids')
     def _compute_appraisal_count(self):
         appraisal_data = self.env['hr.appraisal'].sudo().read_group(
@@ -57,7 +63,8 @@ class HrEmployee(models.Model):
         """Override to return current employee's My Info form."""
         employee = self.env.user.employee_id
         if not employee:
-            raise models.UserError("No employee linked to your user.")
+            from odoo.exceptions import UserError
+            raise UserError("No employee linked to your user.")
         return {
             'name': 'My Info',
             'type': 'ir.actions.act_window',
