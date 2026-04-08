@@ -354,6 +354,20 @@
         </field>
     </record>
 
+    <!-- Backward-compatible action id to avoid missing action errors
+         on instances that previously used sl_hr_appraisal_action. -->
+    <record id="sl_hr_appraisal_action" model="ir.actions.act_window">
+        <field name="name">Appraisals</field>
+        <field name="res_model">hr.appraisal</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="sl_hr_appraisal_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first appraisal
+            </p>
+        </field>
+    </record>
+
     <record id="sl_hr_appraisal_action_view_kanban" model="ir.actions.act_window.view">
         <field name="sequence" eval="1"/>
         <field name="view_mode">kanban</field>
@@ -373,6 +387,27 @@
         <field name="view_mode">form</field>
         <field name="view_id" ref="sl_hr_appraisal_view_form"/>
         <field name="act_window_id" ref="oh_appraisal.hr_appraisal_action"/>
+    </record>
+
+    <record id="sl_hr_appraisal_action_view_kanban_legacy" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="sl_hr_appraisal_view_kanban"/>
+        <field name="act_window_id" ref="sl_hr_appraisal_action"/>
+    </record>
+
+    <record id="sl_hr_appraisal_action_view_list_legacy" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="sl_hr_appraisal_view_tree"/>
+        <field name="act_window_id" ref="sl_hr_appraisal_action"/>
+    </record>
+
+    <record id="sl_hr_appraisal_action_view_form_legacy" model="ir.actions.act_window.view">
+        <field name="sequence" eval="3"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="sl_hr_appraisal_view_form"/>
+        <field name="act_window_id" ref="sl_hr_appraisal_action"/>
     </record>
 
 </odoo>
