@@ -129,14 +129,6 @@
                                     <field name="current_level_progress"
                                            widget="progressbar" readonly="1"
                                            string="Current %"/>
-                                    <field name="proposed_skill_level_id"
-                                           readonly="state != 'published'"
-                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
-                                           string="Proposed (HR Review)"/>
-                                    <field name="proposed_level_progress"
-                                           widget="progressbar" readonly="1"
-                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
-                                           string="Proposed %"/>
                                     <field name="final_skill_level_id"
                                            readonly="state != 'published'"
                                            groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
@@ -147,9 +139,6 @@
                                            string="Final %"/>
                                     <field name="level_change" readonly="1"
                                            string="Δ Change"/>
-                                    <field name="manager_notes"
-                                           readonly="state != 'published'"
-                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
                                     <field name="hr_notes"
                                            readonly="state == 'hr_finalization'"
                                            groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
@@ -198,15 +187,33 @@
 
                         <page string="👥 Managers Feedback" name="managers_feedback"
                               groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
-                            <field name="manager_feedback_ids" nolabel="1" readonly="0">
-                                <list create="false" delete="false">
-                                    <field name="manager_user_id" readonly="1"/>
-                                    <field name="manager_employee_id" readonly="1" optional="hide"/>
-                                    <field name="skill_type_id" readonly="1"/>
-                                    <field name="skill_id" readonly="1"/>
-                                    <field name="proposed_skill_level_id"/>
-                                    <field name="manager_notes"/>
-                                    <field name="write_date" string="Updated On" readonly="1"/>
+                            <div class="alert alert-info mb-2" role="alert">
+                                One line per skill for quick analysis.
+                                Use "My Feedback" in each line to drill down to detailed manager comments.
+                            </div>
+                            <field name="appraisal_skill_line_ids" nolabel="1" readonly="1">
+                                <list create="false" edit="false" delete="false"
+                                      default_order="manager_feedback_count desc, skill_type_id, skill_id"
+                                      decoration-success="feedback_consensus == 'high'"
+                                      decoration-warning="feedback_consensus == 'medium'"
+                                      decoration-danger="feedback_consensus == 'low'"
+                                      decoration-muted="feedback_consensus == 'none'">
+                                    <field name="skill_type_id"/>
+                                    <field name="skill_id"/>
+                                    <field name="current_skill_level_id" string="Current"/>
+                                    <field name="manager_feedback_count" string="# Managers"/>
+                                    <field name="feedback_consensus" widget="badge"
+                                           decoration-success="feedback_consensus == 'high'"
+                                           decoration-warning="feedback_consensus == 'medium'"
+                                           decoration-danger="feedback_consensus == 'low'"
+                                           decoration-muted="feedback_consensus == 'none'"/>
+                                    <field name="feedback_summary" string="Summary"/>
+                                    <field name="suggested_final_skill_level_id" string="Suggested"/>
+                                    <field name="final_skill_level_id" string="HR Final"/>
+                                    <button name="action_open_my_feedback"
+                                            type="object"
+                                            string="View Details"
+                                            class="btn-link"/>
                                 </list>
                             </field>
                         </page>

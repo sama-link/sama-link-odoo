@@ -59,6 +59,22 @@ class HrEmployee(models.Model):
             'context': {'default_employee_id': self.id},
         }
 
+    def action_open_skill_timeline(self):
+        """Open skill timeline history for the employee."""
+        self.ensure_one()
+        tree_view = self.env.ref('sl_appraisal.sl_appraisal_skill_history_view_tree')
+        graph_view = self.env.ref('sl_appraisal.sl_appraisal_skill_history_view_graph')
+        return {
+            'name': f'Skill Timeline — {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'appraisal.skill.history',
+            'view_mode': 'list,graph',
+            'views': [(tree_view.id, 'list'), (graph_view.id, 'graph')],
+            'domain': [('employee_id', '=', self.id)],
+            'context': {'default_employee_id': self.id},
+            'target': 'current',
+        }
+
     def action_open_my_employee(self):
         """Override to return current employee's My Info form."""
         employee = self.env.user.employee_id

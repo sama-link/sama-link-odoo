@@ -39,6 +39,23 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="samalink_security_groups.hr_employee_my_info_form_view"/>
         <field name="arch" type="xml">
+            <!-- Replace fragile skills widget in My Info Follow-up/CV -->
+            <xpath expr="//page[@name='skills_resume']//field[@name='employee_skill_ids' and @widget='skills_one2many']" position="replace">
+                <separator string="Skills Timeline"/>
+                <button name="action_open_skill_timeline"
+                        type="object"
+                        string="Open Skills Timeline"
+                        class="btn-primary mb-2"/>
+                <field mode="list" nolabel="1" name="employee_skill_ids" class="mt-2" readonly="1">
+                    <list create="false" edit="false" delete="false">
+                        <field name="skill_id"/>
+                        <field name="skill_level_id"/>
+                        <field name="level_progress" widget="progressbar"/>
+                        <field name="skill_type_id" optional="hidden"/>
+                    </list>
+                </field>
+            </xpath>
+
             <!-- Add Appraisal History tab to My Info notebook -->
             <page name="skills_resume" position="after">
                 <page string="🎯 My Appraisals" name="my_appraisals">
@@ -64,6 +81,10 @@
                     </field>
 
                     <separator string="Skills Management Timeline"/>
+                    <button name="action_open_skill_timeline"
+                            type="object"
+                            string="Open Skills Timeline"
+                            class="btn-primary mb-2"/>
                     <field name="appraisal_skill_history_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false"
                               default_order="appraisal_date desc">
@@ -93,6 +114,33 @@
                     </field>
                 </page>
             </page>
+        </field>
+    </record>
+
+    <record id="sl_appraisal_skill_history_view_tree" model="ir.ui.view">
+        <field name="name">appraisal.skill.history.tree</field>
+        <field name="model">appraisal.skill.history</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="appraisal_date desc">
+                <field name="appraisal_date"/>
+                <field name="skill_type_id"/>
+                <field name="skill_id"/>
+                <field name="old_level_id"/>
+                <field name="new_level_id"/>
+                <field name="change_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sl_appraisal_skill_history_view_graph" model="ir.ui.view">
+        <field name="name">appraisal.skill.history.graph</field>
+        <field name="model">appraisal.skill.history</field>
+        <field name="arch" type="xml">
+            <graph string="Skills Timeline" type="bar" stacked="1">
+                <field name="appraisal_date" interval="month"/>
+                <field name="change_state"/>
+                <field name="id" type="measure"/>
+            </graph>
         </field>
     </record>
 

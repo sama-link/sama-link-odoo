@@ -88,6 +88,13 @@ class AppraisalSkillLine(models.Model):
         string='Feedback Summary',
         compute='_compute_manager_feedback_count')
 
+    feedback_consensus = fields.Selection([
+        ('none', 'No Feedback'),
+        ('low', 'Low Consensus'),
+        ('medium', 'Medium Consensus'),
+        ('high', 'High Consensus'),
+    ], string='Consensus', compute='_compute_manager_feedback_count', store=True)
+
     suggested_final_skill_level_id = fields.Many2one(
         'hr.skill.level',
         string='Suggested HR Level',
@@ -124,14 +131,35 @@ class AppraisalSkillLine(models.Model):
         self.proposed_skill_level_id = False
         self.final_skill_level_id = False
 
-    @api.depends('manager_feedback_ids')
+    @api.depends(
+        'manager_feedback_ids',
+        'manager_feedback_ids.proposed_skill_level_id',
+    )
     def _compute_manager_feedback_count(self):
         for rec in self:
-            rec.manager_feedback_count = len(rec.manager_feedback_ids)
-            if rec.manager_feedback_count:
-                rec.feedback_summary = _("%s feedback entries") % rec.manager_feedback_count
-            else:
+            feedbacks = rec.manager_feedback_ids.filtered(lambda f: f.proposed_skill_level_id)
+            rec.manager_feedback_count = len(feedbacks)
+            if not rec.manager_feedback_count:
                 rec.feedback_summary = _("No feedback yet")
+                rec.feedback_consensus = 'none'
+                continue
+
+            votes = {}
+            for feedback in feedbacks:
+                level_name = feedback.proposed_skill_level_id.name or _("Unknown")
+                votes[level_name] = votes.get(level_name, 0) + 1
+
+            top_level, top_votes = max(votes.items(), key=lambda item: item[1])
+            ratio = float(top_votes) / float(rec.manager_feedback_count)
+            if ratio >= 0.75:
+                rec.feedback_consensus = 'high'
+            elif ratio >= 0.5:
+                rec.feedback_consensus = 'medium'
+            else:
+                rec.feedback_consensus = 'low'
+            rec.feedback_summary = _("%s/%s agree on %s") % (
+                top_votes, rec.manager_feedback_count, top_level
+            )
 
     @api.depends(
         'manager_feedback_ids.proposed_skill_level_id',
