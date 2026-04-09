@@ -14,11 +14,17 @@ class AppraisalSkillManagerFeedback(models.Model):
         'hr.appraisal', related='skill_line_id.appraisal_id', store=True, index=True, readonly=True)
     employee_id = fields.Many2one(
         'hr.employee', related='skill_line_id.employee_id', store=True, readonly=True)
-    manager_employee_id = fields.Many2one(
-        'hr.employee', required=True, index=True,
-        help="Manager/coach user who provided this feedback.")
     manager_user_id = fields.Many2one(
-        'res.users', related='manager_employee_id.user_id', store=True, index=True, readonly=True)
+        'res.users', required=False, index=True,
+        default=lambda self: self.env.user,
+        help="Manager/coach user who provided this feedback.")
+    manager_employee_id = fields.Many2one(
+        'hr.employee',
+        compute='_compute_manager_employee_id',
+        compute_sudo=True,
+        store=True,
+        readonly=True,
+        help="Employee card linked to manager user (optional).")
     skill_type_id = fields.Many2one(
         'hr.skill.type', related='skill_line_id.skill_type_id', store=True, readonly=True)
     skill_id = fields.Many2one(
@@ -33,10 +39,22 @@ class AppraisalSkillManagerFeedback(models.Model):
     _sql_constraints = [
         (
             'uniq_skillline_manager_feedback',
-            'unique(skill_line_id, manager_employee_id)',
+            'unique(skill_line_id, manager_user_id)',
             'Each manager can submit only one feedback per skill line.',
         ),
     ]
+
+    @api.depends('manager_user_id')
+    def _compute_manager_employee_id(self):
+        emp_model = self.env['hr.employee'].sudo()
+        for rec in self:
+            if rec.manager_user_id:
+                rec.manager_employee_id = emp_model.search(
+                    [('user_id', '=', rec.manager_user_id.id)],
+                    limit=1,
+                )
+            else:
+                rec.manager_employee_id = False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -51,11 +69,10 @@ class AppraisalSkillManagerFeedback(models.Model):
     def _check_manager_self_write(self):
         if self.env.user.has_group('samalink_security_groups.group_samalink_hr_officer') or self.env.user.has_group('base.group_system'):
             return
-        employee = self.env.user.employee_id
-        if not employee:
-            raise AccessError(_("Your user is not linked to an employee record."))
         for rec in self:
             if rec.appraisal_id.state != 'published':
                 raise AccessError(_("Manager feedback is allowed only in Published state."))
-            if rec.manager_employee_id != employee:
+            if not rec.manager_user_id:
+                raise AccessError(_("Manager user is required on feedback records."))
+            if rec.manager_user_id != self.env.user:
                 raise AccessError(_("You can edit only your own manager feedback."))

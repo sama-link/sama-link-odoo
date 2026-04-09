@@ -200,7 +200,8 @@
                               groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
                             <field name="manager_feedback_ids" nolabel="1" readonly="0">
                                 <list create="false" delete="false">
-                                    <field name="manager_employee_id" readonly="1"/>
+                                    <field name="manager_user_id" readonly="1"/>
+                                    <field name="manager_employee_id" readonly="1" optional="hide"/>
                                     <field name="skill_type_id" readonly="1"/>
                                     <field name="skill_id" readonly="1"/>
                                     <field name="proposed_skill_level_id"/>

@@ -289,10 +289,14 @@ class HrAppraisal(models.Model):
                             [('user_id.partner_id', '=', answer.partner_id.id)],
                             limit=1,
                         )
-                        if manager_employee:
+                        manager_user = manager_employee.user_id if manager_employee else self.env['res.users'].search(
+                            [('partner_id', '=', answer.partner_id.id)],
+                            limit=1,
+                        )
+                        if manager_user:
                             feedback = self.env['appraisal.skill.manager.feedback'].search([
                                 ('skill_line_id', '=', skill_line.id),
-                                ('manager_employee_id', '=', manager_employee.id),
+                                ('manager_user_id', '=', manager_user.id),
                             ], limit=1)
                             feedback_vals = {
                                 'proposed_skill_level_id': level.id,
@@ -305,7 +309,7 @@ class HrAppraisal(models.Model):
                             else:
                                 feedback_vals.update({
                                     'skill_line_id': skill_line.id,
-                                    'manager_employee_id': manager_employee.id,
+                                    'manager_user_id': manager_user.id,
                                 })
                                 self.env['appraisal.skill.manager.feedback'].create(feedback_vals)
                             updated += 1

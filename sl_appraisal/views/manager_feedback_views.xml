@@ -6,7 +6,8 @@
         <field name="model">appraisal.skill.manager.feedback</field>
         <field name="arch" type="xml">
             <list create="false" delete="false">
-                <field name="manager_employee_id" readonly="1"/>
+                <field name="manager_user_id" readonly="1"/>
+                <field name="manager_employee_id" readonly="1" optional="hide"/>
                 <field name="skill_type_id" readonly="1"/>
                 <field name="skill_id" readonly="1"/>
                 <field name="proposed_skill_level_id"/>
@@ -26,6 +27,7 @@
                         <group>
                             <field name="appraisal_id" readonly="1"/>
                             <field name="employee_id" readonly="1"/>
+                            <field name="manager_user_id" readonly="1"/>
                             <field name="manager_employee_id" readonly="1"/>
                         </group>
                         <group>

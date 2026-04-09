@@ -173,21 +173,19 @@ class AppraisalSkillLine(models.Model):
             raise AccessError(_("You are not allowed to access this appraisal."))
 
         employee = self.env.user.employee_id
-        if not employee and not appraisal._is_hr_or_admin():
-            raise UserError(_("Your user is not linked to an employee record."))
 
         feedback_model = self.env['appraisal.skill.manager.feedback']
         domain = [('skill_line_id', '=', self.id)]
         if appraisal._is_hr_or_admin():
             action_name = _("All Manager Feedback")
         else:
-            domain.append(('manager_employee_id', '=', employee.id))
+            domain.append(('manager_user_id', '=', self.env.user.id))
             action_name = _("My Feedback")
         existing = feedback_model.search(domain, limit=1)
         if not existing and not appraisal._is_hr_or_admin():
             existing = feedback_model.create({
                 'skill_line_id': self.id,
-                'manager_employee_id': employee.id,
+                'manager_user_id': self.env.user.id,
             })
         return {
             'name': action_name,
@@ -201,7 +199,7 @@ class AppraisalSkillLine(models.Model):
             'domain': domain,
             'context': {
                 'default_skill_line_id': self.id,
-                'default_manager_employee_id': employee.id if employee else False,
+                'default_manager_user_id': self.env.user.id,
             },
             'target': 'current',
             'res_id': existing.id if existing and len(existing) == 1 else False,
