@@ -82,7 +82,8 @@ class AppraisalSkillLine(models.Model):
 
     manager_feedback_count = fields.Integer(
         string='Manager Feedback',
-        compute='_compute_manager_feedback_count')
+        compute='_compute_manager_feedback_count',
+        store=True)
 
     feedback_summary = fields.Char(
         string='Feedback Summary',
