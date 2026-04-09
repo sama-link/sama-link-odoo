@@ -47,12 +47,28 @@ class HrAppraisal(models.Model):
         string='Allowed Access Users',
         help="Users allowed to access this appraisal as evaluator/manager/coach.")
 
+    manager_feedback_ids = fields.One2many(
+        'appraisal.skill.manager.feedback', 'appraisal_id',
+        string='Manager Feedback')
+
+    my_survey_count = fields.Integer(
+        string='My Survey Links',
+        compute='_compute_my_survey_count')
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
     def _compute_skill_line_count(self):
         for rec in self:
             rec.skill_line_count = len(rec.appraisal_skill_line_ids)
+
+    def _compute_my_survey_count(self):
+        user_partner = self.env.user.partner_id
+        for rec in self:
+            rec.my_survey_count = self.env['survey.user_input'].search_count([
+                ('appraisal_id', '=', rec.id),
+                ('partner_id', '=', user_partner.id),
+            ])
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -169,6 +185,25 @@ class HrAppraisal(models.Model):
             subtype_xmlid='mail.mt_note',
         )
 
+    def action_open_my_surveys(self):
+        self.ensure_one()
+        tree_id = self.env['ir.model.data']._xmlid_to_res_id(
+            'survey.survey_user_input_view_tree') or False
+        form_id = self.env['ir.model.data']._xmlid_to_res_id(
+            'survey.survey_user_input_view_form') or False
+        return {
+            'name': _('My Survey Links'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'survey.user_input',
+            'views': [(tree_id, 'list'), (form_id, 'form')],
+            'domain': [
+                ('appraisal_id', '=', self.id),
+                ('partner_id', '=', self.env.user.partner_id.id),
+            ],
+            'context': {'search_default_state': 1},
+        }
+
     def action_hr_finalize(self):
         """Move appraisal from Published → HR Finalization.
         Auto-update employee skills with approved levels."""
@@ -250,14 +285,31 @@ class HrAppraisal(models.Model):
                     continue
                 for skill_line in skill_lines:
                     level = self._map_answer_to_skill_level(skill_line, line)
-                    if level and skill_line.proposed_skill_level_id != level:
-                        skill_line.write({
-                            'proposed_skill_level_id': level.id,
-                            'manager_notes': _("Auto-synced from survey answer by %s") % (
-                                answer.partner_id.name or answer.email or _("Anonymous")
-                            ),
-                        })
-                        updated += 1
+                    if level:
+                        manager_employee = self.env['hr.employee'].search(
+                            [('user_id.partner_id', '=', answer.partner_id.id)],
+                            limit=1,
+                        )
+                        if manager_employee:
+                            feedback = self.env['appraisal.skill.manager.feedback'].search([
+                                ('skill_line_id', '=', skill_line.id),
+                                ('manager_employee_id', '=', manager_employee.id),
+                            ], limit=1)
+                            feedback_vals = {
+                                'proposed_skill_level_id': level.id,
+                                'manager_notes': _("Auto-synced from survey answer by %s") % (
+                                    answer.partner_id.name or answer.email or _("Anonymous")
+                                ),
+                            }
+                            if feedback:
+                                feedback.write(feedback_vals)
+                            else:
+                                feedback_vals.update({
+                                    'skill_line_id': skill_line.id,
+                                    'manager_employee_id': manager_employee.id,
+                                })
+                                self.env['appraisal.skill.manager.feedback'].create(feedback_vals)
+                            updated += 1
         return updated
 
     def _map_answer_to_skill_level(self, skill_line, answer_line):

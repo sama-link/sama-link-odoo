@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 
 
 class AppraisalSkillLine(models.Model):
@@ -75,6 +75,26 @@ class AppraisalSkillLine(models.Model):
         string='HR Notes',
         help="HR comments and decision rationale")
 
+    manager_feedback_ids = fields.One2many(
+        'appraisal.skill.manager.feedback',
+        'skill_line_id',
+        string='Manager Feedback')
+
+    manager_feedback_count = fields.Integer(
+        string='Manager Feedback',
+        compute='_compute_manager_feedback_count')
+
+    feedback_summary = fields.Char(
+        string='Feedback Summary',
+        compute='_compute_manager_feedback_count')
+
+    suggested_final_skill_level_id = fields.Many2one(
+        'hr.skill.level',
+        string='Suggested HR Level',
+        compute='_compute_suggested_final_skill_level',
+        store=True,
+        help="Suggested level based on managers feedback (majority vote).")
+
     # ── Computed: level change indicator ──────────────────────────────
     level_change = fields.Selection([
         ('improved', '↑ Improved'),
@@ -104,6 +124,99 @@ class AppraisalSkillLine(models.Model):
         self.proposed_skill_level_id = False
         self.final_skill_level_id = False
 
+    @api.depends('manager_feedback_ids')
+    def _compute_manager_feedback_count(self):
+        for rec in self:
+            rec.manager_feedback_count = len(rec.manager_feedback_ids)
+            if rec.manager_feedback_count:
+                rec.feedback_summary = _("%s feedback entries") % rec.manager_feedback_count
+            else:
+                rec.feedback_summary = _("No feedback yet")
+
+    @api.depends(
+        'manager_feedback_ids.proposed_skill_level_id',
+        'manager_feedback_ids.proposed_skill_level_id.level_progress',
+    )
+    def _compute_suggested_final_skill_level(self):
+        """Majority vote from managers.
+
+        Tie-breaker: higher level_progress wins.
+        """
+        for rec in self:
+            votes = {}
+            for feedback in rec.manager_feedback_ids.filtered(lambda f: f.proposed_skill_level_id):
+                level = feedback.proposed_skill_level_id
+                bucket = votes.setdefault(level.id, {
+                    'level': level,
+                    'count': 0,
+                    'progress': level.level_progress or 0,
+                })
+                bucket['count'] += 1
+
+            if not votes:
+                rec.suggested_final_skill_level_id = False
+                continue
+
+            ranked = sorted(
+                votes.values(),
+                key=lambda item: (item['count'], item['progress']),
+                reverse=True,
+            )
+            rec.suggested_final_skill_level_id = ranked[0]['level'].id
+
+    def action_open_my_feedback(self):
+        self.ensure_one()
+        appraisal = self.appraisal_id
+        if appraisal.state != 'published':
+            raise UserError(_("You can submit manager feedback only in Published state."))
+        if self.env.user not in appraisal.access_user_ids and not appraisal._is_hr_or_admin():
+            raise AccessError(_("You are not allowed to access this appraisal."))
+
+        employee = self.env.user.employee_id
+        if not employee and not appraisal._is_hr_or_admin():
+            raise UserError(_("Your user is not linked to an employee record."))
+
+        feedback_model = self.env['appraisal.skill.manager.feedback']
+        domain = [('skill_line_id', '=', self.id)]
+        if appraisal._is_hr_or_admin():
+            action_name = _("All Manager Feedback")
+        else:
+            domain.append(('manager_employee_id', '=', employee.id))
+            action_name = _("My Feedback")
+        existing = feedback_model.search(domain, limit=1)
+        if not existing and not appraisal._is_hr_or_admin():
+            existing = feedback_model.create({
+                'skill_line_id': self.id,
+                'manager_employee_id': employee.id,
+            })
+        return {
+            'name': action_name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'appraisal.skill.manager.feedback',
+            'view_mode': 'list,form',
+            'views': [
+                (self.env.ref('sl_appraisal.sl_manager_feedback_view_tree').id, 'list'),
+                (self.env.ref('sl_appraisal.sl_manager_feedback_view_form').id, 'form'),
+            ],
+            'domain': domain,
+            'context': {
+                'default_skill_line_id': self.id,
+                'default_manager_employee_id': employee.id if employee else False,
+            },
+            'target': 'current',
+            'res_id': existing.id if existing and len(existing) == 1 else False,
+        }
+
+    def action_apply_suggested_final_level(self):
+        self.ensure_one()
+        appraisal = self.appraisal_id
+        if not appraisal._is_hr_or_admin():
+            raise AccessError(_("Only HR/Admin can apply suggested levels."))
+        if not self.suggested_final_skill_level_id:
+            raise UserError(_("No suggested level available for this skill line yet."))
+        self.write({'final_skill_level_id': self.suggested_final_skill_level_id.id})
+        return True
+
     def write(self, vals):
         for rec in self:
             appraisal = rec.appraisal_id
@@ -112,7 +225,5 @@ class AppraisalSkillLine(models.Model):
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
             if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
-                allowed = {'proposed_skill_level_id', 'manager_notes'}
-                if not set(vals).issubset(allowed):
-                    raise AccessError(_("Managers/coach can edit only proposed level and manager notes in Published."))
+                raise AccessError(_("Managers/coach must use the 'My Feedback' action to submit feedback."))
         return super().write(vals)

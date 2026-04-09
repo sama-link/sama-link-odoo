@@ -42,6 +42,11 @@
                             class="btn-secondary"
                             invisible="state == 'draft'"
                             confirm="This will reset the appraisal to Draft state. Continue?"/>
+                    <button name="action_open_my_surveys"
+                            string="🔗 My Survey Links"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state == 'draft'"/>
                     <!-- Status bar -->
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,published,hr_finalization"/>
@@ -55,6 +60,14 @@
                                 icon="fa-pencil-square-o"
                                 invisible="state == 'draft'">
                             <field string="Answers" name="tot_comp_survey"
+                                   widget="statinfo"/>
+                        </button>
+                        <button name="action_open_my_surveys"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-link"
+                                invisible="state == 'draft'">
+                            <field string="My Surveys" name="my_survey_count"
                                    widget="statinfo"/>
                         </button>
                     </div>
@@ -118,22 +131,48 @@
                                            string="Current %"/>
                                     <field name="proposed_skill_level_id"
                                            readonly="state != 'published'"
-                                           string="Manager Proposed"/>
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
+                                           string="Proposed (HR Review)"/>
                                     <field name="proposed_level_progress"
                                            widget="progressbar" readonly="1"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
                                            string="Proposed %"/>
                                     <field name="final_skill_level_id"
                                            readonly="state != 'published'"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
                                            string="HR Final"/>
                                     <field name="final_level_progress"
                                            widget="progressbar" readonly="1"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"
                                            string="Final %"/>
                                     <field name="level_change" readonly="1"
                                            string="Δ Change"/>
                                     <field name="manager_notes"
-                                           readonly="state != 'published'"/>
+                                           readonly="state != 'published'"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
                                     <field name="hr_notes"
-                                           readonly="state == 'hr_finalization'"/>
+                                           readonly="state == 'hr_finalization'"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                                    <field name="manager_feedback_count" string="Managers" readonly="1"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                                    <field name="feedback_summary" string="Feedback"
+                                           readonly="1"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                                    <field name="suggested_final_skill_level_id"
+                                           string="Suggested HR Level"
+                                           readonly="1"
+                                           groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                                    <button name="action_apply_suggested_final_level"
+                                            type="object"
+                                            string="Apply Suggested"
+                                            class="btn-link"
+                                            invisible="suggested_final_skill_level_id == False"
+                                            groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                                    <button name="action_open_my_feedback"
+                                            type="object"
+                                            string="My Feedback"
+                                            class="btn-link"
+                                            invisible="state != 'published'"/>
                                     <field name="survey_question_id" optional="hidden"/>
                                     <field name="state" column_invisible="True"/>
                                 </list>
@@ -155,6 +194,20 @@
                                 <strong>✅ Finalized:</strong>
                                 Approved skill levels have been applied to the employee card.
                             </div>
+                        </page>
+
+                        <page string="👥 Managers Feedback" name="managers_feedback"
+                              groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
+                            <field name="manager_feedback_ids" nolabel="1" readonly="0">
+                                <list create="false" delete="false">
+                                    <field name="manager_employee_id" readonly="1"/>
+                                    <field name="skill_type_id" readonly="1"/>
+                                    <field name="skill_id" readonly="1"/>
+                                    <field name="proposed_skill_level_id"/>
+                                    <field name="manager_notes"/>
+                                    <field name="write_date" string="Updated On" readonly="1"/>
+                                </list>
+                            </field>
                         </page>
 
                         <!-- ── Plan Tab (survey assignments) ── -->
