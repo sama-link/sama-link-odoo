@@ -35,6 +35,7 @@ class HrAppraisal(models.Model):
     allowed_manager_ids = fields.Many2many(
         'hr.employee',
         compute='_compute_allowed_manager_ids',
+        compute_sudo=True,
         string='Allowed Evaluators',
         help="Employees that can be selected as manager evaluators.")
 

@@ -89,7 +89,6 @@
 
                     <!-- Hidden technical fields -->
                     <field name="is_hr_or_admin" invisible="1"/>
-                    <field name="allowed_manager_ids" invisible="1"/>
                     <field name="skills_populated" invisible="1"/>
                     <field name="response_id" invisible="1"/>
                     <field name="app_period_from" invisible="1"/>
@@ -159,7 +158,9 @@
                         </page>
 
                         <!-- ── Plan Tab (survey assignments) ── -->
-                        <page string="📝 Survey Plan" name="plan">
+                        <page string="📝 Survey Plan" name="plan"
+                              groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
+                            <field name="allowed_manager_ids" invisible="1"/>
                             <group>
                                 <group>
                                     <field name="hr_manager"
