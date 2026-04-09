@@ -27,7 +27,7 @@ class AppraisalSkillManagerFeedback(models.Model):
         'hr.skill.level',
         domain="[('skill_type_id', '=', skill_type_id)]",
         string='Manager Proposed Level',
-        required=True)
+        required=False)
     manager_notes = fields.Text(string='Manager Notes')
 
     _sql_constraints = [

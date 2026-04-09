@@ -8,6 +8,23 @@
     <!-- Override the existing oh_appraisal action on the main menu -->
     <record id="oh_appraisal.hr_appraisal_menu" model="ir.ui.menu">
         <field name="action" ref="sl_appraisal.sl_hr_appraisal_action"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('oh_appraisal.oh_appraisal_group_manager'),
+            ref('samalink_security_groups.group_sl_general_manager'),
+            ref('samalink_security_groups.group_sl_coach_manager'),
+            ref('samalink_security_groups.group_samalink_hr_officer'),
+            ref('base.group_system')
+        ])]"/>
+    </record>
+
+    <record id="oh_appraisal.hr_appraisal_menu_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [
+            ref('oh_appraisal.oh_appraisal_group_manager'),
+            ref('samalink_security_groups.group_sl_general_manager'),
+            ref('samalink_security_groups.group_sl_coach_manager'),
+            ref('samalink_security_groups.group_samalink_hr_officer'),
+            ref('base.group_system')
+        ])]"/>
     </record>
 
     <!-- ============================================================
@@ -43,6 +60,29 @@
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
             (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
+        ]"/>
+    </record>
+
+    <!-- Make appraisal menu visible for manager-type groups in Samalink -->
+    <record id="samalink_security_groups.group_sl_general_manager" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+        ]"/>
+    </record>
+
+    <record id="samalink_security_groups.group_sl_coach_manager" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
         ]"/>
     </record>
 

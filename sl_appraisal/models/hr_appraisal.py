@@ -187,21 +187,20 @@ class HrAppraisal(models.Model):
 
     def action_open_my_surveys(self):
         self.ensure_one()
-        tree_id = self.env['ir.model.data']._xmlid_to_res_id(
-            'survey.survey_user_input_view_tree') or False
-        form_id = self.env['ir.model.data']._xmlid_to_res_id(
-            'survey.survey_user_input_view_form') or False
+        answers = self.env['survey.user_input'].search([
+            ('appraisal_id', '=', self.id),
+            ('partner_id', '=', self.env.user.partner_id.id),
+        ], order='state asc, create_date desc')
+        if not answers:
+            raise UserError(_("No survey link found for your user in this appraisal."))
+
+        # Prefer pending link, then latest completed.
+        pending = answers.filtered(lambda a: a.state != 'done')
+        answer = pending[:1] or answers[:1]
         return {
-            'name': _('My Survey Links'),
-            'type': 'ir.actions.act_window',
-            'view_mode': 'list,form',
-            'res_model': 'survey.user_input',
-            'views': [(tree_id, 'list'), (form_id, 'form')],
-            'domain': [
-                ('appraisal_id', '=', self.id),
-                ('partner_id', '=', self.env.user.partner_id.id),
-            ],
-            'context': {'search_default_state': 1},
+            'type': 'ir.actions.act_url',
+            'url': answer.get_start_url(),
+            'target': 'new',
         }
 
     def action_hr_finalize(self):

@@ -122,10 +122,7 @@
         <record id="sl_manager_feedback_rule_user_own" model="ir.rule">
             <field name="name">Manager Feedback: own records only</field>
             <field name="model_id" ref="model_appraisal_skill_manager_feedback"/>
-            <field name="domain_force">['&amp;',
-                ('manager_user_id', '=', user.id),
-                ('appraisal_id.access_user_ids', 'in', user.id)
-            ]</field>
+            <field name="domain_force">[('manager_user_id', '=', user.id)]</field>
             <field name="groups" eval="[(4, ref('base.group_user'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
