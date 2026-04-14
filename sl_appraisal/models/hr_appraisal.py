@@ -111,7 +111,7 @@ class HrAppraisal(models.Model):
 
     @api.depends(
         'appraisal_skill_line_ids',
-        'appraisal_skill_line_ids.current_level_progress',
+        'appraisal_skill_line_ids.computed_current_level_progress',
         'appraisal_skill_line_ids.final_level_progress',
         'manual_score',
     )
@@ -120,7 +120,7 @@ class HrAppraisal(models.Model):
             percentages = []
             for line in rec.appraisal_skill_line_ids:
                 # Prefer final approved level; fallback to current level.
-                value = line.final_level_progress or line.current_level_progress or 0
+                value = line.final_level_progress or line.computed_current_level_progress or 0
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
             rec.total_score = rec.skill_average_score + (rec.manual_score or 0.0)

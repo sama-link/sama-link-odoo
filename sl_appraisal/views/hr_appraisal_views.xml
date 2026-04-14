@@ -109,9 +109,25 @@
                                     <field name="skill_type_id" readonly="1"/>
                                     <field name="skill_id" readonly="1"/>
                                     <field name="current_skill_level_id" readonly="1"/>
-                                    <field name="current_level_progress"
+                                    <field name="computed_current_level_progress"
                                            widget="progressbar" readonly="1"
                                            string="Current %"/>
+                                    <field name="manager_feedback_skill_level_id"
+                                           string="Manager Feedback Score"
+                                           readonly="state != 'published'"/>
+                                    <field name="manager_feedback_level_progress"
+                                           widget="progressbar"
+                                           readonly="1"
+                                           string="Manager %"/>
+                                    <field name="hr_skill_score_level_id"
+                                           string="HR Skill Score"
+                                           readonly="state not in ('published','submitted')"
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
+                                    <field name="hr_skill_score_level_progress"
+                                           widget="progressbar"
+                                           readonly="1"
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                                           string="HR %"/>
                                     <field name="final_skill_level_id"
                                            readonly="state != 'published'"
                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
