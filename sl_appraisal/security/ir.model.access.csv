@@ -9,3 +9,7 @@ access_appraisal_skill_history_admin,appraisal.skill.history.admin,model_apprais
 access_appraisal_skill_manager_feedback_user,appraisal.skill.manager.feedback.user,model_appraisal_skill_manager_feedback,oh_appraisal.oh_appraisal_group_manager,1,1,1,0
 access_appraisal_skill_manager_feedback_hr,appraisal.skill.manager.feedback.hr,model_appraisal_skill_manager_feedback,sl_appraisal.group_appraisal_hr,1,1,1,0
 access_appraisal_skill_manager_feedback_admin,appraisal.skill.manager.feedback.admin,model_appraisal_skill_manager_feedback,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_hr_appraisal_sysadmin,hr.appraisal.sysadmin,oh_appraisal.model_hr_appraisal,base.group_system,1,1,1,1
+access_appraisal_skill_line_sysadmin,appraisal.skill.line.sysadmin,model_appraisal_skill_line,base.group_system,1,1,1,1
+access_appraisal_skill_history_sysadmin,appraisal.skill.history.sysadmin,model_appraisal_skill_history,base.group_system,1,1,1,1
+access_appraisal_skill_manager_feedback_sysadmin,appraisal.skill.manager.feedback.sysadmin,model_appraisal_skill_manager_feedback,base.group_system,1,1,1,1

@@ -114,53 +114,21 @@
                                            string="Current %"/>
                                     <field name="manager_feedback_skill_level_id"
                                            string="Manager Feedback Score"
-                                           readonly="state != 'published'"/>
+                                           readonly="state != 'published'"
+                                           groups="oh_appraisal.oh_appraisal_group_manager"/>
                                     <field name="manager_feedback_level_progress"
                                            widget="progressbar"
                                            readonly="1"
                                            string="Manager %"/>
                                     <field name="hr_skill_score_level_id"
                                            string="HR Skill Score"
-                                           readonly="state not in ('published','submitted')"
+                                           readonly="state not in ('submitted','hr_finalization')"
                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="hr_skill_score_level_progress"
                                            widget="progressbar"
                                            readonly="1"
                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                                            string="HR %"/>
-                                    <field name="final_skill_level_id"
-                                           readonly="state != 'published'"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
-                                           string="HR Final"/>
-                                    <field name="final_level_progress"
-                                           widget="progressbar" readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
-                                           string="Final %"/>
-                                    <field name="level_change" readonly="1"
-                                           string="Δ Change"/>
-                                    <field name="hr_notes"
-                                           readonly="state == 'hr_finalization'"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="manager_feedback_count" string="Managers" readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="feedback_summary" string="Feedback"
-                                           readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="suggested_final_skill_level_id"
-                                           string="Suggested HR Level"
-                                           readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <button name="action_apply_suggested_final_level"
-                                            type="object"
-                                            string="Apply Suggested"
-                                            class="btn-link"
-                                            invisible="suggested_final_skill_level_id == False"
-                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <button name="action_open_my_feedback"
-                                            type="object"
-                                            string="My Feedback"
-                                            class="btn-link"
-                                            invisible="state != 'published'"/>
                                     <field name="survey_question_id" optional="hidden"/>
                                     <field name="state" column_invisible="True"/>
                                 </list>

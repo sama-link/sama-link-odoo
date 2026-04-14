@@ -302,6 +302,11 @@ class HrAppraisal(models.Model):
         if not (is_admin or is_selected_user):
             raise AccessError(_("Only selected manager/contributor or Appraisal Administrator can submit."))
 
+        # On submit, initialize HR score from manager feedback score once.
+        for line in self.appraisal_skill_line_ids:
+            if not line.hr_skill_score_level_id and line.manager_feedback_skill_level_id:
+                line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
+
         self.write({'state': 'submitted'})
 
     def action_sync_skills_from_surveys(self):
@@ -346,6 +351,7 @@ class HrAppraisal(models.Model):
             raise UserError(
                 _("Only submitted appraisals can be finalized."))
         self._sync_skill_lines_from_surveys_if_needed()
+        self._apply_hr_scores_to_final_levels()
         self.write({'state': 'hr_finalization'})
         # Auto-update employee skills
         self._update_employee_skills()
@@ -386,6 +392,12 @@ class HrAppraisal(models.Model):
     def _sync_skill_lines_from_surveys_if_needed(self):
         for appraisal in self:
             appraisal._sync_skill_lines_from_survey_answers()
+
+    def _apply_hr_scores_to_final_levels(self):
+        for appraisal in self:
+            for line in appraisal.appraisal_skill_line_ids:
+                if line.hr_skill_score_level_id:
+                    line.final_skill_level_id = line.hr_skill_score_level_id
 
     def _sync_skill_lines_from_survey_answers(self):
         """Map completed survey answers to appraisal skill proposed levels.

@@ -108,29 +108,6 @@ class AppraisalSkillLine(models.Model):
         'skill_line_id',
         string='Manager Feedback')
 
-    manager_feedback_count = fields.Integer(
-        string='Manager Feedback',
-        compute='_compute_manager_feedback_count',
-        store=True)
-
-    feedback_summary = fields.Char(
-        string='Feedback Summary',
-        compute='_compute_manager_feedback_count')
-
-    feedback_consensus = fields.Selection([
-        ('none', 'No Feedback'),
-        ('low', 'Low Consensus'),
-        ('medium', 'Medium Consensus'),
-        ('high', 'High Consensus'),
-    ], string='Consensus', compute='_compute_manager_feedback_count', store=True)
-
-    suggested_final_skill_level_id = fields.Many2one(
-        'hr.skill.level',
-        string='Suggested HR Level',
-        compute='_compute_suggested_final_skill_level',
-        store=True,
-        help="Suggested level based on managers feedback (majority vote).")
-
     # ── Computed: level change indicator ──────────────────────────────
     level_change = fields.Selection([
         ('improved', '↑ Improved'),
@@ -139,14 +116,34 @@ class AppraisalSkillLine(models.Model):
         ('new', '★ New'),
     ], string='Change', compute='_compute_level_change', store=True)
 
-    @api.depends('manager_feedback_skill_level_id', 'current_level_progress')
+    @api.depends(
+        'state',
+        'manager_feedback_skill_level_id',
+        'manager_feedback_level_progress',
+        'hr_skill_score_level_id',
+        'hr_skill_score_level_progress',
+        'current_level_progress',
+    )
     def _compute_computed_current_level_progress(self):
         for line in self:
-            line.computed_current_level_progress = (
-                line.manager_feedback_level_progress
-                if line.manager_feedback_skill_level_id
-                else (line.current_level_progress or 0)
-            )
+            if line.state == 'published':
+                line.computed_current_level_progress = (
+                    line.manager_feedback_level_progress
+                    if line.manager_feedback_skill_level_id
+                    else (line.current_level_progress or 0)
+                )
+            elif line.state in ('submitted', 'hr_finalization'):
+                line.computed_current_level_progress = (
+                    line.hr_skill_score_level_progress
+                    if line.hr_skill_score_level_id
+                    else (
+                        line.manager_feedback_level_progress
+                        if line.manager_feedback_skill_level_id
+                        else (line.current_level_progress or 0)
+                    )
+                )
+            else:
+                line.computed_current_level_progress = line.current_level_progress or 0
 
     @api.depends('current_skill_level_id', 'final_skill_level_id')
     def _compute_level_change(self):
@@ -176,73 +173,6 @@ class AppraisalSkillLine(models.Model):
         for rec in self:
             if rec.current_skill_level_id and not rec.manager_feedback_skill_level_id:
                 rec.manager_feedback_skill_level_id = rec.current_skill_level_id
-
-    @api.onchange('manager_feedback_skill_level_id')
-    def _onchange_manager_score_default_hr_score(self):
-        for rec in self:
-            if rec.manager_feedback_skill_level_id and not rec.hr_skill_score_level_id:
-                rec.hr_skill_score_level_id = rec.manager_feedback_skill_level_id
-
-    @api.depends(
-        'manager_feedback_ids',
-        'manager_feedback_ids.proposed_skill_level_id',
-    )
-    def _compute_manager_feedback_count(self):
-        for rec in self:
-            feedbacks = rec.manager_feedback_ids.filtered(lambda f: f.proposed_skill_level_id)
-            rec.manager_feedback_count = len(feedbacks)
-            if not rec.manager_feedback_count:
-                rec.feedback_summary = _("No feedback yet")
-                rec.feedback_consensus = 'none'
-                continue
-
-            votes = {}
-            for feedback in feedbacks:
-                level_name = feedback.proposed_skill_level_id.name or _("Unknown")
-                votes[level_name] = votes.get(level_name, 0) + 1
-
-            top_level, top_votes = max(votes.items(), key=lambda item: item[1])
-            ratio = float(top_votes) / float(rec.manager_feedback_count)
-            if ratio >= 0.75:
-                rec.feedback_consensus = 'high'
-            elif ratio >= 0.5:
-                rec.feedback_consensus = 'medium'
-            else:
-                rec.feedback_consensus = 'low'
-            rec.feedback_summary = _("%s/%s agree on %s") % (
-                top_votes, rec.manager_feedback_count, top_level
-            )
-
-    @api.depends(
-        'manager_feedback_ids.proposed_skill_level_id',
-        'manager_feedback_ids.proposed_skill_level_id.level_progress',
-    )
-    def _compute_suggested_final_skill_level(self):
-        """Majority vote from managers.
-
-        Tie-breaker: higher level_progress wins.
-        """
-        for rec in self:
-            votes = {}
-            for feedback in rec.manager_feedback_ids.filtered(lambda f: f.proposed_skill_level_id):
-                level = feedback.proposed_skill_level_id
-                bucket = votes.setdefault(level.id, {
-                    'level': level,
-                    'count': 0,
-                    'progress': level.level_progress or 0,
-                })
-                bucket['count'] += 1
-
-            if not votes:
-                rec.suggested_final_skill_level_id = False
-                continue
-
-            ranked = sorted(
-                votes.values(),
-                key=lambda item: (item['count'], item['progress']),
-                reverse=True,
-            )
-            rec.suggested_final_skill_level_id = ranked[0]['level'].id
 
     def action_open_my_feedback(self):
         self.ensure_one()
@@ -285,16 +215,6 @@ class AppraisalSkillLine(models.Model):
             'res_id': existing.id if existing and len(existing) == 1 else False,
         }
 
-    def action_apply_suggested_final_level(self):
-        self.ensure_one()
-        appraisal = self.appraisal_id
-        if not appraisal._is_hr_or_admin():
-            raise AccessError(_("Only HR/Admin can apply suggested levels."))
-        if not self.suggested_final_skill_level_id:
-            raise UserError(_("No suggested level available for this skill line yet."))
-        self.write({'final_skill_level_id': self.suggested_final_skill_level_id.id})
-        return True
-
     def write(self, vals):
         for rec in self:
             appraisal = rec.appraisal_id
@@ -302,6 +222,7 @@ class AppraisalSkillLine(models.Model):
                 appraisal.env.user.has_group('sl_appraisal.group_appraisal_administrator')
                 or appraisal.env.user.has_group('base.group_system')
             )
+            is_hr = appraisal.env.user.has_group('sl_appraisal.group_appraisal_hr')
             is_manager = appraisal.env.user.has_group('oh_appraisal.oh_appraisal_group_manager')
             if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in Draft."))
@@ -309,11 +230,18 @@ class AppraisalSkillLine(models.Model):
                 raise AccessError(_("Only Appraisal Administrator can edit skill lines in Submitted state."))
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
+            if appraisal.state == 'published' and is_hr:
+                allowed_hr_vals = {'hr_skill_score_level_id'}
+                if not set(vals).issubset(allowed_hr_vals):
+                    raise AccessError(_("HR Officer can update only HR Skill Score in Published stage."))
             if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
-                # Managers can only update their score field while published.
                 allowed_manager_vals = {'manager_feedback_skill_level_id'}
                 if not is_manager or not set(vals).issubset(allowed_manager_vals):
-                    raise AccessError(_("Managers can update only Manager Feedback Score in Published state."))
+                    raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
+            if appraisal.state in ('submitted', 'hr_finalization') and is_hr:
+                allowed_hr_vals = {'hr_skill_score_level_id'}
+                if not set(vals).issubset(allowed_hr_vals):
+                    raise AccessError(_("HR Officer can update only HR Skill Score in Submitted/HR Finalization stages."))
         return super().write(vals)
 
     @api.model_create_multi
@@ -322,6 +250,4 @@ class AppraisalSkillLine(models.Model):
             current_level_id = vals.get('current_skill_level_id')
             if current_level_id and not vals.get('manager_feedback_skill_level_id'):
                 vals['manager_feedback_skill_level_id'] = current_level_id
-            if vals.get('manager_feedback_skill_level_id') and not vals.get('hr_skill_score_level_id'):
-                vals['hr_skill_score_level_id'] = vals['manager_feedback_skill_level_id']
         return super().create(vals_list)
