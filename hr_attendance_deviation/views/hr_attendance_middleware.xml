@@ -13,6 +13,9 @@
                 </header>
                 <field name="employee_id"/>
                 <field name="date"/>
+                <field name="attendance_day"/>
+                <field name="check_in_final" string="Check In"/>
+                <field name="check_out_final" string="Check Out"/>
                 <field name="late_check_in" widget="float_time"/>
                 <field name="early_check_out" widget="float_time"/>
                 <field name="late_check_in_state"/>
