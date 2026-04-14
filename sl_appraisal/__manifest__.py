@@ -19,6 +19,7 @@
         'samalink_security_groups',
     ],
     'data': [
+        'security/sl_appraisal_groups.xml',
         'security/ir.model.access.csv',
         'security/sl_appraisal_security.xml',
         'data/stages.xml',

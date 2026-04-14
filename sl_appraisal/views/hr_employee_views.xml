@@ -15,7 +15,7 @@
                         type="object"
                         class="oe_stat_button"
                         icon="fa-trophy"
-                        groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
+                        groups="sl_appraisal.group_appraisal_hr,base.group_system">
                     <div class="o_stat_info">
                         <field name="appraisal_count" class="o_stat_value"/>
                         <span class="o_stat_text">Appraisals</span>
@@ -26,7 +26,7 @@
             <!-- Last appraisal date in work info -->
             <field name="coach_id" position="after">
                 <field name="last_appraisal_date" readonly="1"
-                       groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                       groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
             </field>
         </field>
     </record>

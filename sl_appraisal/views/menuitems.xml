@@ -10,16 +10,24 @@
         <field name="action" ref="sl_appraisal.sl_hr_appraisal_action"/>
         <field name="groups_id" eval="[(6, 0, [
             ref('oh_appraisal.oh_appraisal_group_manager'),
-            ref('samalink_security_groups.group_samalink_hr_officer')
+            ref('sl_appraisal.group_appraisal_hr')
         ])]"/>
     </record>
 
     <record id="oh_appraisal.hr_appraisal_menu_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [
             ref('oh_appraisal.oh_appraisal_group_manager'),
-            ref('samalink_security_groups.group_samalink_hr_officer')
+            ref('sl_appraisal.group_appraisal_hr')
         ])]"/>
     </record>
+
+    <!-- Extra submenu requested for appraisal model -->
+    <menuitem id="sl_menu_appraisal_model"
+              name="Appraisal Model"
+              parent="oh_appraisal.hr_appraisal_menu_root"
+              action="sl_hr_appraisal_action"
+              sequence="14"
+              groups="oh_appraisal.oh_appraisal_group_manager,sl_appraisal.group_appraisal_hr"/>
 
     <!-- ============================================================
          MY APPRAISALS MENU — for employees
@@ -44,16 +52,18 @@
     </record>
 
     <!-- Add main Appraisal menus to HR Officer whitelist -->
-    <record id="samalink_security_groups.group_samalink_hr_officer" model="res.groups">
+    <record id="sl_appraisal.group_appraisal_hr" model="res.groups">
         <field name="whitelisted_menu_ids" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
             (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
+            (4, ref('sl_menu_appraisal_model')),
         ]"/>
         <field name="menu_access" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
             (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
+            (4, ref('sl_menu_appraisal_model')),
         ]"/>
     </record>
 

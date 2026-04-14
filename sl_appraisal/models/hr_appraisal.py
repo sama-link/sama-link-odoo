@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _, Command
-from odoo.exceptions import UserError, AccessError
+from odoo.exceptions import UserError, AccessError, ValidationError
 
 
 class HrAppraisal(models.Model):
@@ -39,6 +39,14 @@ class HrAppraisal(models.Model):
         string='Allowed Evaluators',
         help="Employees that can be selected as manager evaluators.")
 
+    hr_employee_ids = fields.Many2many(
+        'hr.employee',
+        'employee_appraisal_rel',
+        'appraisal_id',
+        'employee_id',
+        string='Select Employees',
+        help="Employees who can access this appraisal.")
+
     access_user_ids = fields.Many2many(
         'res.users',
         compute='_compute_access_user_ids',
@@ -73,7 +81,7 @@ class HrAppraisal(models.Model):
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
         is_hr = self.env.user.has_group(
-            'samalink_security_groups.group_samalink_hr_officer')
+            'sl_appraisal.group_appraisal_hr')
         is_admin = self.env.user.has_group('base.group_system')
         for rec in self:
             rec.is_hr_or_admin = is_hr or is_admin
@@ -87,22 +95,40 @@ class HrAppraisal(models.Model):
                 managers |= rec.employee_id.coach_id
             rec.allowed_manager_ids = managers.filtered(lambda e: e.user_id)
 
-    @api.depends('employee_id', 'employee_id.user_id', 'employee_id.parent_id.user_id',
-                 'employee_id.coach_id.user_id', 'hr_manager_ids.user_id')
+    @api.depends(
+        'employee_id', 'employee_id.user_id', 'employee_id.parent_id.user_id',
+        'employee_id.coach_id.user_id', 'hr_manager_ids.user_id',
+        'hr_collaborator_ids.user_id', 'hr_colleague_ids.user_id',
+        'hr_employee_ids.user_id', 'creater_id'
+    )
     def _compute_access_user_ids(self):
         for rec in self:
             users = self.env['res.users']
             if rec.employee_id and rec.employee_id.user_id:
                 users |= rec.employee_id.user_id
-            if rec.employee_id and rec.employee_id.parent_id.user_id:
-                users |= rec.employee_id.parent_id.user_id
-            if rec.employee_id and rec.employee_id.coach_id.user_id:
-                users |= rec.employee_id.coach_id.user_id
-            users |= rec.hr_manager_ids.mapped('user_id')
+            users |= rec._get_selected_access_employees().mapped('user_id')
             # Always include creator for traceability access.
             if rec.creater_id:
                 users |= rec.creater_id
             rec.access_user_ids = users
+
+    def _get_selected_access_employees(self):
+        self.ensure_one()
+        return (
+            self.hr_manager_ids
+            | self.hr_collaborator_ids
+            | self.hr_colleague_ids
+            | self.hr_employee_ids
+        ).filtered(lambda emp: emp.user_id)
+
+    @api.constrains('hr_manager_ids', 'hr_collaborator_ids', 'hr_colleague_ids', 'hr_employee_ids')
+    def _check_single_access_person(self):
+        for rec in self:
+            selected_employees = rec._get_selected_access_employees()
+            if len(selected_employees) > 1:
+                raise ValidationError(_(
+                    "Only one person can be selected to access the appraisal form."
+                ))
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 
@@ -154,7 +180,7 @@ class HrAppraisal(models.Model):
         })
 
     def action_publish(self):
-        """Move appraisal from Draft → Published and send survey emails."""
+        """Move appraisal from Draft → Published."""
         self.ensure_one()
         self._check_hr_or_admin_access("publish appraisals")
         if self.state != 'draft':
@@ -165,14 +191,14 @@ class HrAppraisal(models.Model):
                 raise UserError(_(
                     "Only the employee's direct manager/coach can be selected as manager evaluators."
                 ))
-        # Validate that at least one evaluator is set
-        if not self.hr_manager_ids and not self.hr_emp:
+        selected_employees = self._get_selected_access_employees()
+        if not selected_employees:
             raise UserError(
-                _("Please assign at least one evaluator (managers or "
-                  "employee) before publishing."))
+                _("Please select one person who can access this appraisal form before publishing.")
+            )
+        if len(selected_employees) > 1:
+            raise UserError(_("Only one person can access this appraisal form."))
         self.write({'state': 'published'})
-        # Send survey emails using existing mechanism
-        self.action_start_appraisal()
 
     def action_sync_skills_from_surveys(self):
         """Sync manager proposed skill levels from completed survey answers."""
@@ -233,7 +259,7 @@ class HrAppraisal(models.Model):
 
     def _is_hr_or_admin(self):
         return (self.env.user.has_group(
-            'samalink_security_groups.group_samalink_hr_officer')
+            'sl_appraisal.group_appraisal_hr')
             or self.env.user.has_group('base.group_system'))
 
     def _check_hr_or_admin_access(self, action_name):
