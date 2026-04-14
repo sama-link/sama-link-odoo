@@ -16,33 +16,40 @@
                             string="📋 Populate Skills"
                             type="object"
                             class="btn-secondary"
-                            groups="sl_appraisal.group_appraisal_hr,base.group_system"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'draft' or skills_populated == True"
                             confirm="This will populate skills from the employee's current skill profile. Continue?"/>
                     <button name="action_publish"
                             string="📤 Publish"
                             type="object"
                             class="oe_highlight"
-                            groups="sl_appraisal.group_appraisal_hr,base.group_system"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'draft'"
                             confirm="This will publish the appraisal. Continue?"/>
                     <button name="action_hr_finalize"
                             string="✅ HR Finalize &amp; Apply Skills"
                             type="object"
                             class="oe_highlight"
-                            groups="sl_appraisal.group_appraisal_hr,base.group_system"
-                            invisible="state != 'published'"
+                            groups="sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'submitted'"
                             confirm="This will finalize the appraisal and apply approved skill levels to the employee card. Continue?"/>
+                    <button name="action_submit"
+                            string="🗂 Submit"
+                            type="object"
+                            class="btn-secondary"
+                            groups="oh_appraisal.oh_appraisal_group_manager,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'published'"
+                            confirm="This will lock manager feedback and move appraisal to Submitted. Continue?"/>
                     <button name="action_reset_to_draft"
                             string="↩ Reset to Draft"
                             type="object"
                             class="btn-secondary"
-                            groups="sl_appraisal.group_appraisal_hr,base.group_system"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state == 'draft'"
                             confirm="This will reset the appraisal to Draft state. Continue?"/>
                     <!-- Status bar -->
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,published,hr_finalization"/>
+                           statusbar_visible="draft,published,submitted,hr_finalization"/>
                 </header>
                 <sheet>
                     <!-- Title -->
@@ -107,32 +114,32 @@
                                            string="Current %"/>
                                     <field name="final_skill_level_id"
                                            readonly="state != 'published'"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                                            string="HR Final"/>
                                     <field name="final_level_progress"
                                            widget="progressbar" readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                                            string="Final %"/>
                                     <field name="level_change" readonly="1"
                                            string="Δ Change"/>
                                     <field name="hr_notes"
                                            readonly="state == 'hr_finalization'"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="manager_feedback_count" string="Managers" readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="feedback_summary" string="Feedback"
                                            readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="suggested_final_skill_level_id"
                                            string="Suggested HR Level"
                                            readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
+                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <button name="action_apply_suggested_final_level"
                                             type="object"
                                             string="Apply Suggested"
                                             class="btn-link"
                                             invisible="suggested_final_skill_level_id == False"
-                                            groups="sl_appraisal.group_appraisal_hr,base.group_system"/>
+                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <button name="action_open_my_feedback"
                                             type="object"
                                             string="My Feedback"
@@ -159,10 +166,15 @@
                                 <strong>✅ Finalized:</strong>
                                 Approved skill levels have been applied to the employee card.
                             </div>
+                            <div class="alert alert-secondary mt-3" role="alert"
+                                 invisible="state != 'submitted'">
+                                <strong>🗂 Submitted:</strong>
+                                Manager feedback is locked. Only Appraisal Administrator can modify records.
+                            </div>
                         </page>
 
                         <page string="🔐 Access Plan" name="plan"
-                              groups="sl_appraisal.group_appraisal_hr,base.group_system">
+                              groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
                             <field name="allowed_manager_ids" invisible="1"/>
                             <div class="alert alert-info mb-3" role="alert">
                                 Select only one person (manager, collaborator, colleague, or employee) who can access this appraisal.
@@ -193,7 +205,7 @@
                         </page>
 
                         <page string="🏅 Score" name="score_tab"
-                              groups="sl_appraisal.group_appraisal_hr,base.group_system">
+                              groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
                             <group>
                                 <group>
                                     <field name="skill_average_score" readonly="1"/>
@@ -225,12 +237,14 @@
         <field name="priority">5</field>
         <field name="arch" type="xml">
             <list decoration-muted="state == 'hr_finalization'"
+                  decoration-primary="state == 'submitted'"
                   decoration-info="state == 'published'"
                   decoration-bf="state == 'draft'">
                 <field name="employee_id"/>
                 <field name="appraisal_deadline"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'hr_finalization'"
+                       decoration-primary="state == 'submitted'"
                        decoration-warning="state == 'published'"
                        decoration-info="state == 'draft'"/>
                 <field name="skill_line_count" string="Skills"/>
@@ -258,7 +272,7 @@
                 <field name="tot_comp_survey"/>
                 <field name="skill_line_count"/>
                 <progressbar field="state"
-                             colors='{"draft": "info", "published": "warning", "hr_finalization": "success"}'/>
+                             colors='{"draft": "info", "published": "warning", "submitted": "primary", "hr_finalization": "success"}'/>
                 <templates>
                     <t t-name="card" class="flex-row">
                         <aside>
@@ -306,6 +320,8 @@
                         domain="[('state', '=', 'draft')]"/>
                 <filter name="filter_published" string="Published"
                         domain="[('state', '=', 'published')]"/>
+                <filter name="filter_submitted" string="Submitted"
+                        domain="[('state', '=', 'submitted')]"/>
                 <filter name="filter_finalized" string="HR Finalized"
                         domain="[('state', '=', 'hr_finalization')]"/>
                 <separator/>

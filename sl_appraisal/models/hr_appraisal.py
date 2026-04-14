@@ -9,10 +9,12 @@ class HrAppraisal(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('published', 'Published'),
+        ('submitted', 'Submitted'),
         ('hr_finalization', 'HR Finalization'),
     ], string='Status', default='draft', tracking=True, copy=False,
         help="Draft: HR prepares appraisal.\n"
-             "Published: Surveys sent to evaluators.\n"
+             "Published: Feedback in progress.\n"
+             "Submitted: Feedback locked for manager review.\n"
              "HR Finalization: HR reviews and approves skill changes.")
 
     # ── Skills evaluation lines ───────────────────────────────────────
@@ -127,7 +129,7 @@ class HrAppraisal(models.Model):
     def _compute_is_hr_or_admin(self):
         is_hr = self.env.user.has_group(
             'sl_appraisal.group_appraisal_hr')
-        is_admin = self.env.user.has_group('base.group_system')
+        is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
         for rec in self:
             rec.is_hr_or_admin = is_hr or is_admin
 
@@ -215,7 +217,18 @@ class HrAppraisal(models.Model):
         return record
 
     def write(self, vals):
-        """Prevent non-HR users from changing state directly."""
+        """Restrict writes by role and appraisal access plan."""
+        is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') or self.env.user.has_group('base.group_system')
+        is_hr_officer = self.env.user.has_group('sl_appraisal.group_appraisal_hr')
+
+        if is_hr_officer and not is_admin:
+            for rec in self:
+                allowed_users = rec._get_selected_access_employees().mapped('user_id')
+                if self.env.user not in allowed_users:
+                    raise AccessError(_(
+                        "You can edit this appraisal only if you are selected in the Access Plan."
+                    ))
+
         if 'state' in vals and not self._is_hr_or_admin():
             raise AccessError(
                 _("Only HR Officers and Administrators can change "
@@ -274,6 +287,23 @@ class HrAppraisal(models.Model):
             raise UserError(_("Only one person can access this appraisal form."))
         self.write({'state': 'published'})
 
+    def action_submit(self):
+        """Move appraisal from Published -> Submitted.
+        Allowed for selected manager user and appraisal administrators."""
+        self.ensure_one()
+        if self.state != 'published':
+            raise UserError(_("Only published appraisals can be submitted."))
+
+        is_admin = (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        )
+        is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
+        if not (is_admin or is_selected_user):
+            raise AccessError(_("Only selected manager/contributor or Appraisal Administrator can submit."))
+
+        self.write({'state': 'submitted'})
+
     def action_sync_skills_from_surveys(self):
         """Sync manager proposed skill levels from completed survey answers."""
         self.ensure_one()
@@ -307,10 +337,14 @@ class HrAppraisal(models.Model):
         """Move appraisal from Published → HR Finalization.
         Auto-update employee skills with approved levels."""
         self.ensure_one()
-        self._check_hr_or_admin_access("finalize appraisals")
-        if self.state != 'published':
+        if not (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        ):
+            raise AccessError(_("Only Appraisal Administrators can finalize appraisals."))
+        if self.state != 'submitted':
             raise UserError(
-                _("Only published appraisals can be finalized."))
+                _("Only submitted appraisals can be finalized."))
         self._sync_skill_lines_from_surveys_if_needed()
         self.write({'state': 'hr_finalization'})
         # Auto-update employee skills
@@ -334,6 +368,7 @@ class HrAppraisal(models.Model):
     def _is_hr_or_admin(self):
         return (self.env.user.has_group(
             'sl_appraisal.group_appraisal_hr')
+            or self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
             or self.env.user.has_group('base.group_system'))
 
     def _check_hr_or_admin_access(self, action_name):

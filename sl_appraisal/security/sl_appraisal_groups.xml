@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+        <record id="oh_appraisal.oh_appraisal_group_employee" model="res.groups">
+            <field name="category_id" eval="False"/>
+        </record>
+
+        <record id="oh_appraisal.oh_appraisal_group_manager" model="res.groups">
+            <field name="name">Appriasal / Manager</field>
+            <field name="category_id" ref="oh_appraisal.module_category_hr_appraisal"/>
+        </record>
+
         <record id="group_appraisal_hr" model="res.groups">
-            <field name="name">Appriasal / HR Officer</field>
+            <field name="name">HR Officer</field>
             <field name="category_id" ref="oh_appraisal.module_category_hr_appraisal"/>
             <field name="implied_ids" eval="[(4, ref('oh_appraisal.oh_appraisal_group_manager'))]"/>
+        </record>
+
+        <record id="group_appraisal_administrator" model="res.groups">
+            <field name="name">Appriasal / Administrator</field>
+            <field name="category_id" ref="oh_appraisal.module_category_hr_appraisal"/>
+            <field name="implied_ids" eval="[(4, ref('sl_appraisal.group_appraisal_hr'))]"/>
         </record>
     </data>
 </odoo>

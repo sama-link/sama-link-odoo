@@ -247,8 +247,14 @@ class AppraisalSkillLine(models.Model):
     def write(self, vals):
         for rec in self:
             appraisal = rec.appraisal_id
+            is_admin = (
+                appraisal.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+                or appraisal.env.user.has_group('base.group_system')
+            )
             if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in Draft."))
+            if appraisal.state == 'submitted' and not is_admin:
+                raise AccessError(_("Only Appraisal Administrator can edit skill lines in Submitted state."))
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
             if appraisal.state == 'published' and not appraisal._is_hr_or_admin():

@@ -6,19 +6,6 @@
              APPRAISAL RECORD RULES
              ============================================================ -->
 
-        <!-- Employee: can read only their own appraisals -->
-        <record id="sl_appraisal_rule_employee_read" model="ir.rule">
-            <field name="name">Appraisal: Employee sees own appraisals</field>
-            <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
-            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups"
-                   eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
         <!-- Manager: can read/write appraisals where
              they are the selected access person -->
         <record id="sl_appraisal_rule_manager" model="ir.rule">
@@ -43,25 +30,23 @@
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+        <record id="sl_appraisal_rule_admin" model="ir.rule">
+            <field name="name">Appraisal: Administrator full access</field>
+            <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('sl_appraisal.group_appraisal_administrator'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
         </record>
 
         <!-- ============================================================
              SKILL LINE RECORD RULES
              ============================================================ -->
-
-        <!-- Employee: can read only their own skill lines -->
-        <record id="sl_skill_line_rule_employee" model="ir.rule">
-            <field name="name">Skill Line: Employee sees own</field>
-            <field name="model_id" ref="model_appraisal_skill_line"/>
-            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups"
-                   eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
 
         <!-- Manager: can read/write skill lines for their team -->
         <record id="sl_skill_line_rule_manager" model="ir.rule">
@@ -86,30 +71,40 @@
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+        <record id="sl_skill_line_rule_admin" model="ir.rule">
+            <field name="name">Skill Line: Administrator full access</field>
+            <field name="model_id" ref="model_appraisal_skill_line"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('sl_appraisal.group_appraisal_administrator'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
         </record>
 
         <!-- ============================================================
              SKILL TIMELINE RECORD RULES
              ============================================================ -->
-        <record id="sl_skill_history_rule_employee" model="ir.rule">
-            <field name="name">Skill History: Employee sees own</field>
-            <field name="model_id" ref="model_appraisal_skill_history"/>
-            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups"
-                   eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
         <record id="sl_skill_history_rule_hr" model="ir.rule">
             <field name="name">Skill History: HR full</field>
             <field name="model_id" ref="model_appraisal_skill_history"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups"
                    eval="[(4, ref('sl_appraisal.group_appraisal_hr'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+        <record id="sl_skill_history_rule_admin" model="ir.rule">
+            <field name="name">Skill History: Administrator full</field>
+            <field name="model_id" ref="model_appraisal_skill_history"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('sl_appraisal.group_appraisal_administrator'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -136,11 +131,11 @@
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups"
                    eval="[(4, ref('sl_appraisal.group_appraisal_hr')),
-                          (4, ref('base.group_system'))]"/>
+                          (4, ref('sl_appraisal.group_appraisal_administrator'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
-            <field name="perm_unlink" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
         <!-- Keep survey.user_input rules from upstream modules to avoid
@@ -155,6 +150,9 @@
         </record>
         <record id="oh_appraisal.hr_appraisal_rule_manager" model="ir.rule">
             <field name="active" eval="False"/>
+        </record>
+        <record id="oh_appraisal.oh_appraisal_group_employee" model="res.groups">
+            <field name="implied_ids" eval="[(5, 0, 0)]"/>
         </record>
         <record id="oh_appraisal.access_hr_appraisal_user" model="ir.model.access">
             <field name="perm_read" eval="1"/>

@@ -67,7 +67,10 @@ class AppraisalSkillManagerFeedback(models.Model):
         return super().write(vals)
 
     def _check_manager_self_write(self):
-        if self.env.user.has_group('sl_appraisal.group_appraisal_hr') or self.env.user.has_group('base.group_system'):
+        if (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        ):
             return
         for rec in self:
             if rec.appraisal_id.state != 'published':
