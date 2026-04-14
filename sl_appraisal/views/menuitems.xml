@@ -43,6 +43,7 @@
          MY APPRAISALS MENU — for employees
          ============================================================ -->
     <record id="sl_menu_my_appraisals" model="ir.ui.menu">
+        <field name="name">My Appraisals</field>
         <field name="active" eval="False"/>
     </record>
 
