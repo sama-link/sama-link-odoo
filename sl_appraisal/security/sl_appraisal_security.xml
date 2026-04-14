@@ -24,11 +24,7 @@
         <record id="sl_appraisal_rule_manager" model="ir.rule">
             <field name="name">Appraisal: Manager/Coach access</field>
             <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
-            <field name="domain_force">['|', '|',
-                ('hr_manager_ids.user_id', '=', user.id),
-                ('employee_id.parent_id.user_id', '=', user.id),
-                ('employee_id.coach_id.user_id', '=', user.id)
-            ]</field>
+            <field name="domain_force">[('access_user_ids', 'in', user.id)]</field>
             <field name="groups"
                    eval="[(4, ref('base.group_user'))]"/>
             <field name="perm_read" eval="True"/>
@@ -71,11 +67,7 @@
         <record id="sl_skill_line_rule_manager" model="ir.rule">
             <field name="name">Skill Line: Manager access</field>
             <field name="model_id" ref="model_appraisal_skill_line"/>
-            <field name="domain_force">['|', '|',
-                ('appraisal_id.hr_manager_ids.user_id', '=', user.id),
-                ('employee_id.parent_id.user_id', '=', user.id),
-                ('employee_id.coach_id.user_id', '=', user.id)
-            ]</field>
+            <field name="domain_force">[('appraisal_id.access_user_ids', 'in', user.id)]</field>
             <field name="groups"
                    eval="[(4, ref('base.group_user'))]"/>
             <field name="perm_read" eval="True"/>
@@ -96,6 +88,63 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
         </record>
+
+        <!-- ============================================================
+             SKILL TIMELINE RECORD RULES
+             ============================================================ -->
+        <record id="sl_skill_history_rule_employee" model="ir.rule">
+            <field name="name">Skill History: Employee sees own</field>
+            <field name="model_id" ref="model_appraisal_skill_history"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="groups"
+                   eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="sl_skill_history_rule_hr" model="ir.rule">
+            <field name="name">Skill History: HR full</field>
+            <field name="model_id" ref="model_appraisal_skill_history"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('samalink_security_groups.group_samalink_hr_officer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ============================================================
+             MANAGER FEEDBACK RECORD RULES
+             ============================================================ -->
+        <record id="sl_manager_feedback_rule_user_own" model="ir.rule">
+            <field name="name">Manager Feedback: own records only</field>
+            <field name="model_id" ref="model_appraisal_skill_manager_feedback"/>
+            <field name="domain_force">[('manager_user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="sl_manager_feedback_rule_hr" model="ir.rule">
+            <field name="name">Manager Feedback: HR/Admin full</field>
+            <field name="model_id" ref="model_appraisal_skill_manager_feedback"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('samalink_security_groups.group_samalink_hr_officer')),
+                          (4, ref('base.group_system'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Keep survey.user_input rules from upstream modules to avoid
+             blocking generic survey access in non-appraisal contexts. -->
 
         <!-- ============================================================
              DISABLE OLD oh_appraisal GLOBAL RULES

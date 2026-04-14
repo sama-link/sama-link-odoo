@@ -16,6 +16,8 @@ class SurveyUserInput(models.Model):
             for record in self:
                 if record.appraisal_id:
                     try:
+                        # Keep appraisal skill proposals aligned with submitted answers.
+                        record.appraisal_id._sync_skill_lines_from_survey_answers()
                         record.appraisal_id.message_post(
                             body=f"✅ Survey response completed by "
                                  f"<b>{record.partner_id.name or record.email or 'Anonymous'}</b>.",

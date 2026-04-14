@@ -3,3 +3,9 @@ access_appraisal_skill_line_employee,appraisal.skill.line.employee,model_apprais
 access_appraisal_skill_line_hr,appraisal.skill.line.hr,model_appraisal_skill_line,samalink_security_groups.group_samalink_hr_officer,1,1,1,1
 access_appraisal_skill_line_admin,appraisal.skill.line.admin,model_appraisal_skill_line,base.group_system,1,1,1,1
 access_appraisal_skill_line_user,appraisal.skill.line.user,model_appraisal_skill_line,base.group_user,1,1,0,0
+access_appraisal_skill_history_employee,appraisal.skill.history.employee,model_appraisal_skill_history,samalink_security_groups.group_samalink_employee,1,0,0,0
+access_appraisal_skill_history_hr,appraisal.skill.history.hr,model_appraisal_skill_history,samalink_security_groups.group_samalink_hr_officer,1,1,1,1
+access_appraisal_skill_history_admin,appraisal.skill.history.admin,model_appraisal_skill_history,base.group_system,1,1,1,1
+access_appraisal_skill_manager_feedback_user,appraisal.skill.manager.feedback.user,model_appraisal_skill_manager_feedback,base.group_user,1,1,1,0
+access_appraisal_skill_manager_feedback_hr,appraisal.skill.manager.feedback.hr,model_appraisal_skill_manager_feedback,samalink_security_groups.group_samalink_hr_officer,1,1,1,1
+access_appraisal_skill_manager_feedback_admin,appraisal.skill.manager.feedback.admin,model_appraisal_skill_manager_feedback,base.group_system,1,1,1,1

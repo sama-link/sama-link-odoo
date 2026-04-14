@@ -26,6 +26,7 @@ jobs:
             gcloud compute os-login ssh-keys remove --key="$key" --quiet || true
           done
 
+          
       - name: SSH via IAP and Execute Refresh Script
         run: |
           gcloud compute ssh --quiet \

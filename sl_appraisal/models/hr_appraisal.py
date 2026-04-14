@@ -32,12 +32,43 @@ class HrAppraisal(models.Model):
     is_hr_or_admin = fields.Boolean(
         string='Is HR/Admin', compute='_compute_is_hr_or_admin')
 
+    allowed_manager_ids = fields.Many2many(
+        'hr.employee',
+        compute='_compute_allowed_manager_ids',
+        compute_sudo=True,
+        string='Allowed Evaluators',
+        help="Employees that can be selected as manager evaluators.")
+
+    access_user_ids = fields.Many2many(
+        'res.users',
+        compute='_compute_access_user_ids',
+        compute_sudo=True,
+        store=True,
+        string='Allowed Access Users',
+        help="Users allowed to access this appraisal as evaluator/manager/coach.")
+
+    manager_feedback_ids = fields.One2many(
+        'appraisal.skill.manager.feedback', 'appraisal_id',
+        string='Manager Feedback')
+
+    my_survey_count = fields.Integer(
+        string='My Survey Links',
+        compute='_compute_my_survey_count')
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
     def _compute_skill_line_count(self):
         for rec in self:
             rec.skill_line_count = len(rec.appraisal_skill_line_ids)
+
+    def _compute_my_survey_count(self):
+        user_partner = self.env.user.partner_id
+        for rec in self:
+            rec.my_survey_count = self.env['survey.user_input'].search_count([
+                ('appraisal_id', '=', rec.id),
+                ('partner_id', '=', user_partner.id),
+            ])
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -46,6 +77,32 @@ class HrAppraisal(models.Model):
         is_admin = self.env.user.has_group('base.group_system')
         for rec in self:
             rec.is_hr_or_admin = is_hr or is_admin
+
+    @api.depends('employee_id', 'employee_id.parent_id', 'employee_id.coach_id')
+    def _compute_allowed_manager_ids(self):
+        for rec in self:
+            managers = self.env['hr.employee']
+            if rec.employee_id:
+                managers |= rec.employee_id.parent_id
+                managers |= rec.employee_id.coach_id
+            rec.allowed_manager_ids = managers.filtered(lambda e: e.user_id)
+
+    @api.depends('employee_id', 'employee_id.user_id', 'employee_id.parent_id.user_id',
+                 'employee_id.coach_id.user_id', 'hr_manager_ids.user_id')
+    def _compute_access_user_ids(self):
+        for rec in self:
+            users = self.env['res.users']
+            if rec.employee_id and rec.employee_id.user_id:
+                users |= rec.employee_id.user_id
+            if rec.employee_id and rec.employee_id.parent_id.user_id:
+                users |= rec.employee_id.parent_id.user_id
+            if rec.employee_id and rec.employee_id.coach_id.user_id:
+                users |= rec.employee_id.coach_id.user_id
+            users |= rec.hr_manager_ids.mapped('user_id')
+            # Always include creator for traceability access.
+            if rec.creater_id:
+                users |= rec.creater_id
+            rec.access_user_ids = users
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 
@@ -102,6 +159,12 @@ class HrAppraisal(models.Model):
         self._check_hr_or_admin_access("publish appraisals")
         if self.state != 'draft':
             raise UserError(_("Only draft appraisals can be published."))
+        if self.employee_id and self.hr_manager_ids:
+            invalid = self.hr_manager_ids - self.allowed_manager_ids
+            if invalid:
+                raise UserError(_(
+                    "Only the employee's direct manager/coach can be selected as manager evaluators."
+                ))
         # Validate that at least one evaluator is set
         if not self.hr_manager_ids and not self.hr_emp:
             raise UserError(
@@ -111,6 +174,35 @@ class HrAppraisal(models.Model):
         # Send survey emails using existing mechanism
         self.action_start_appraisal()
 
+    def action_sync_skills_from_surveys(self):
+        """Sync manager proposed skill levels from completed survey answers."""
+        self.ensure_one()
+        if self.state not in ('published', 'hr_finalization'):
+            raise UserError(_("You can sync survey answers only in Published or HR Finalization."))
+        synced = self._sync_skill_lines_from_survey_answers()
+        self.message_post(
+            body=_("Survey answers synced to skills. Updated %s skill line(s).") % synced,
+            subtype_xmlid='mail.mt_note',
+        )
+
+    def action_open_my_surveys(self):
+        self.ensure_one()
+        answers = self.env['survey.user_input'].search([
+            ('appraisal_id', '=', self.id),
+            ('partner_id', '=', self.env.user.partner_id.id),
+        ], order='state asc, create_date desc')
+        if not answers:
+            raise UserError(_("No survey link found for your user in this appraisal."))
+
+        # Prefer pending link, then latest completed.
+        pending = answers.filtered(lambda a: a.state != 'done')
+        answer = pending[:1] or answers[:1]
+        return {
+            'type': 'ir.actions.act_url',
+            'url': answer.get_start_url(),
+            'target': 'new',
+        }
+
     def action_hr_finalize(self):
         """Move appraisal from Published → HR Finalization.
         Auto-update employee skills with approved levels."""
@@ -119,9 +211,11 @@ class HrAppraisal(models.Model):
         if self.state != 'published':
             raise UserError(
                 _("Only published appraisals can be finalized."))
+        self._sync_skill_lines_from_surveys_if_needed()
         self.write({'state': 'hr_finalization'})
         # Auto-update employee skills
         self._update_employee_skills()
+        self._create_skill_timeline()
 
     def action_reset_to_draft(self):
         """Reset appraisal back to Draft state."""
@@ -147,6 +241,107 @@ class HrAppraisal(models.Model):
             raise AccessError(
                 _("Only HR Officers and Administrators can %s.",
                   action_name))
+
+    @api.onchange('employee_id')
+    def _onchange_employee_id_limit_managers(self):
+        for rec in self:
+            if rec.hr_manager_ids:
+                rec.hr_manager_ids = rec.hr_manager_ids & rec.allowed_manager_ids
+
+    def _sync_skill_lines_from_surveys_if_needed(self):
+        for appraisal in self:
+            appraisal._sync_skill_lines_from_survey_answers()
+
+    def _sync_skill_lines_from_survey_answers(self):
+        """Map completed survey answers to appraisal skill proposed levels.
+
+        Mapping strategy:
+        1) Skill line linked to question (`survey_question_id`)
+        2) Exact skill level name match with textual answer (case-insensitive)
+        3) Fallback: numeric answer mapped by nearest `level_progress`
+        """
+        self.ensure_one()
+        if not self.appraisal_skill_line_ids:
+            return 0
+
+        answers = self.env['survey.user_input'].search([
+            ('appraisal_id', '=', self.id),
+            ('state', '=', 'done'),
+        ])
+        if not answers:
+            return 0
+
+        question_lines = {}
+        for line in self.appraisal_skill_line_ids.filtered(lambda l: l.survey_question_id):
+            question_lines.setdefault(line.survey_question_id.id, self.env['appraisal.skill.line'])
+            question_lines[line.survey_question_id.id] |= line
+
+        updated = 0
+        for answer in answers:
+            for line in answer.user_input_line_ids:
+                skill_lines = question_lines.get(line.question_id.id)
+                if not skill_lines:
+                    continue
+                for skill_line in skill_lines:
+                    level = self._map_answer_to_skill_level(skill_line, line)
+                    if level:
+                        manager_employee = self.env['hr.employee'].search(
+                            [('user_id.partner_id', '=', answer.partner_id.id)],
+                            limit=1,
+                        )
+                        manager_user = manager_employee.user_id if manager_employee else self.env['res.users'].search(
+                            [('partner_id', '=', answer.partner_id.id)],
+                            limit=1,
+                        )
+                        if manager_user:
+                            feedback = self.env['appraisal.skill.manager.feedback'].search([
+                                ('skill_line_id', '=', skill_line.id),
+                                ('manager_user_id', '=', manager_user.id),
+                            ], limit=1)
+                            feedback_vals = {
+                                'proposed_skill_level_id': level.id,
+                                'manager_notes': _("Auto-synced from survey answer by %s") % (
+                                    answer.partner_id.name or answer.email or _("Anonymous")
+                                ),
+                            }
+                            if feedback:
+                                feedback.write(feedback_vals)
+                            else:
+                                feedback_vals.update({
+                                    'skill_line_id': skill_line.id,
+                                    'manager_user_id': manager_user.id,
+                                })
+                                self.env['appraisal.skill.manager.feedback'].create(feedback_vals)
+                            updated += 1
+        return updated
+
+    def _map_answer_to_skill_level(self, skill_line, answer_line):
+        levels = self.env['hr.skill.level'].search([
+            ('skill_type_id', '=', skill_line.skill_type_id.id),
+        ])
+        if not levels:
+            return False
+
+        suggested_row = getattr(answer_line, 'value_suggested_row', False)
+        suggested_answer = getattr(answer_line, 'suggested_answer_id', False)
+        textual_candidates = [
+            getattr(answer_line, 'value_text_box', False),
+            getattr(answer_line, 'value_char_box', False),
+            suggested_row and suggested_row.value or False,
+            suggested_answer and suggested_answer.value or False,
+        ]
+        text_value = next((v for v in textual_candidates if v), False)
+        if text_value:
+            text_value = text_value.strip().lower()
+            exact = levels.filtered(lambda l: (l.name or '').strip().lower() == text_value)
+            if exact:
+                return exact[0]
+
+        numeric_value = getattr(answer_line, 'value_numerical_box', False)
+        if numeric_value is False or numeric_value is None:
+            return False
+        nearest = min(levels, key=lambda lvl: abs((lvl.level_progress or 0) - numeric_value))
+        return nearest
 
     def _update_employee_skills(self):
         """Update employee skill levels based on HR-approved final levels."""
@@ -175,3 +370,18 @@ class HrAppraisal(models.Model):
                             'skill_level_id': final_level.id,
                         })]
                     })
+
+    def _create_skill_timeline(self):
+        history_model = self.env['appraisal.skill.history']
+        for appraisal in self:
+            for line in appraisal.appraisal_skill_line_ids.filtered(lambda l: l.final_skill_level_id):
+                history_model.create({
+                    'employee_id': appraisal.employee_id.id,
+                    'appraisal_id': appraisal.id,
+                    'appraisal_date': appraisal.appraisal_deadline,
+                    'skill_type_id': line.skill_type_id.id,
+                    'skill_id': line.skill_id.id,
+                    'old_level_id': line.current_skill_level_id.id,
+                    'new_level_id': line.final_skill_level_id.id,
+                    'change_state': line.level_change or 'same',
+                })

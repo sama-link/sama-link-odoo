@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sl_manager_feedback_view_tree" model="ir.ui.view">
+        <field name="name">appraisal.skill.manager.feedback.tree</field>
+        <field name="model">appraisal.skill.manager.feedback</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false">
+                <field name="manager_user_id" readonly="1"/>
+                <field name="manager_employee_id" readonly="1" optional="hide"/>
+                <field name="skill_type_id" readonly="1"/>
+                <field name="skill_id" readonly="1"/>
+                <field name="proposed_skill_level_id"/>
+                <field name="manager_notes"/>
+                <field name="write_date" string="Updated On" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sl_manager_feedback_view_form" model="ir.ui.view">
+        <field name="name">appraisal.skill.manager.feedback.form</field>
+        <field name="model">appraisal.skill.manager.feedback</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="appraisal_id" readonly="1"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="manager_user_id" readonly="1"/>
+                            <field name="manager_employee_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="skill_type_id" readonly="1"/>
+                            <field name="skill_id" readonly="1"/>
+                            <field name="proposed_skill_level_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="manager_notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>
