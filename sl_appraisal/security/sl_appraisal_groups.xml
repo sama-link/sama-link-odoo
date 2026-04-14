@@ -2,8 +2,8 @@
 <odoo>
     <data noupdate="1">
         <record id="group_appraisal_hr" model="res.groups">
-            <field name="name">Appraisal / HR Officer</field>
-            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="name">Appriasal / HR Officer</field>
+            <field name="category_id" ref="oh_appraisal.module_category_hr_appraisal"/>
             <field name="implied_ids" eval="[(4, ref('oh_appraisal.oh_appraisal_group_manager'))]"/>
         </record>
     </data>

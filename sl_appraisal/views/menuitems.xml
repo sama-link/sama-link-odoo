@@ -21,13 +21,21 @@
         ])]"/>
     </record>
 
-    <!-- Extra submenu requested for appraisal model -->
+    <!-- Hide unwanted submenus -->
+    <record id="oh_appraisal.hr_appraisal_menu_answers" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
     <menuitem id="sl_menu_appraisal_model"
               name="Appraisal Model"
               parent="oh_appraisal.hr_appraisal_menu_root"
               action="sl_hr_appraisal_action"
               sequence="14"
               groups="oh_appraisal.oh_appraisal_group_manager,sl_appraisal.group_appraisal_hr"/>
+
+    <record id="sl_menu_appraisal_model" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <!-- ============================================================
          MY APPRAISALS MENU — for employees
@@ -56,14 +64,10 @@
         <field name="whitelisted_menu_ids" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
-            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
-            (4, ref('sl_menu_appraisal_model')),
         ]"/>
         <field name="menu_access" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
-            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
-            (4, ref('sl_menu_appraisal_model')),
         ]"/>
     </record>
 

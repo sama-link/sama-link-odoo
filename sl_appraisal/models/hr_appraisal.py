@@ -63,6 +63,35 @@ class HrAppraisal(models.Model):
         string='My Survey Links',
         compute='_compute_my_survey_count')
 
+    skill_average_score = fields.Float(
+        string='Skills Average (%)',
+        compute='_compute_scores',
+        store=True,
+        digits=(16, 2),
+        help="Average percentage of all skills in this appraisal.")
+
+    manual_score = fields.Float(
+        string='Manual Score (%)',
+        digits=(16, 2),
+        help="Additional score entered by HR (0 to 15).")
+
+    manual_score_display = fields.Float(
+        string='Score Tab Value (%)',
+        related='manual_score',
+        readonly=True,
+        help="Displays the score entered in the Score tab.")
+
+    total_score = fields.Float(
+        string='Total Score (%)',
+        compute='_compute_scores',
+        store=True,
+        digits=(16, 2),
+        help="Sum of Skills Average and Manual Score.")
+
+    manual_score_reason = fields.Text(
+        string='Score Reason',
+        help="Reason for the manual score adjustment.")
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
@@ -77,6 +106,22 @@ class HrAppraisal(models.Model):
                 ('appraisal_id', '=', rec.id),
                 ('partner_id', '=', user_partner.id),
             ])
+
+    @api.depends(
+        'appraisal_skill_line_ids',
+        'appraisal_skill_line_ids.current_level_progress',
+        'appraisal_skill_line_ids.final_level_progress',
+        'manual_score',
+    )
+    def _compute_scores(self):
+        for rec in self:
+            percentages = []
+            for line in rec.appraisal_skill_line_ids:
+                # Prefer final approved level; fallback to current level.
+                value = line.final_level_progress or line.current_level_progress or 0
+                percentages.append(value)
+            rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
+            rec.total_score = rec.skill_average_score + (rec.manual_score or 0.0)
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -129,6 +174,35 @@ class HrAppraisal(models.Model):
                 raise ValidationError(_(
                     "Only one person can be selected to access the appraisal form."
                 ))
+
+    @api.constrains('manual_score', 'manual_score_reason', 'total_score')
+    def _check_score_limits(self):
+        for rec in self:
+            if rec.manual_score < 0 or rec.manual_score > 15:
+                raise ValidationError(_("Manual score must be between 0 and 15."))
+            if rec.manual_score and not rec.manual_score_reason:
+                raise ValidationError(_("Score reason is mandatory when manual score is set."))
+            if rec.total_score > 100:
+                raise ValidationError(_("Total score cannot exceed 100%%."))
+
+    @api.onchange('manual_score')
+    def _onchange_manual_score(self):
+        for rec in self:
+            if rec.manual_score < 0:
+                rec.manual_score = 0
+            if rec.manual_score > 15:
+                rec.manual_score = 15
+            max_by_total = max(0.0, 100.0 - (rec.skill_average_score or 0.0))
+            if rec.manual_score > max_by_total:
+                rec.manual_score = max_by_total
+                return {
+                    'warning': {
+                        'title': _("Score adjusted"),
+                        'message': _(
+                            "Manual score was reduced so the total does not exceed 100%%."
+                        ),
+                    }
+                }
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 
