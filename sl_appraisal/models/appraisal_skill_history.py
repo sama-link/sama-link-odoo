@@ -12,7 +12,9 @@ class AppraisalSkillHistory(models.Model):
     skill_type_id = fields.Many2one('hr.skill.type', required=True)
     skill_id = fields.Many2one('hr.skill', required=True)
     old_level_id = fields.Many2one('hr.skill.level')
+    old_level_progress = fields.Integer(related='old_level_id.level_progress', string='Before Progress')
     new_level_id = fields.Many2one('hr.skill.level', required=True)
+    new_level_progress = fields.Integer(related='new_level_id.level_progress', string='After Progress')
     change_state = fields.Selection([
         ('improved', 'Improved'),
         ('same', 'Same'),

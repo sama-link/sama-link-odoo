@@ -91,7 +91,9 @@
                             <field name="skill_type_id"/>
                             <field name="skill_id"/>
                             <field name="old_level_id" string="Before"/>
+                            <field name="old_level_progress" widget="progressbar" string="Before %"/>
                             <field name="new_level_id" string="After"/>
+                            <field name="new_level_progress" widget="progressbar" string="After %"/>
                             <field name="change_state" widget="badge"
                                    decoration-success="change_state == 'improved'"
                                    decoration-warning="change_state == 'same'"
@@ -125,7 +127,9 @@
                 <field name="skill_type_id"/>
                 <field name="skill_id"/>
                 <field name="old_level_id"/>
+                <field name="old_level_progress" widget="progressbar" string="Before %"/>
                 <field name="new_level_id"/>
+                <field name="new_level_progress" widget="progressbar" string="After %"/>
                 <field name="change_state"/>
             </list>
         </field>
@@ -135,10 +139,10 @@
         <field name="name">appraisal.skill.history.graph</field>
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
-            <graph string="Skills Timeline" type="bar" stacked="1">
+            <graph string="Skills Timeline" type="line" sample="1">
                 <field name="appraisal_date" interval="month"/>
-                <field name="change_state"/>
-                <field name="id" type="measure"/>
+                <field name="skill_id"/>
+                <field name="new_level_progress" type="measure"/>
             </graph>
         </field>
     </record>
