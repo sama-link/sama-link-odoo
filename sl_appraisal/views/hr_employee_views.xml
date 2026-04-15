@@ -75,7 +75,6 @@
                                    decoration-warning="state == 'published'"
                                    decoration-info="state == 'draft'"/>
                             <field name="skill_line_count" string="Skills Evaluated"/>
-                            <field name="tot_comp_survey" string="Survey Answers"/>
                             <field name="creater_id" string="Created By"/>
                         </list>
                     </field>

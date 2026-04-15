@@ -89,11 +89,6 @@ class AppraisalSkillLine(models.Model):
         related='final_skill_level_id.level_progress',
         string='Final Progress', readonly=True)
 
-    # ── Survey link (optional) ────────────────────────────────────────
-    survey_question_id = fields.Many2one(
-        'survey.question', string='Linked Survey Question',
-        help="Optional: link this skill evaluation to a specific survey question")
-
     # ── Notes ─────────────────────────────────────────────────────────
     manager_notes = fields.Text(
         string='Manager Notes',
@@ -223,25 +218,25 @@ class AppraisalSkillLine(models.Model):
                 or appraisal.env.user.has_group('base.group_system')
             )
             is_hr = appraisal.env.user.has_group('sl_appraisal.group_appraisal_hr')
-            is_manager = appraisal.env.user.has_group('oh_appraisal.oh_appraisal_group_manager')
+            is_manager = appraisal.env.user.has_group('sl_appraisal.group_appraisal_manager')
+            if is_admin and {'manager_feedback_skill_level_id', 'current_skill_level_id'} & set(vals):
+                raise AccessError(_("Administrator cannot edit Manager Feedback Score or Current Level fields."))
             if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in Draft."))
             if appraisal.state == 'submitted' and not is_admin:
                 raise AccessError(_("Only Appraisal Administrator can edit skill lines in Submitted state."))
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
-            if appraisal.state == 'published' and is_hr:
-                allowed_hr_vals = {'hr_skill_score_level_id'}
-                if not set(vals).issubset(allowed_hr_vals):
-                    raise AccessError(_("HR Officer can update only HR Skill Score in Published stage."))
             if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
                 allowed_manager_vals = {'manager_feedback_skill_level_id'}
                 if not is_manager or not set(vals).issubset(allowed_manager_vals):
                     raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
-            if appraisal.state in ('submitted', 'hr_finalization') and is_hr:
-                allowed_hr_vals = {'hr_skill_score_level_id'}
+            if appraisal.state == 'published' and is_hr and not is_admin:
+                allowed_hr_vals = {'manager_feedback_skill_level_id'}
                 if not set(vals).issubset(allowed_hr_vals):
-                    raise AccessError(_("HR Officer can update only HR Skill Score in Submitted/HR Finalization stages."))
+                    raise AccessError(_("HR Officer can update only Manager Feedback Score in Published stage."))
+            if appraisal.state in ('submitted', 'hr_finalization') and is_hr and not is_admin:
+                raise AccessError(_("HR Officer cannot edit skill lines after submission."))
         return super().write(vals)
 
     @api.model_create_multi

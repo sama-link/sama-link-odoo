@@ -33,6 +33,9 @@ class HrAppraisal(models.Model):
 
     is_hr_or_admin = fields.Boolean(
         string='Is HR/Admin', compute='_compute_is_hr_or_admin')
+    is_appraisal_admin = fields.Boolean(
+        string='Is Appraisal Admin',
+        compute='_compute_is_appraisal_admin')
 
     allowed_manager_ids = fields.Many2many(
         'hr.employee',
@@ -60,10 +63,6 @@ class HrAppraisal(models.Model):
     manager_feedback_ids = fields.One2many(
         'appraisal.skill.manager.feedback', 'appraisal_id',
         string='Manager Feedback')
-
-    my_survey_count = fields.Integer(
-        string='My Survey Links',
-        compute='_compute_my_survey_count')
 
     skill_average_score = fields.Float(
         string='Skills Average (%)',
@@ -101,14 +100,6 @@ class HrAppraisal(models.Model):
         for rec in self:
             rec.skill_line_count = len(rec.appraisal_skill_line_ids)
 
-    def _compute_my_survey_count(self):
-        user_partner = self.env.user.partner_id
-        for rec in self:
-            rec.my_survey_count = self.env['survey.user_input'].search_count([
-                ('appraisal_id', '=', rec.id),
-                ('partner_id', '=', user_partner.id),
-            ])
-
     @api.depends(
         'appraisal_skill_line_ids',
         'appraisal_skill_line_ids.computed_current_level_progress',
@@ -133,6 +124,15 @@ class HrAppraisal(models.Model):
         for rec in self:
             rec.is_hr_or_admin = is_hr or is_admin
 
+    @api.depends_context('uid')
+    def _compute_is_appraisal_admin(self):
+        is_admin = (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        )
+        for rec in self:
+            rec.is_appraisal_admin = is_admin
+
     @api.depends('employee_id', 'employee_id.parent_id', 'employee_id.coach_id')
     def _compute_allowed_manager_ids(self):
         for rec in self:
@@ -145,7 +145,6 @@ class HrAppraisal(models.Model):
     @api.depends(
         'employee_id', 'employee_id.user_id', 'employee_id.parent_id.user_id',
         'employee_id.coach_id.user_id', 'hr_manager_ids.user_id',
-        'hr_collaborator_ids.user_id', 'hr_colleague_ids.user_id',
         'hr_employee_ids.user_id', 'creater_id'
     )
     def _compute_access_user_ids(self):
@@ -163,12 +162,10 @@ class HrAppraisal(models.Model):
         self.ensure_one()
         return (
             self.hr_manager_ids
-            | self.hr_collaborator_ids
-            | self.hr_colleague_ids
             | self.hr_employee_ids
         ).filtered(lambda emp: emp.user_id)
 
-    @api.constrains('hr_manager_ids', 'hr_collaborator_ids', 'hr_colleague_ids', 'hr_employee_ids')
+    @api.constrains('hr_manager_ids', 'hr_employee_ids')
     def _check_single_access_person(self):
         for rec in self:
             selected_employees = rec._get_selected_access_employees()
@@ -220,14 +217,54 @@ class HrAppraisal(models.Model):
         """Restrict writes by role and appraisal access plan."""
         is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') or self.env.user.has_group('base.group_system')
         is_hr_officer = self.env.user.has_group('sl_appraisal.group_appraisal_hr')
+        is_manager = self.env.user.has_group('sl_appraisal.group_appraisal_manager') or is_hr_officer
+
+        if is_admin and {'manual_score', 'manual_score_reason'} & set(vals):
+            raise AccessError(_("Appraisal Administrator cannot edit manual score fields."))
+
+        allowed_manager_fields = {'manual_score', 'manual_score_reason'}
 
         if is_hr_officer and not is_admin:
             for rec in self:
+                # HR Officer can prepare draft and publish even if not selected.
+                if rec.state == 'draft':
+                    continue
                 allowed_users = rec._get_selected_access_employees().mapped('user_id')
                 if self.env.user not in allowed_users:
-                    raise AccessError(_(
-                        "You can edit this appraisal only if you are selected in the Access Plan."
-                    ))
+                    # Allow only publish transition while still in draft; all
+                    # other edits require being selected in access plan.
+                    if vals.get('state') == 'published' and set(vals) == {'state'}:
+                        continue
+                    raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))
+
+        if is_manager and not is_admin:
+            for rec in self:
+                # In non-draft states, manager-like users must be selected.
+                if rec.state != 'draft':
+                    allowed_users = rec._get_selected_access_employees().mapped('user_id')
+                    if self.env.user not in allowed_users:
+                        raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))
+
+                if 'state' in vals:
+                    next_state = vals.get('state')
+                    if next_state == 'submitted':
+                        if set(vals) != {'state'}:
+                            raise AccessError(_("Submit action can only change state."))
+                    elif next_state == 'published' and is_hr_officer and rec.state == 'draft':
+                        # HR publish allowed.
+                        pass
+                    else:
+                        raise AccessError(_("You cannot change appraisal state in this operation."))
+
+                non_state_fields = set(vals) - {'state'}
+                if non_state_fields:
+                    if rec.state == 'draft' and is_hr_officer:
+                        # HR draft preparation is allowed.
+                        continue
+                    if not non_state_fields.issubset(allowed_manager_fields):
+                        raise AccessError(_("You can edit only Manual Score fields at this stage."))
+                    if rec.state != 'published':
+                        raise AccessError(_("Manual Score can be edited only while appraisal is Published."))
 
         if 'state' in vals and not self._is_hr_or_admin():
             raise AccessError(
@@ -300,7 +337,7 @@ class HrAppraisal(models.Model):
         )
         is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
         if not (is_admin or is_selected_user):
-            raise AccessError(_("Only selected manager/contributor or Appraisal Administrator can submit."))
+            raise AccessError(_("Only selected manager/employee or Appraisal Administrator can submit."))
 
         # On submit, initialize HR score from manager feedback score once.
         for line in self.appraisal_skill_line_ids:
@@ -308,35 +345,6 @@ class HrAppraisal(models.Model):
                 line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
 
         self.write({'state': 'submitted'})
-
-    def action_sync_skills_from_surveys(self):
-        """Sync manager proposed skill levels from completed survey answers."""
-        self.ensure_one()
-        if self.state not in ('published', 'hr_finalization'):
-            raise UserError(_("You can sync survey answers only in Published or HR Finalization."))
-        synced = self._sync_skill_lines_from_survey_answers()
-        self.message_post(
-            body=_("Survey answers synced to skills. Updated %s skill line(s).") % synced,
-            subtype_xmlid='mail.mt_note',
-        )
-
-    def action_open_my_surveys(self):
-        self.ensure_one()
-        answers = self.env['survey.user_input'].search([
-            ('appraisal_id', '=', self.id),
-            ('partner_id', '=', self.env.user.partner_id.id),
-        ], order='state asc, create_date desc')
-        if not answers:
-            raise UserError(_("No survey link found for your user in this appraisal."))
-
-        # Prefer pending link, then latest completed.
-        pending = answers.filtered(lambda a: a.state != 'done')
-        answer = pending[:1] or answers[:1]
-        return {
-            'type': 'ir.actions.act_url',
-            'url': answer.get_start_url(),
-            'target': 'new',
-        }
 
     def action_hr_finalize(self):
         """Move appraisal from Published → HR Finalization.
@@ -350,7 +358,6 @@ class HrAppraisal(models.Model):
         if self.state != 'submitted':
             raise UserError(
                 _("Only submitted appraisals can be finalized."))
-        self._sync_skill_lines_from_surveys_if_needed()
         self._apply_hr_scores_to_final_levels()
         self.write({'state': 'hr_finalization'})
         # Auto-update employee skills
@@ -389,106 +396,11 @@ class HrAppraisal(models.Model):
             if rec.hr_manager_ids:
                 rec.hr_manager_ids = rec.hr_manager_ids & rec.allowed_manager_ids
 
-    def _sync_skill_lines_from_surveys_if_needed(self):
-        for appraisal in self:
-            appraisal._sync_skill_lines_from_survey_answers()
-
     def _apply_hr_scores_to_final_levels(self):
         for appraisal in self:
             for line in appraisal.appraisal_skill_line_ids:
                 if line.hr_skill_score_level_id:
                     line.final_skill_level_id = line.hr_skill_score_level_id
-
-    def _sync_skill_lines_from_survey_answers(self):
-        """Map completed survey answers to appraisal skill proposed levels.
-
-        Mapping strategy:
-        1) Skill line linked to question (`survey_question_id`)
-        2) Exact skill level name match with textual answer (case-insensitive)
-        3) Fallback: numeric answer mapped by nearest `level_progress`
-        """
-        self.ensure_one()
-        if not self.appraisal_skill_line_ids:
-            return 0
-
-        answers = self.env['survey.user_input'].search([
-            ('appraisal_id', '=', self.id),
-            ('state', '=', 'done'),
-        ])
-        if not answers:
-            return 0
-
-        question_lines = {}
-        for line in self.appraisal_skill_line_ids.filtered(lambda l: l.survey_question_id):
-            question_lines.setdefault(line.survey_question_id.id, self.env['appraisal.skill.line'])
-            question_lines[line.survey_question_id.id] |= line
-
-        updated = 0
-        for answer in answers:
-            for line in answer.user_input_line_ids:
-                skill_lines = question_lines.get(line.question_id.id)
-                if not skill_lines:
-                    continue
-                for skill_line in skill_lines:
-                    level = self._map_answer_to_skill_level(skill_line, line)
-                    if level:
-                        manager_employee = self.env['hr.employee'].search(
-                            [('user_id.partner_id', '=', answer.partner_id.id)],
-                            limit=1,
-                        )
-                        manager_user = manager_employee.user_id if manager_employee else self.env['res.users'].search(
-                            [('partner_id', '=', answer.partner_id.id)],
-                            limit=1,
-                        )
-                        if manager_user:
-                            feedback = self.env['appraisal.skill.manager.feedback'].search([
-                                ('skill_line_id', '=', skill_line.id),
-                                ('manager_user_id', '=', manager_user.id),
-                            ], limit=1)
-                            feedback_vals = {
-                                'proposed_skill_level_id': level.id,
-                                'manager_notes': _("Auto-synced from survey answer by %s") % (
-                                    answer.partner_id.name or answer.email or _("Anonymous")
-                                ),
-                            }
-                            if feedback:
-                                feedback.write(feedback_vals)
-                            else:
-                                feedback_vals.update({
-                                    'skill_line_id': skill_line.id,
-                                    'manager_user_id': manager_user.id,
-                                })
-                                self.env['appraisal.skill.manager.feedback'].create(feedback_vals)
-                            updated += 1
-        return updated
-
-    def _map_answer_to_skill_level(self, skill_line, answer_line):
-        levels = self.env['hr.skill.level'].search([
-            ('skill_type_id', '=', skill_line.skill_type_id.id),
-        ])
-        if not levels:
-            return False
-
-        suggested_row = getattr(answer_line, 'value_suggested_row', False)
-        suggested_answer = getattr(answer_line, 'suggested_answer_id', False)
-        textual_candidates = [
-            getattr(answer_line, 'value_text_box', False),
-            getattr(answer_line, 'value_char_box', False),
-            suggested_row and suggested_row.value or False,
-            suggested_answer and suggested_answer.value or False,
-        ]
-        text_value = next((v for v in textual_candidates if v), False)
-        if text_value:
-            text_value = text_value.strip().lower()
-            exact = levels.filtered(lambda l: (l.name or '').strip().lower() == text_value)
-            if exact:
-                return exact[0]
-
-        numeric_value = getattr(answer_line, 'value_numerical_box', False)
-        if numeric_value is False or numeric_value is None:
-            return False
-        nearest = min(levels, key=lambda lvl: abs((lvl.level_progress or 0) - numeric_value))
-        return nearest
 
     def _update_employee_skills(self):
         """Update employee skill levels based on HR-approved final levels."""

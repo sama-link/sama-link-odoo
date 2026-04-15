@@ -37,7 +37,7 @@
                             string="🗂 Submit"
                             type="object"
                             class="btn-secondary"
-                            groups="oh_appraisal.oh_appraisal_group_manager,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'published'"
                             confirm="This will lock manager feedback and move appraisal to Submitted. Continue?"/>
                     <button name="action_reset_to_draft"
@@ -85,10 +85,10 @@
 
                     <!-- Hidden technical fields -->
                     <field name="is_hr_or_admin" invisible="1"/>
+                    <field name="is_appraisal_admin" invisible="1"/>
                     <field name="skills_populated" invisible="1"/>
                     <field name="response_id" invisible="1"/>
                     <field name="app_period_from" invisible="1"/>
-                    <field name="tot_sent_survey" invisible="1"/>
                     <field name="check_draft" invisible="1"/>
                     <field name="check_sent" invisible="1"/>
                     <field name="check_done" invisible="1"/>
@@ -115,7 +115,7 @@
                                     <field name="manager_feedback_skill_level_id"
                                            string="Manager Feedback Score"
                                            readonly="state != 'published'"
-                                           groups="oh_appraisal.oh_appraisal_group_manager"/>
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr"/>
                                     <field name="manager_feedback_level_progress"
                                            widget="progressbar"
                                            readonly="1"
@@ -129,7 +129,6 @@
                                            readonly="1"
                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                                            string="HR %"/>
-                                    <field name="survey_question_id" optional="hidden"/>
                                     <field name="state" column_invisible="True"/>
                                 </list>
                             </field>
@@ -161,7 +160,7 @@
                               groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
                             <field name="allowed_manager_ids" invisible="1"/>
                             <div class="alert alert-info mb-3" role="alert">
-                                Select only one person (manager, collaborator, colleague, or employee) who can access this appraisal.
+                                Select who can access this appraisal (manager or employee).
                             </div>
                             <group>
                                 <group>
@@ -175,16 +174,6 @@
                                            readonly="state != 'draft'"
                                            options="{'no_create': True}"/>
                                 </group>
-                                <group>
-                                    <field name="hr_collaborator_ids"
-                                           widget="many2many_tags"
-                                           readonly="state != 'draft'"
-                                           options="{'no_create': True}"/>
-                                    <field name="hr_colleague_ids"
-                                           widget="many2many_tags"
-                                           readonly="state != 'draft'"
-                                           options="{'no_create': True}"/>
-                                </group>
                             </group>
                         </page>
 
@@ -193,12 +182,16 @@
                             <group>
                                 <group>
                                     <field name="skill_average_score" readonly="1"/>
-                                    <field name="manual_score"/>
+                                    <field name="manual_score"
+                                           readonly="is_appraisal_admin == True or state != 'published'"
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="total_score" readonly="1"/>
                                 </group>
                                 <group>
                                     <field name="manual_score_reason"
-                                           required="manual_score &gt; 0"/>
+                                           readonly="is_appraisal_admin == True or state != 'published'"
+                                           required="manual_score &gt; 0"
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                 </group>
                             </group>
                             <div class="alert alert-warning mt-2" role="alert">
@@ -232,7 +225,6 @@
                        decoration-warning="state == 'published'"
                        decoration-info="state == 'draft'"/>
                 <field name="skill_line_count" string="Skills"/>
-                <field name="tot_comp_survey" string="Answers"/>
                 <field name="creater_id" string="Created By" optional="show"/>
                 <field name="company_id" column_invisible="True"/>
             </list>
@@ -253,7 +245,6 @@
                 <field name="state"/>
                 <field name="employee_id"/>
                 <field name="appraisal_deadline"/>
-                <field name="tot_comp_survey"/>
                 <field name="skill_line_count"/>
                 <progressbar field="state"
                              colors='{"draft": "info", "published": "warning", "submitted": "primary", "hr_finalization": "success"}'/>
@@ -278,7 +269,7 @@
                                 </span>
                                 <span class="badge rounded-pill text-bg-secondary">
                                     <i class="fa fa-pencil me-1"/>
-                                    <field name="tot_comp_survey"/> Answers
+                                    <field name="state"/> Status
                                 </span>
                             </div>
                         </main>

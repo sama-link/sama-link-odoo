@@ -21,7 +21,6 @@
                        decoration-warning="state == 'published'"
                        decoration-info="state == 'draft'"/>
                 <field name="skill_line_count" string="Skills Evaluated"/>
-                <field name="tot_comp_survey" string="Answers"/>
                 <field name="final_interview" string="Final Interview"/>
             </list>
         </field>
