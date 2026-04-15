@@ -37,7 +37,7 @@
                             string="🗂 Submit"
                             type="object"
                             class="btn-secondary"
-                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr"
+                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'published'"
                             confirm="This will lock manager feedback and move appraisal to Submitted. Continue?"/>
                     <button name="action_reset_to_draft"
@@ -185,6 +185,9 @@
                                     <field name="manual_score_reason"
                                            readonly="is_appraisal_admin == True or state != 'published'"
                                            required="manual_score &gt; 0"
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
+                                    <field name="final_reason"
+                                           readonly="is_appraisal_admin == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                 </group>
                             </group>

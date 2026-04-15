@@ -98,6 +98,10 @@ class HrAppraisal(models.Model):
         string='Score Reason',
         help="Reason for the manual score adjustment.")
 
+    final_reason = fields.Text(
+        string='Final Reason',
+        help="Optional reason provided by Administrator for the final score.")
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
@@ -226,10 +230,7 @@ class HrAppraisal(models.Model):
         is_hr_officer = self.env.user.has_group('sl_appraisal.group_appraisal_hr')
         is_manager = self.env.user.has_group('sl_appraisal.group_appraisal_manager') or is_hr_officer
 
-        if is_admin and {'manual_score', 'manual_score_reason'} & set(vals):
-            raise AccessError(_("Appraisal Administrator cannot edit manual score fields."))
-        if is_admin and vals.get('state') == 'submitted':
-            raise AccessError(_("Appraisal Administrator cannot submit appraisal forms."))
+
 
         allowed_manager_fields = {
             'manual_score',
@@ -253,10 +254,16 @@ class HrAppraisal(models.Model):
                         continue
                     raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))
 
-        if is_manager and not is_admin:
+        if is_manager or is_admin:
             for rec in self:
-                # In non-draft states, manager-like users must be selected.
-                if rec.state != 'draft':
+                # Admin performing admin-only operations (finalize, reset)
+                # does not require access plan selection.
+                is_admin_operation = is_admin and vals.get('state') in (
+                    'hr_finalization', 'draft')
+
+                # In non-draft states, users must be selected in access plan
+                # unless performing an admin-only operation.
+                if rec.state != 'draft' and not is_admin_operation:
                     allowed_users = rec._get_selected_access_employees().mapped('user_id')
                     if self.env.user not in allowed_users:
                         raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))
@@ -264,16 +271,30 @@ class HrAppraisal(models.Model):
                 if 'state' in vals:
                     next_state = vals.get('state')
                     if next_state == 'submitted':
+                        if rec.state != 'published':
+                            raise AccessError(_("Only published appraisals can be submitted."))
+                        allowed_users = rec._get_selected_access_employees().mapped('user_id')
+                        if self.env.user not in allowed_users:
+                            raise AccessError(_("Only selected manager/employee can submit."))
                         # Button submit may include pending inline skill line
                         # edits from the form cache.
                         allowed_submit_payload = {'state', 'appraisal_skill_line_ids'}
                         if not set(vals).issubset(allowed_submit_payload):
                             raise AccessError(_("Submit action can include only state and skill feedback updates."))
-                    elif next_state == 'published' and is_hr_officer and rec.state == 'draft':
-                        # HR publish allowed.
+                        # Submit flow is allowed; skip extra non-state guards.
+                        continue
+                    elif next_state == 'published' and (is_hr_officer or is_admin) and rec.state == 'draft':
+                        # HR/Admin publish allowed.
+                        pass
+                    elif is_admin_operation:
+                        # Admin finalize / reset — allowed.
                         pass
                     else:
                         raise AccessError(_("You cannot change appraisal state in this operation."))
+
+                # Admin can edit any field (final_hr_score, hr_skill_score, etc.)
+                if is_admin:
+                    continue
 
                 non_state_fields = set(vals) - {'state'}
                 if non_state_fields:
@@ -363,19 +384,20 @@ class HrAppraisal(models.Model):
         if self.state != 'published':
             raise UserError(_("Only published appraisals can be submitted."))
 
-        is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') \
-            or self.env.user.has_group('base.group_system')
-        if is_admin:
-            raise AccessError(_("Appraisal Administrator cannot submit appraisal forms."))
+
         is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
         if not is_selected_user:
             raise AccessError(_("Only selected manager/employee can submit."))
 
         # Snapshot final HR score from manual score at submit time.
-        self.final_hr_score = self.manual_score or 0.0
+        # Use sudo() for these internal bookkeeping writes because the
+        # manager-restriction guard in write() does not whitelist
+        # final_hr_score / hr_skill_score_level_id.  Access was already
+        # validated above, so escalating here is safe.
+        self.sudo().final_hr_score = self.manual_score or 0.0
 
         # On submit, initialize HR score from manager feedback score once.
-        for line in self.appraisal_skill_line_ids:
+        for line in self.sudo().appraisal_skill_line_ids:
             if not line.hr_skill_score_level_id and line.manager_feedback_skill_level_id:
                 line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
 
