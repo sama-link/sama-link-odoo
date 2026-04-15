@@ -229,7 +229,9 @@ class AppraisalSkillLine(models.Model):
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
             if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
                 allowed_manager_vals = {'manager_feedback_skill_level_id'}
-                if not is_manager or not set(vals).issubset(allowed_manager_vals):
+                # Any user explicitly assigned in appraisal access plan can
+                # update manager feedback score in Published stage.
+                if not set(vals).issubset(allowed_manager_vals):
                     raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
             if appraisal.state == 'published' and is_hr and not is_admin:
                 allowed_hr_vals = {'manager_feedback_skill_level_id'}

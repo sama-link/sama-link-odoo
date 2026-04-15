@@ -267,9 +267,19 @@ class HrAppraisal(models.Model):
                         raise AccessError(_("Manual Score can be edited only while appraisal is Published."))
 
         if 'state' in vals and not self._is_hr_or_admin():
-            raise AccessError(
-                _("Only HR Officers and Administrators can change "
-                  "the appraisal status."))
+            # Allow assigned users/managers to submit Published -> Submitted.
+            requested_state = vals.get('state')
+            if requested_state == 'submitted':
+                for rec in self:
+                    allowed_users = rec._get_selected_access_employees().mapped('user_id')
+                    if rec.state != 'published' or self.env.user not in allowed_users:
+                        raise AccessError(
+                            _("Only assigned users can submit a published appraisal.")
+                        )
+            else:
+                raise AccessError(
+                    _("Only HR Officers and Administrators can change "
+                      "the appraisal status."))
         return super().write(vals)
 
     def unlink(self):
