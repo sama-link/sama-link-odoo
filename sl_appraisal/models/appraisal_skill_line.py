@@ -247,10 +247,17 @@ class AppraisalSkillLine(models.Model):
                 raise AccessError(_("Only Appraisal Administrator can edit skill lines in Submitted state."))
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
-            if appraisal.state == 'published' and not is_admin:
-                allowed_manager_vals = {'manager_feedback_skill_level_id'}
-                if not effective_changed.issubset(allowed_manager_vals):
-                    raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
+            if appraisal.state == 'published':
+                manager_only_vals = {'manager_feedback_skill_level_id'}
+                if is_admin:
+                    # Admin can edit all fields, but needs access plan for manager fields.
+                    if effective_changed & manager_only_vals:
+                        allowed_users = appraisal._get_selected_access_employees().mapped('user_id')
+                        if self.env.user not in allowed_users:
+                            raise AccessError(_("You must be selected in the Access Plan to edit Manager Feedback Score."))
+                else:
+                    if not effective_changed.issubset(manager_only_vals):
+                        raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
             if appraisal.state in ('submitted', 'hr_finalization') and is_hr and not is_admin:
                 raise AccessError(_("HR Officer cannot edit skill lines after submission."))
         return super().write(vals)

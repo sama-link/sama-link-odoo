@@ -86,6 +86,7 @@
                     <!-- Hidden technical fields -->
                     <field name="is_hr_or_admin" invisible="1"/>
                     <field name="is_appraisal_admin" invisible="1"/>
+                    <field name="is_in_access_plan" invisible="1"/>
                     <field name="skills_populated" invisible="1"/>
                     <field name="response_id" invisible="1"/>
                     <field name="app_period_from" invisible="1"/>
@@ -114,8 +115,8 @@
                                            string="Current %"/>
                                     <field name="manager_feedback_skill_level_id"
                                            string="Manager Feedback Score"
-                                           readonly="state != 'published'"
-                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr"/>
+                                           readonly="state != 'published' or parent.is_in_access_plan == False"
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="hr_skill_score_level_id"
                                            string="HR Skill Score"
                                            readonly="state not in ('submitted','hr_finalization')"
@@ -174,7 +175,7 @@
                                 <group>
                                     <field name="skill_average_score" readonly="1"/>
                                     <field name="manual_score"
-                                           readonly="state != 'published'"
+                                           readonly="state != 'published' or is_in_access_plan == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="final_hr_score"
                                            readonly="is_appraisal_admin == False"
@@ -183,7 +184,7 @@
                                 </group>
                                 <group>
                                     <field name="manual_score_reason"
-                                           readonly="state != 'published'"
+                                           readonly="state != 'published' or is_in_access_plan == False"
                                            required="manual_score &gt; 0"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="final_reason"

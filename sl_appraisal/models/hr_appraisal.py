@@ -36,6 +36,9 @@ class HrAppraisal(models.Model):
     is_appraisal_admin = fields.Boolean(
         string='Is Appraisal Admin',
         compute='_compute_is_appraisal_admin')
+    is_in_access_plan = fields.Boolean(
+        string='In Access Plan',
+        compute='_compute_is_in_access_plan')
 
     allowed_manager_ids = fields.Many2many(
         'hr.employee',
@@ -142,6 +145,12 @@ class HrAppraisal(models.Model):
         for rec in self:
             rec.is_appraisal_admin = is_admin
 
+    @api.depends_context('uid')
+    @api.depends('access_user_ids')
+    def _compute_is_in_access_plan(self):
+        for rec in self:
+            rec.is_in_access_plan = self.env.user in rec.access_user_ids
+
     @api.depends('employee_id', 'employee_id.parent_id', 'employee_id.coach_id')
     def _compute_allowed_manager_ids(self):
         for rec in self:
@@ -247,8 +256,18 @@ class HrAppraisal(models.Model):
 
         if is_manager or is_admin:
             for rec in self:
-                # Admin can edit any field in any state, no access plan needed.
+                # Admin needs access plan for manager-specific fields
+                # but can always edit admin-only fields.
                 if is_admin:
+                    manager_fields = {'manual_score', 'manual_score_reason',
+                                      'appraisal_skill_line_ids'}
+                    editing_manager_fields = manager_fields & set(vals)
+                    if editing_manager_fields and rec.state != 'draft':
+                        allowed_users = rec._get_selected_access_employees().mapped('user_id')
+                        if self.env.user not in allowed_users:
+                            raise AccessError(_(
+                                "You must be selected in the Access Plan to edit manager fields."
+                            ))
                     continue
 
                 # In non-draft states, users must be selected in access plan.
