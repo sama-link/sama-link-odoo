@@ -116,19 +116,10 @@
                                            string="Manager Feedback Score"
                                            readonly="state != 'published'"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr"/>
-                                    <field name="manager_feedback_level_progress"
-                                           widget="progressbar"
-                                           readonly="1"
-                                           string="Manager %"/>
                                     <field name="hr_skill_score_level_id"
                                            string="HR Skill Score"
                                            readonly="state not in ('submitted','hr_finalization')"
                                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="hr_skill_score_level_progress"
-                                           widget="progressbar"
-                                           readonly="1"
-                                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
-                                           string="HR %"/>
                                     <field name="state" column_invisible="True"/>
                                 </list>
                             </field>
@@ -184,6 +175,9 @@
                                     <field name="skill_average_score" readonly="1"/>
                                     <field name="manual_score"
                                            readonly="is_appraisal_admin == True or state != 'published'"
+                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
+                                    <field name="final_hr_score"
+                                           readonly="is_appraisal_admin == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="total_score" readonly="1"/>
                                 </group>

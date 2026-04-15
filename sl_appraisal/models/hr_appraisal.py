@@ -76,6 +76,11 @@ class HrAppraisal(models.Model):
         digits=(16, 2),
         help="Additional score entered by HR (0 to 15).")
 
+    final_hr_score = fields.Float(
+        string='Final HR Score (%)',
+        digits=(16, 2),
+        help="Final score set by Appraisal Administrator and used in total score.")
+
     manual_score_display = fields.Float(
         string='Score Tab Value (%)',
         related='manual_score',
@@ -104,7 +109,7 @@ class HrAppraisal(models.Model):
         'appraisal_skill_line_ids',
         'appraisal_skill_line_ids.computed_current_level_progress',
         'appraisal_skill_line_ids.final_level_progress',
-        'manual_score',
+        'final_hr_score',
     )
     def _compute_scores(self):
         for rec in self:
@@ -114,7 +119,7 @@ class HrAppraisal(models.Model):
                 value = line.final_level_progress or line.computed_current_level_progress or 0
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
-            rec.total_score = rec.skill_average_score + (rec.manual_score or 0.0)
+            rec.total_score = rec.skill_average_score + (rec.final_hr_score or 0.0)
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -174,11 +179,13 @@ class HrAppraisal(models.Model):
                     "Only one person can be selected to access the appraisal form."
                 ))
 
-    @api.constrains('manual_score', 'manual_score_reason', 'total_score')
+    @api.constrains('manual_score', 'manual_score_reason', 'final_hr_score', 'total_score')
     def _check_score_limits(self):
         for rec in self:
             if rec.manual_score < 0 or rec.manual_score > 15:
                 raise ValidationError(_("Manual score must be between 0 and 15."))
+            if rec.final_hr_score < 0 or rec.final_hr_score > 15:
+                raise ValidationError(_("Final HR score must be between 0 and 15."))
             if rec.manual_score and not rec.manual_score_reason:
                 raise ValidationError(_("Score reason is mandatory when manual score is set."))
             if rec.total_score > 100:
@@ -221,8 +228,10 @@ class HrAppraisal(models.Model):
 
         if is_admin and {'manual_score', 'manual_score_reason'} & set(vals):
             raise AccessError(_("Appraisal Administrator cannot edit manual score fields."))
+        if is_admin and vals.get('state') == 'submitted':
+            raise AccessError(_("Appraisal Administrator cannot submit appraisal forms."))
 
-        allowed_manager_fields = {'manual_score', 'manual_score_reason'}
+        allowed_manager_fields = {'manual_score', 'manual_score_reason', 'appraisal_skill_line_ids'}
 
         if is_hr_officer and not is_admin:
             for rec in self:
@@ -248,8 +257,11 @@ class HrAppraisal(models.Model):
                 if 'state' in vals:
                     next_state = vals.get('state')
                     if next_state == 'submitted':
-                        if set(vals) != {'state'}:
-                            raise AccessError(_("Submit action can only change state."))
+                        # Button submit may include pending inline skill line
+                        # edits from the form cache.
+                        allowed_submit_payload = {'state', 'appraisal_skill_line_ids'}
+                        if not set(vals).issubset(allowed_submit_payload):
+                            raise AccessError(_("Submit action can include only state and skill feedback updates."))
                     elif next_state == 'published' and is_hr_officer and rec.state == 'draft':
                         # HR publish allowed.
                         pass
@@ -261,8 +273,11 @@ class HrAppraisal(models.Model):
                     if rec.state == 'draft' and is_hr_officer:
                         # HR draft preparation is allowed.
                         continue
+                    # Allow manager inline skill feedback writes from form payload.
+                    if non_state_fields == {'appraisal_skill_line_ids'} and rec.state == 'published':
+                        continue
                     if not non_state_fields.issubset(allowed_manager_fields):
-                        raise AccessError(_("You can edit only Manual Score fields at this stage."))
+                        raise AccessError(_("You can edit only Manual Score fields and Manager Feedback Score at this stage."))
                     if rec.state != 'published':
                         raise AccessError(_("Manual Score can be edited only while appraisal is Published."))
 
@@ -336,18 +351,21 @@ class HrAppraisal(models.Model):
 
     def action_submit(self):
         """Move appraisal from Published -> Submitted.
-        Allowed for selected manager user and appraisal administrators."""
+        Allowed for selected manager/user only."""
         self.ensure_one()
         if self.state != 'published':
             raise UserError(_("Only published appraisals can be submitted."))
 
-        is_admin = (
-            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+        is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') \
             or self.env.user.has_group('base.group_system')
-        )
+        if is_admin:
+            raise AccessError(_("Appraisal Administrator cannot submit appraisal forms."))
         is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
-        if not (is_admin or is_selected_user):
-            raise AccessError(_("Only selected manager/employee or Appraisal Administrator can submit."))
+        if not is_selected_user:
+            raise AccessError(_("Only selected manager/employee can submit."))
+
+        # Snapshot final HR score from manual score at submit time.
+        self.final_hr_score = self.manual_score or 0.0
 
         # On submit, initialize HR score from manager feedback score once.
         for line in self.appraisal_skill_line_ids:

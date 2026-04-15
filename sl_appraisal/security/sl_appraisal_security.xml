@@ -64,7 +64,10 @@
         <record id="sl_skill_line_rule_employee_own" model="ir.rule">
             <field name="name">Skill Line: Employee own only</field>
             <field name="model_id" ref="model_appraisal_skill_line"/>
-            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="domain_force">[
+                ('employee_id.user_id', '=', user.id),
+                ('appraisal_id.state', '=', 'hr_finalization')
+            ]</field>
             <field name="groups"
                    eval="[(4, ref('samalink_security_groups.group_samalink_employee'))]"/>
             <field name="perm_read" eval="True"/>
