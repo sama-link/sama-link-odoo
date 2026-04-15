@@ -232,15 +232,6 @@ class HrAppraisal(models.Model):
 
 
 
-        allowed_manager_fields = {
-            'manual_score',
-            'manual_score_reason',
-            'appraisal_skill_line_ids',
-            # Benign form payload fields that may be sent by web client.
-            'message_follower_ids',
-            'message_partner_ids',
-        }
-
         if is_hr_officer and not is_admin:
             for rec in self:
                 # HR Officer can prepare draft and publish even if not selected.
@@ -276,13 +267,6 @@ class HrAppraisal(models.Model):
                         allowed_users = rec._get_selected_access_employees().mapped('user_id')
                         if self.env.user not in allowed_users:
                             raise AccessError(_("Only selected manager/employee can submit."))
-                        # Button submit may include pending inline skill line
-                        # edits from the form cache.
-                        allowed_submit_payload = {'state', 'appraisal_skill_line_ids'}
-                        if not set(vals).issubset(allowed_submit_payload):
-                            raise AccessError(_("Submit action can include only state and skill feedback updates."))
-                        # Submit flow is allowed; skip extra non-state guards.
-                        continue
                     elif next_state == 'published' and (is_hr_officer or is_admin) and rec.state == 'draft':
                         # HR/Admin publish allowed.
                         pass
@@ -292,22 +276,18 @@ class HrAppraisal(models.Model):
                     else:
                         raise AccessError(_("You cannot change appraisal state in this operation."))
 
-                # Admin can edit any field (final_hr_score, hr_skill_score, etc.)
+                # Admin can edit any field in any state.
                 if is_admin:
                     continue
 
+                # Manager/HR can only edit in Published or Draft state.
+                # Field-level access is already enforced by view readonly attrs.
                 non_state_fields = set(vals) - {'state'}
                 if non_state_fields:
                     if rec.state == 'draft' and is_hr_officer:
-                        # HR draft preparation is allowed.
                         continue
-                    # Allow manager inline skill feedback writes from form payload.
-                    if non_state_fields == {'appraisal_skill_line_ids'} and rec.state == 'published':
-                        continue
-                    if not non_state_fields.issubset(allowed_manager_fields):
-                        raise AccessError(_("You can edit only Manual Score fields and Manager Feedback Score at this stage."))
                     if rec.state != 'published':
-                        raise AccessError(_("Manual Score can be edited only while appraisal is Published."))
+                        raise AccessError(_("Appraisal can only be edited while in Published state."))
 
         if 'state' in vals and not self._is_hr_or_admin():
             # Allow assigned users/managers to submit Published -> Submitted.
