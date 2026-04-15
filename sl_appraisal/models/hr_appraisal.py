@@ -86,9 +86,9 @@ class HrAppraisal(models.Model):
 
     manual_score_display = fields.Float(
         string='Score Tab Value (%)',
-        related='manual_score',
+        compute='_compute_manual_score_display',
         readonly=True,
-        help="Displays the score entered in the Score tab.")
+        help="Displays the score entered in the Score tab before finalization, and final HR score after.")
 
     total_score = fields.Float(
         string='Total Score (%)',
@@ -127,6 +127,14 @@ class HrAppraisal(models.Model):
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
             rec.total_score = rec.skill_average_score + (rec.final_hr_score or 0.0)
+
+    @api.depends('manual_score', 'final_hr_score', 'state')
+    def _compute_manual_score_display(self):
+        for rec in self:
+            if rec.state == 'hr_finalization':
+                rec.manual_score_display = rec.final_hr_score or 0.0
+            else:
+                rec.manual_score_display = rec.manual_score or 0.0
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
