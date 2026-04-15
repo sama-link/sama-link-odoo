@@ -259,8 +259,7 @@ class HrAppraisal(models.Model):
                 # Admin needs access plan for manager-specific fields
                 # but can always edit admin-only fields.
                 if is_admin:
-                    manager_fields = {'manual_score', 'manual_score_reason',
-                                      'appraisal_skill_line_ids'}
+                    manager_fields = {'manual_score', 'manual_score_reason'}
                     editing_manager_fields = manager_fields & set(vals)
                     if editing_manager_fields and rec.state != 'draft':
                         allowed_users = rec._get_selected_access_employees().mapped('user_id')
