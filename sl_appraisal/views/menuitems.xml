@@ -45,6 +45,8 @@
     <record id="sl_menu_my_appraisals" model="ir.ui.menu">
         <field name="name">My Appraisals</field>
         <field name="active" eval="True"/>
+        <field name="parent_id" eval="False"/>
+        <field name="action" ref="sl_appraisal.sl_action_my_appraisals"/>
         <field name="groups_id" eval="[(6, 0, [
             ref('samalink_security_groups.group_samalink_employee')
         ])]"/>

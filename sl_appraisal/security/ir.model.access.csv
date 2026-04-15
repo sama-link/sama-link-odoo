@@ -1,9 +1,13 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_appraisal_employee,hr.appraisal.employee,oh_appraisal.model_hr_appraisal,samalink_security_groups.group_samalink_employee,1,0,0,0
 access_hr_appraisal_manager,hr.appraisal.manager,oh_appraisal.model_hr_appraisal,sl_appraisal.group_appraisal_manager,1,1,0,0
 access_hr_appraisal_hr_officer,hr.appraisal.hr.officer,oh_appraisal.model_hr_appraisal,sl_appraisal.group_appraisal_hr,1,1,1,0
 access_hr_appraisal_admin,hr.appraisal.admin,oh_appraisal.model_hr_appraisal,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_appraisal_skill_line_employee,appraisal.skill.line.employee,model_appraisal_skill_line,samalink_security_groups.group_samalink_employee,1,0,0,0
+access_appraisal_skill_line_manager,appraisal.skill.line.manager,model_appraisal_skill_line,sl_appraisal.group_appraisal_manager,1,1,0,0
 access_appraisal_skill_line_hr,appraisal.skill.line.hr,model_appraisal_skill_line,sl_appraisal.group_appraisal_hr,1,1,1,0
 access_appraisal_skill_line_admin,appraisal.skill.line.admin,model_appraisal_skill_line,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_appraisal_skill_history_employee,appraisal.skill.history.employee,model_appraisal_skill_history,samalink_security_groups.group_samalink_employee,1,0,0,0
 access_appraisal_skill_history_hr,appraisal.skill.history.hr,model_appraisal_skill_history,sl_appraisal.group_appraisal_hr,1,1,1,0
 access_appraisal_skill_history_admin,appraisal.skill.history.admin,model_appraisal_skill_history,sl_appraisal.group_appraisal_administrator,1,1,1,1
 access_appraisal_skill_manager_feedback_user,appraisal.skill.manager.feedback.user,model_appraisal_skill_manager_feedback,sl_appraisal.group_appraisal_manager,1,1,1,0
