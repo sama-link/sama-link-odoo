@@ -247,14 +247,12 @@ class HrAppraisal(models.Model):
 
         if is_manager or is_admin:
             for rec in self:
-                # Admin performing admin-only operations (finalize, reset)
-                # does not require access plan selection.
-                is_admin_operation = is_admin and vals.get('state') in (
-                    'hr_finalization', 'draft')
+                # Admin can edit any field in any state, no access plan needed.
+                if is_admin:
+                    continue
 
-                # In non-draft states, users must be selected in access plan
-                # unless performing an admin-only operation.
-                if rec.state != 'draft' and not is_admin_operation:
+                # In non-draft states, users must be selected in access plan.
+                if rec.state != 'draft':
                     allowed_users = rec._get_selected_access_employees().mapped('user_id')
                     if self.env.user not in allowed_users:
                         raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))
@@ -267,18 +265,11 @@ class HrAppraisal(models.Model):
                         allowed_users = rec._get_selected_access_employees().mapped('user_id')
                         if self.env.user not in allowed_users:
                             raise AccessError(_("Only selected manager/employee can submit."))
-                    elif next_state == 'published' and (is_hr_officer or is_admin) and rec.state == 'draft':
-                        # HR/Admin publish allowed.
-                        pass
-                    elif is_admin_operation:
-                        # Admin finalize / reset — allowed.
+                    elif next_state == 'published' and is_hr_officer and rec.state == 'draft':
+                        # HR publish allowed.
                         pass
                     else:
                         raise AccessError(_("You cannot change appraisal state in this operation."))
-
-                # Admin can edit any field in any state.
-                if is_admin:
-                    continue
 
                 # Manager/HR can only edit in Published or Draft state.
                 # Field-level access is already enforced by view readonly attrs.

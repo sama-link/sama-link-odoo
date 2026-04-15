@@ -211,6 +211,10 @@ class AppraisalSkillLine(models.Model):
         }
 
     def write(self, vals):
+        # Sudo context (e.g. action_submit bookkeeping) bypasses all guards.
+        if self.env.su:
+            return super().write(vals)
+
         for rec in self:
             appraisal = rec.appraisal_id
             is_admin = (
@@ -236,24 +240,17 @@ class AppraisalSkillLine(models.Model):
                     if current_value != value:
                         effective_changed.add(field_name)
 
-            if is_admin and {'manager_feedback_skill_level_id', 'current_skill_level_id'} & set(vals):
-                raise AccessError(_("Administrator cannot edit Manager Feedback Score or Current Level fields."))
+
             if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in Draft."))
             if appraisal.state == 'submitted' and not is_admin:
                 raise AccessError(_("Only Appraisal Administrator can edit skill lines in Submitted state."))
             if appraisal.state == 'hr_finalization' and not appraisal._is_hr_or_admin():
                 raise AccessError(_("Only HR/Admin can edit skill lines in HR Finalization."))
-            if appraisal.state == 'published' and not appraisal._is_hr_or_admin():
+            if appraisal.state == 'published' and not is_admin:
                 allowed_manager_vals = {'manager_feedback_skill_level_id'}
-                # Any user explicitly assigned in appraisal access plan can
-                # update manager feedback score in Published stage.
                 if not effective_changed.issubset(allowed_manager_vals):
                     raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
-            if appraisal.state == 'published' and is_hr and not is_admin:
-                allowed_hr_vals = {'manager_feedback_skill_level_id'}
-                if not effective_changed.issubset(allowed_hr_vals):
-                    raise AccessError(_("HR Officer can update only Manager Feedback Score in Published stage."))
             if appraisal.state in ('submitted', 'hr_finalization') and is_hr and not is_admin:
                 raise AccessError(_("HR Officer cannot edit skill lines after submission."))
         return super().write(vals)
