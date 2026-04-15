@@ -9,12 +9,10 @@
 
         <record id="oh_appraisal.oh_appraisal_group_employee" model="res.groups">
             <field name="category_id" eval="False"/>
-            <field name="active" eval="False"/>
         </record>
 
         <record id="oh_appraisal.oh_appraisal_group_manager" model="res.groups">
             <field name="category_id" eval="False"/>
-            <field name="active" eval="False"/>
         </record>
 
         <record id="group_appraisal_hr" model="res.groups">
