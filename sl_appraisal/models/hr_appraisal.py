@@ -231,7 +231,14 @@ class HrAppraisal(models.Model):
         if is_admin and vals.get('state') == 'submitted':
             raise AccessError(_("Appraisal Administrator cannot submit appraisal forms."))
 
-        allowed_manager_fields = {'manual_score', 'manual_score_reason', 'appraisal_skill_line_ids'}
+        allowed_manager_fields = {
+            'manual_score',
+            'manual_score_reason',
+            'appraisal_skill_line_ids',
+            # Benign form payload fields that may be sent by web client.
+            'message_follower_ids',
+            'message_partner_ids',
+        }
 
         if is_hr_officer and not is_admin:
             for rec in self:

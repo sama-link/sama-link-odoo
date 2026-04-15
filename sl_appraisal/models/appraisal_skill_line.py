@@ -219,6 +219,23 @@ class AppraisalSkillLine(models.Model):
             )
             is_hr = appraisal.env.user.has_group('sl_appraisal.group_appraisal_hr')
             is_manager = appraisal.env.user.has_group('sl_appraisal.group_appraisal_manager')
+            # Odoo inline one2many updates may include unchanged readonly fields.
+            # Enforce permissions only on fields that are actually changing.
+            effective_changed = set()
+            for field_name, value in vals.items():
+                field = rec._fields.get(field_name)
+                if not field:
+                    continue
+                current_value = rec[field_name]
+                if field.type == 'many2one':
+                    current_id = current_value.id if current_value else False
+                    new_id = value or False
+                    if current_id != new_id:
+                        effective_changed.add(field_name)
+                else:
+                    if current_value != value:
+                        effective_changed.add(field_name)
+
             if is_admin and {'manager_feedback_skill_level_id', 'current_skill_level_id'} & set(vals):
                 raise AccessError(_("Administrator cannot edit Manager Feedback Score or Current Level fields."))
             if appraisal.state == 'draft' and not appraisal._is_hr_or_admin():
@@ -231,11 +248,11 @@ class AppraisalSkillLine(models.Model):
                 allowed_manager_vals = {'manager_feedback_skill_level_id'}
                 # Any user explicitly assigned in appraisal access plan can
                 # update manager feedback score in Published stage.
-                if not set(vals).issubset(allowed_manager_vals):
+                if not effective_changed.issubset(allowed_manager_vals):
                     raise AccessError(_("Managers can update only Manager Feedback Score in Published stage."))
             if appraisal.state == 'published' and is_hr and not is_admin:
                 allowed_hr_vals = {'manager_feedback_skill_level_id'}
-                if not set(vals).issubset(allowed_hr_vals):
+                if not effective_changed.issubset(allowed_hr_vals):
                     raise AccessError(_("HR Officer can update only Manager Feedback Score in Published stage."))
             if appraisal.state in ('submitted', 'hr_finalization') and is_hr and not is_admin:
                 raise AccessError(_("HR Officer cannot edit skill lines after submission."))
