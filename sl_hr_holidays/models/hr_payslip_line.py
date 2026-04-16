@@ -9,7 +9,7 @@ class HrPayslipLine(models.Model):
     _inherit = 'hr.payslip.line'
 
     def _compute_related_records_count(self):
-        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=30)
+        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=15)
         allowed_late_hours = int(allowed_late_minutes) / 60.0
         allowed_early_leaving_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_early_leaving_minutes', default=15)
         allowed_early_leaving_hours = int(allowed_early_leaving_minutes) / 60.0
@@ -30,7 +30,7 @@ class HrPayslipLine(models.Model):
 
     def open_related_records(self):
         self.ensure_one()
-        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=30)
+        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=15)
         allowed_late_hours = int(allowed_late_minutes) / 60.0
         allowed_early_leaving_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_early_leaving_minutes', default=15)
         allowed_early_leaving_hours = int(allowed_early_leaving_minutes) / 60.0

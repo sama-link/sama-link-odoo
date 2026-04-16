@@ -72,7 +72,7 @@ class HrAttendanceMiddleware(models.Model):
         string='Late Check-In State',
         compute='_compute_late_early_times',
         store=True,
-        help='Late more than 30 minutes unless approved.',
+        help='Late more than 15 minutes unless approved.',
     )
     early_check_out_state = fields.Selection(
         [('early', 'Early'), ('approved', 'Approved')],
@@ -133,7 +133,7 @@ class HrAttendanceMiddleware(models.Model):
 
     @api.depends('check_in_final', 'check_out_final', 'best_work_time_id', 'force_best_work_time_id', 'date')
     def _compute_late_early_times(self):
-        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=30)
+        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=15)
         allowed_early_leaving_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_early_leaving_minutes', default=15)
         for record in self:
             late_duration = 0
@@ -406,7 +406,7 @@ class HrAttendanceMiddleware(models.Model):
 
     @api.depends('check_in_computed', 'check_out_computed', 'best_work_time_id', 'force_best_work_time_id', 'is_check_in_close_to_start')
     def _compute_checking_adjustments(self):
-        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=30)
+        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=15)
         allowed_early_leaving_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_early_leaving_minutes', default=15)
         check_in_out_tolerance_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_zk_api_attendance.check_in_out_tolerance_minutes', default=15)
         

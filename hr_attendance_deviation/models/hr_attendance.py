@@ -50,7 +50,7 @@ class HrAttendance(models.Model):
     )
 
     def get_late_days_hours(self):
-        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=30)
+        allowed_late_minutes = self.env['ir.config_parameter'].sudo().get_param('hr_attendance_deviation.allowed_late_minutes', default=15)
         allowed_late_hours = int(allowed_late_minutes) / 60.0
         late_attendances = self.filtered(lambda att: att.late_check_in > allowed_late_hours)
         late_days = len(late_attendances)
