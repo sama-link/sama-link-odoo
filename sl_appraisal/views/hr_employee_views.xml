@@ -143,7 +143,7 @@
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
             <graph string="Skills Timeline" type="line" sample="1">
-                <field name="date_to" interval="month"/>
+                <field name="date_to" interval="day"/>
                 <field name="skill_id"/>
                 <field name="new_level_progress" type="measure"/>
             </graph>

@@ -382,8 +382,12 @@ class HrAppraisal(models.Model):
         assigned_user = selected_employees.user_id
         if assigned_user and assigned_user.partner_id:
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            # Using plain string without HTML to avoid escaping issues
-            appraisal_url = "%s/web#id=%s&model=hr.appraisal&view_type=form" % (base_url, self.id)
+            # Get the correct action ID so Odoo mounts the custom appraisal view
+            action = self.env.ref('oh_appraisal.hr_appraisal_action', raise_if_not_found=False)
+            action_id = action.id if action else ''
+            
+            # Construct the exact URL bypassing any default survey routing
+            appraisal_url = f"{base_url}/web#id={self.id}&action={action_id}&model=hr.appraisal&view_type=form"
             
             body = _("Hello %s, this appraisal is now published and ready for your feedback. You can access the appraisal form directly here: %s") % (
                 assigned_user.partner_id.name, appraisal_url
