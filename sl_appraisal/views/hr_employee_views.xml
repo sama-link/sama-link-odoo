@@ -86,8 +86,9 @@
                             class="btn-primary mb-2"/>
                     <field name="appraisal_skill_history_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false"
-                              default_order="appraisal_date desc">
-                            <field name="appraisal_date" string="Date"/>
+                              default_order="date_to desc">
+                            <field name="date_from" string="Period From"/>
+                            <field name="date_to" string="Period To"/>
                             <field name="skill_type_id"/>
                             <field name="skill_id"/>
                             <field name="old_level_id" string="Before"/>
@@ -122,8 +123,9 @@
         <field name="name">appraisal.skill.history.tree</field>
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="appraisal_date desc">
-                <field name="appraisal_date"/>
+            <list create="false" edit="false" delete="false" default_order="date_to desc">
+                <field name="date_from"/>
+                <field name="date_to"/>
                 <field name="skill_type_id"/>
                 <field name="skill_id"/>
                 <field name="old_level_id"/>
@@ -140,7 +142,7 @@
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
             <graph string="Skills Timeline" type="line" sample="1">
-                <field name="appraisal_date" interval="month"/>
+                <field name="date_to" interval="month"/>
                 <field name="skill_id"/>
                 <field name="new_level_progress" type="measure"/>
             </graph>
