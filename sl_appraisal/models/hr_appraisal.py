@@ -381,8 +381,12 @@ class HrAppraisal(models.Model):
         # Ping the selected evaluator in the chatter
         assigned_user = selected_employees.user_id
         if assigned_user and assigned_user.partner_id:
-            body = _("Hello <a href='#' data-oe-model='res.partner' data-oe-id='%s'>@%s</a>, this appraisal is now published and ready for your feedback.") % (
-                assigned_user.partner_id.id, assigned_user.partner_id.name
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            # Using plain string without HTML to avoid escaping issues
+            appraisal_url = "%s/web#id=%s&model=hr.appraisal&view_type=form" % (base_url, self.id)
+            
+            body = _("Hello %s, this appraisal is now published and ready for your feedback. You can access the appraisal form directly here: %s") % (
+                assigned_user.partner_id.name, appraisal_url
             )
             self.message_post(
                 body=body,
@@ -451,10 +455,10 @@ class HrAppraisal(models.Model):
     def _cron_auto_submit_appraisals(self):
         """Auto-submit published appraisals whose deadline has reached or passed."""
         today = fields.Date.today()
-        # Auto submit relying on date_to period bounds
+        # Auto submit relying on appraisal_deadline bounds
         appraisals = self.search([
             ('state', '=', 'published'),
-            ('date_to', '<=', today)
+            ('appraisal_deadline', '<=', today)
         ])
         for appraisal in appraisals:
             for line in appraisal.appraisal_skill_line_ids:
@@ -463,7 +467,7 @@ class HrAppraisal(models.Model):
             
             appraisal.write({'state': 'submitted'})
             appraisal.message_post(
-                body=_("Appraisal auto-submitted because the specified period has elapsed."),
+                body=_("Appraisal auto-submitted because the deadline has elapsed."),
                 subtype_xmlid='mail.mt_note',
             )
 

@@ -69,7 +69,8 @@
                               decoration-success="state == 'hr_finalization'"
                               decoration-warning="state == 'published'"
                               decoration-bf="state == 'draft'">
-                            <field name="appraisal_deadline" string="Date"/>
+                            <field name="date_from" string="Period From"/>
+                            <field name="date_to" string="Period To"/>
                             <field name="state" widget="badge"
                                    decoration-success="state == 'hr_finalization'"
                                    decoration-warning="state == 'published'"

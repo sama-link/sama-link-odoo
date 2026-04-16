@@ -43,9 +43,9 @@ class HrEmployee(models.Model):
         for employee in self:
             finalized = employee.appraisal_ids.filtered(
                 lambda a: a.state == 'hr_finalization'
-            ).sorted('appraisal_deadline', reverse=True)
+            ).sorted('date_to', reverse=True)
             employee.last_appraisal_date = (
-                finalized[0].appraisal_deadline if finalized else False)
+                finalized[0].date_to if finalized else False)
 
     def action_open_appraisals(self):
         """Open appraisals list for this employee."""
