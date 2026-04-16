@@ -17,6 +17,9 @@ class HrAppraisal(models.Model):
              "Submitted: Feedback locked for manager review.\n"
              "HR Finalization: HR reviews and approves skill changes.")
 
+    date_from = fields.Date(string='Period From')
+    date_to = fields.Date(string='Period To')
+
     # ── Skills evaluation lines ───────────────────────────────────────
     appraisal_skill_line_ids = fields.One2many(
         'appraisal.skill.line', 'appraisal_id',
@@ -372,7 +375,21 @@ class HrAppraisal(models.Model):
             )
         if len(selected_employees) > 1:
             raise UserError(_("Only one person can access this appraisal form."))
+        
         self.write({'state': 'published'})
+        
+        # Ping the selected evaluator in the chatter
+        assigned_user = selected_employees.user_id
+        if assigned_user and assigned_user.partner_id:
+            body = _("Hello <a href='#' data-oe-model='res.partner' data-oe-id='%s'>@%s</a>, this appraisal is now published and ready for your feedback.") % (
+                assigned_user.partner_id.id, assigned_user.partner_id.name
+            )
+            self.message_post(
+                body=body,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment',
+                partner_ids=[assigned_user.partner_id.id]
+            )
 
     def action_submit(self):
         """Move appraisal from Published -> Submitted.
@@ -429,6 +446,26 @@ class HrAppraisal(models.Model):
             'check_done': False,
             'check_cancel': False,
         })
+
+    @api.model
+    def _cron_auto_submit_appraisals(self):
+        """Auto-submit published appraisals whose deadline has reached or passed."""
+        today = fields.Date.today()
+        # Auto submit relying on date_to period bounds
+        appraisals = self.search([
+            ('state', '=', 'published'),
+            ('date_to', '<=', today)
+        ])
+        for appraisal in appraisals:
+            for line in appraisal.appraisal_skill_line_ids:
+                if not line.hr_skill_score_level_id and line.manager_feedback_skill_level_id:
+                    line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
+            
+            appraisal.write({'state': 'submitted'})
+            appraisal.message_post(
+                body=_("Appraisal auto-submitted because the specified period has elapsed."),
+                subtype_xmlid='mail.mt_note',
+            )
 
     # ─── Internal helpers ─────────────────────────────────────────────
 
@@ -491,7 +528,8 @@ class HrAppraisal(models.Model):
                 history_model.create({
                     'employee_id': appraisal.employee_id.id,
                     'appraisal_id': appraisal.id,
-                    'appraisal_date': appraisal.appraisal_deadline,
+                    'date_from': appraisal.date_from,
+                    'date_to': appraisal.date_to,
                     'skill_type_id': line.skill_type_id.id,
                     'skill_id': line.skill_id.id,
                     'old_level_id': line.current_skill_level_id.id,

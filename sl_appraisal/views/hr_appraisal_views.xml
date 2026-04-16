@@ -68,6 +68,8 @@
                         <group>
                             <field name="appraisal_deadline"
                                    readonly="state != 'draft'"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
                             <field name="company_id" readonly="1"
                                    groups="base.group_multi_company"/>
                             <field name="creater_id" string="Created By"

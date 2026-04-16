@@ -22,6 +22,7 @@
         'security/ir.model.access.csv',
         'security/sl_appraisal_security.xml',
         'data/stages.xml',
+        'data/ir_cron_data.xml',
         'views/manager_feedback_views.xml',
         'views/hr_appraisal_views.xml',
         'views/hr_employee_views.xml',

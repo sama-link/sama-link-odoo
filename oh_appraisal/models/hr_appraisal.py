@@ -185,16 +185,13 @@ class HrAppraisal(models.Model):
                 baseurl = self.env['ir.config_parameter'].sudo().get_param(
                     'web.base.url')
                 response = survey_id._create_answer(survey_id=survey_id.id,
-                                                    deadline=self.appraisal_deadline,
                                                     partner=reviewers.user_id.partner_id,
                                                     email=reviewers.work_email,
                                                     appraisal_id=self.ids[0])
                 url = response.get_start_url()
                 mail_content = "Dear " + reviewers.name + "," + "<br>Please fill out the following survey " \
                                                                 "related to " + self.employee_id.name + "<br>Click here to access the survey.<br>" + \
-                               baseurl + str(
-                    url) + "<br>Post your response for the appraisal till : " \
-                               + str(self.appraisal_deadline)
+                               baseurl + str(url)
                 values = {'model': 'hr.appraisal', 'res_id': self.ids[0],
                           'subject': survey_id.title,
                           'body_html': mail_content, 'parent_id': None,
