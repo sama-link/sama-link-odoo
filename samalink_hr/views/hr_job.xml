@@ -15,5 +15,17 @@
                 </page>
             </field>
         </record>
+
+        <record id="view_hr_job_tree_inherit" model="ir.ui.view">
+            <field name="name">hr.job.tree.inherit.summary.skills</field>
+            <field name="model">hr.job</field>
+            <field name="inherit_id" ref="hr.view_hr_job_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="inside">
+                    <field name="description" string="Job Summary"/>
+                    <field name="skill_ids" string="Skills Required" widget="many2many_tags"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
