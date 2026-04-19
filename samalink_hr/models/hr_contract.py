@@ -11,6 +11,12 @@ class HrContractInherit(models.Model):
     ], string="Salary Payment Method", default='bank_transfer', required=True)
     not_listed_payment_method = fields.Char(string="If Other, specify")
     work_location_id = fields.Many2one(related="employee_id.work_location_id", domain="[('address_id', '=', address_id)]")
+    medical_insurance = fields.Selection([
+        ('sama_link_heliopolis', '1- سما لينك للتجاره والتصنيع (مصر الجديده)'),
+        ('sama_link_downtown', '2-سما لينك للتجاره والتصنيع (وسط البلد)'),
+        ('sama_tech_downtown', '3-سما تكنولوجي الحسن على محمد (وسط البلد)'),
+        ('sama_tech_hadayek', '4-سما تكنولوجي الحسن على محمد (حدائق القبة)')
+    ], string="Medical Insurance")
     _SCHEDULE_CONFLICT_MSG = "Changing the contract on this employee changes their working schedule"
 
     def write(self, vals):

@@ -11,6 +11,7 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     allow_check_from_odoo = fields.Boolean(string="Allow Check From Odoo", default=False, groups="base.group_system,hr.group_hr_user")
+    medical_insurance = fields.Selection(related='contract_id.medical_insurance', string="Medical Insurance", readonly=True)
 
     @api.constrains('pin')
     def _check_pin(self):
