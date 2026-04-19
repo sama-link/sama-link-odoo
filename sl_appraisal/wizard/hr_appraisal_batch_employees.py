@@ -83,7 +83,7 @@ class HrAppraisalBatchEmployees(models.TransientModel):
                 "These employees already exist in this batch:\n%s"
             ) % "\n".join(duplicates.mapped('name')))
 
-        appraisal_model = self.env['hr.appraisal']
+        appraisal_model = self.env['hr.appraisal'].sudo()
         for employee in self.employee_ids:
             vals = {
                 'employee_id': employee.id,
