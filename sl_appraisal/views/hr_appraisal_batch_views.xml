@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_appraisal_batch_search" model="ir.ui.view">
+        <field name="name">hr.appraisal.batch.search</field>
+        <field name="model">hr.appraisal.batch</field>
+        <field name="arch" type="xml">
+            <search string="Search Appraisal Batches">
+                <field name="name"/>
+                <field name="creator_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="date_deadline"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <separator/>
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_published" string="Published" domain="[('state', '=', 'published')]"/>
+                <filter name="filter_submitted" string="Submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter name="filter_finalized" string="HR Finalized" domain="[('state', '=', 'hr_finalization')]"/>
+                <filter name="filter_close" string="Close" domain="[('state', '=', 'close')]"/>
+                <filter name="filter_mine" string="My Batches" domain="[('creator_id', '=', uid)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_creator" string="Created By" context="{'group_by': 'creator_id'}"/>
+                    <filter name="group_deadline" string="Deadline" context="{'group_by': 'date_deadline:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_hr_appraisal_batch_tree" model="ir.ui.view">
+        <field name="name">hr.appraisal.batch.list</field>
+        <field name="model">hr.appraisal.batch</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'close'"
+                  decoration-info="state == 'draft'"
+                  decoration-primary="state == 'submitted'"
+                  decoration-success="state == 'hr_finalization'">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="date_deadline"/>
+                <field name="appraisal_count"/>
+                <field name="creator_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'published'"
+                       decoration-primary="state == 'submitted'"
+                       decoration-success="state == 'hr_finalization'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_appraisal_batch_form" model="ir.ui.view">
+        <field name="name">hr.appraisal.batch.form</field>
+        <field name="model">hr.appraisal.batch</field>
+        <field name="arch" type="xml">
+            <form string="Appraisal Batch">
+                <header>
+                    <button name="action_open_generate_wizard"
+                            string="Generate Appraisals"
+                            type="object"
+                            class="btn-secondary"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'draft'"/>
+                    <button name="action_publish_all"
+                            string="Publish All"
+                            type="object"
+                            class="oe_highlight"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'draft'"/>
+                    <button name="action_submit_all"
+                            string="Submit All"
+                            type="object"
+                            class="oe_highlight"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'published'"/>
+                    <button name="action_hr_finalize_all"
+                            string="HR Finalize All"
+                            type="object"
+                            class="oe_highlight"
+                            groups="sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_close"
+                            string="Close"
+                            type="object"
+                            class="btn-secondary"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'hr_finalization'"/>
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            class="btn-secondary"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,published,submitted,hr_finalization,close"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_appraisals"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-tasks">
+                            <div class="o_stat_info">
+                                <field name="appraisal_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Appraisals</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="date_deadline" readonly="state != 'draft'"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="creator_id" readonly="1"/>
+                            <field name="appraisal_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Appraisals"/>
+
+                    <field name="appraisal_ids" readonly="state != 'draft'"
+                           context="{'default_appraisal_batch_id': id}">
+                        <list delete="true">
+                            <field name="employee_id" readonly="1"/>
+                            <field name="job_id" readonly="1" optional="show"/>
+                            <field name="work_location_id" readonly="1" optional="hide"/>
+                            <field name="general_manager_id" readonly="1" optional="show"/>
+                            <field name="coach_manager_id" readonly="1" optional="hide"/>
+                            <field name="hr_manager_ids" widget="many2many_tags" readonly="1" optional="show"/>
+                            <field name="hr_employee_ids" widget="many2many_tags" readonly="1" optional="hide"/>
+                            <field name="skill_average_score" readonly="1" optional="show"/>
+                            <field name="manual_score" readonly="1" optional="hide"/>
+                            <field name="total_score" readonly="1" optional="show"/>
+                            <field name="state" widget="badge" readonly="1"
+                                   decoration-info="state == 'draft'"
+                                   decoration-warning="state == 'published'"
+                                   decoration-primary="state == 'submitted'"
+                                   decoration-success="state == 'hr_finalization'"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_appraisal_batch" model="ir.actions.act_window">
+        <field name="name">Appraisal Batches</field>
+        <field name="res_model">hr.appraisal.batch</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_hr_appraisal_batch_search"/>
+    </record>
+
+    <record id="action_appraisal_batch_export_xlsx" model="ir.actions.server">
+        <field name="name">Export Batch (Excel)</field>
+        <field name="model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system')
+        ])]"/>
+        <field name="code">action = records.action_export_xlsx()</field>
+    </record>
+
+    <record id="action_appraisal_batch_export_pdf" model="ir.actions.server">
+        <field name="name">Export Batch (PDF)</field>
+        <field name="model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system')
+        ])]"/>
+        <field name="code">action = records.action_export_pdf()</field>
+    </record>
+
+    <menuitem id="sl_menu_appraisal_batches"
+              name="Appraisal Batches"
+              parent="oh_appraisal.hr_appraisal_menu_root"
+              action="action_hr_appraisal_batch"
+              sequence="20"
+              groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
+
+</odoo>

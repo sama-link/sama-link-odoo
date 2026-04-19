@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_appraisal_batch_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="batch">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>
+                            <span t-esc="batch.name"/>
+                        </h2>
+
+                        <div class="row mt-3 mb-3">
+                            <div class="col-6">
+                                <strong>Period:</strong>
+                                <span t-esc="batch.date_from"/>
+                                <span> - </span>
+                                <span t-esc="batch.date_to"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Deadline:</strong>
+                                <span t-esc="batch.date_deadline"/>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <strong>Created By:</strong>
+                                <span t-esc="batch.creator_id.name"/>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <strong>Status:</strong>
+                                <span t-esc="dict(batch._fields['state'].selection).get(batch.state, batch.state)"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Job Position</th>
+                                    <th>Work Location</th>
+                                    <th>General Manager</th>
+                                    <th>Coach Manager</th>
+                                    <th>Selected Managers</th>
+                                    <th>Selected Employees</th>
+                                    <th>Skills Average (%)</th>
+                                    <th>Manual Score (%)</th>
+                                    <th>Total Score (%)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="batch.appraisal_ids.sorted(lambda app: app.employee_id.name or '')" t-as="appraisal">
+                                    <td><span t-esc="appraisal.employee_id.name"/></td>
+                                    <td><span t-esc="appraisal.job_id.name"/></td>
+                                    <td><span t-esc="appraisal.work_location_id.name"/></td>
+                                    <td><span t-esc="appraisal.general_manager_id.name"/></td>
+                                    <td><span t-esc="appraisal.coach_manager_id.name"/></td>
+                                    <td><span t-esc="', '.join(appraisal.hr_manager_ids.mapped('name'))"/></td>
+                                    <td><span t-esc="', '.join(appraisal.hr_employee_ids.mapped('name'))"/></td>
+                                    <td><span t-esc="'%.2f' % (appraisal.skill_average_score or 0.0)"/></td>
+                                    <td><span t-esc="'%.2f' % (appraisal.manual_score or 0.0)"/></td>
+                                    <td><span t-esc="'%.2f' % (appraisal.total_score or 0.0)"/></td>
+                                    <td><span t-esc="dict(appraisal._fields['state'].selection).get(appraisal.state, appraisal.state)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

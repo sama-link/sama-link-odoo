@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_appraisal_batch_pdf" model="ir.actions.report">
+        <field name="name">Appraisal Batch Summary</field>
+        <field name="model">hr.appraisal.batch</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sl_appraisal.report_appraisal_batch_template</field>
+        <field name="report_file">sl_appraisal.report_appraisal_batch_template</field>
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
+</odoo>

@@ -1,3 +1,4 @@
+from . import hr_appraisal_batch
 from . import hr_appraisal
 from . import appraisal_skill_line
 from . import appraisal_skill_manager_feedback

@@ -60,22 +60,26 @@
     <record id="sl_appraisal.group_appraisal_hr" model="res.groups">
         <field name="whitelisted_menu_ids" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu'))
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('sl_appraisal.sl_menu_appraisal_batches'))
         ]"/>
         <field name="menu_access" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu'))
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('sl_appraisal.sl_menu_appraisal_batches'))
         ]"/>
     </record>
 
     <record id="sl_appraisal.group_appraisal_administrator" model="res.groups">
         <field name="whitelisted_menu_ids" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu'))
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('sl_appraisal.sl_menu_appraisal_batches'))
         ]"/>
         <field name="menu_access" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu'))
+            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('sl_appraisal.sl_menu_appraisal_batches'))
         ]"/>
     </record>
 

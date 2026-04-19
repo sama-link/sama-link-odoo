@@ -17,3 +17,9 @@ access_hr_appraisal_sysadmin,hr.appraisal.sysadmin,oh_appraisal.model_hr_apprais
 access_appraisal_skill_line_sysadmin,appraisal.skill.line.sysadmin,model_appraisal_skill_line,base.group_system,1,1,1,1
 access_appraisal_skill_history_sysadmin,appraisal.skill.history.sysadmin,model_appraisal_skill_history,base.group_system,1,1,1,1
 access_appraisal_skill_manager_feedback_sysadmin,appraisal.skill.manager.feedback.sysadmin,model_appraisal_skill_manager_feedback,base.group_system,1,1,1,1
+access_hr_appraisal_batch_hr,hr.appraisal.batch.hr,model_hr_appraisal_batch,sl_appraisal.group_appraisal_hr,1,1,1,0
+access_hr_appraisal_batch_admin,hr.appraisal.batch.admin,model_hr_appraisal_batch,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_hr_appraisal_batch_sysadmin,hr.appraisal.batch.sysadmin,model_hr_appraisal_batch,base.group_system,1,1,1,1
+access_hr_appraisal_batch_employees_hr,hr.appraisal.batch.employees.hr,model_hr_appraisal_batch_employees,sl_appraisal.group_appraisal_hr,1,1,1,1
+access_hr_appraisal_batch_employees_admin,hr.appraisal.batch.employees.admin,model_hr_appraisal_batch_employees,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_hr_appraisal_batch_employees_sysadmin,hr.appraisal.batch.employees.sysadmin,model_hr_appraisal_batch_employees,base.group_system,1,1,1,1

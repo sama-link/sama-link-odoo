@@ -5,6 +5,14 @@ from odoo.exceptions import UserError, AccessError, ValidationError
 class HrAppraisal(models.Model):
     _inherit = 'hr.appraisal'
 
+    appraisal_batch_id = fields.Many2one(
+        'hr.appraisal.batch',
+        string='Appraisal Batch',
+        ondelete='set null',
+        index=True,
+        copy=False,
+    )
+
     # ── State field (replaces old Kanban stages) ──────────────────────
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -19,6 +27,34 @@ class HrAppraisal(models.Model):
 
     date_from = fields.Date(string='Period From')
     date_to = fields.Date(string='Period To')
+    job_id = fields.Many2one(
+        'hr.job',
+        string='Job Position',
+        related='employee_id.job_id',
+        store=True,
+        readonly=True,
+    )
+    work_location_id = fields.Many2one(
+        'hr.work.location',
+        string='Work Location',
+        related='employee_id.work_location_id',
+        store=True,
+        readonly=True,
+    )
+    general_manager_id = fields.Many2one(
+        'hr.employee',
+        string='General Manager',
+        related='employee_id.parent_id',
+        store=True,
+        readonly=True,
+    )
+    coach_manager_id = fields.Many2one(
+        'hr.employee',
+        string='Coach Manager',
+        related='employee_id.coach_id',
+        store=True,
+        readonly=True,
+    )
 
     # ── Skills evaluation lines ───────────────────────────────────────
     appraisal_skill_line_ids = fields.One2many(
@@ -241,6 +277,7 @@ class HrAppraisal(models.Model):
         """Only HR Officers and Administrators can create appraisals."""
         self._check_hr_or_admin_access("create appraisals")
         vals['state'] = 'draft'
+        vals = self._apply_default_manager_to_vals(vals)
         record = super().create(vals)
         return record
 
@@ -406,9 +443,9 @@ class HrAppraisal(models.Model):
         if self.state != 'published':
             raise UserError(_("Only published appraisals can be submitted."))
 
-
+        force_batch_submit = self.env.context.get('batch_force_submit') and self._is_hr_or_admin()
         is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
-        if not is_selected_user:
+        if not is_selected_user and not force_batch_submit:
             raise AccessError(_("Only selected manager/employee can submit."))
 
         # Snapshot final HR score from manual score at submit time.
@@ -423,7 +460,10 @@ class HrAppraisal(models.Model):
             if not line.hr_skill_score_level_id and line.manager_feedback_skill_level_id:
                 line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
 
-        self.write({'state': 'submitted'})
+        if force_batch_submit:
+            self.sudo().write({'state': 'submitted'})
+        else:
+            self.write({'state': 'submitted'})
 
     def action_hr_finalize(self):
         """Move appraisal from Published → HR Finalization.
@@ -492,8 +532,18 @@ class HrAppraisal(models.Model):
     @api.onchange('employee_id')
     def _onchange_employee_id_limit_managers(self):
         for rec in self:
+            if not rec.hr_manager_ids and rec.employee_id.parent_id.user_id:
+                rec.hr_manager_ids = rec.employee_id.parent_id
             if rec.hr_manager_ids:
                 rec.hr_manager_ids = rec.hr_manager_ids & rec.allowed_manager_ids
+
+    @api.model
+    def _apply_default_manager_to_vals(self, vals):
+        if vals.get('employee_id') and 'hr_manager_ids' not in vals:
+            employee = self.env['hr.employee'].browse(vals['employee_id'])
+            if employee.parent_id.user_id:
+                vals['hr_manager_ids'] = [(6, 0, employee.parent_id.ids)]
+        return vals
 
     def _apply_hr_scores_to_final_levels(self):
         for appraisal in self:
