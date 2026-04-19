@@ -28,7 +28,15 @@ class HrAttendanceMiddleware(models.Model):
     employee_id = fields.Many2one('hr.employee', string='Employee')
     company_id = fields.Many2one('res.company', related='employee_id.company_id', string='Company', store=True)
     date = fields.Date(string='Attendance Date')
-    attendance_day = fields.Char(string='Attendance Day', compute='_compute_attendance_day', store=True)
+    attendance_day = fields.Selection([
+        ('Monday', 'الإثنين'),
+        ('Tuesday', 'الثلاثاء'),
+        ('Wednesday', 'الأربعاء'),
+        ('Thursday', 'الخميس'),
+        ('Friday', 'الجمعة'),
+        ('Saturday', 'السبت'),
+        ('Sunday', 'الأحد')
+    ], string='Attendance Day', compute='_compute_attendance_day', store=True)
 
     # Computed fields
     hr_attendance_id = fields.Many2one('hr.attendance', string='HR Attendance', compute='_compute_hr_attendance', store=True, precompute=True)

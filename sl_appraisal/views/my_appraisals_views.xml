@@ -21,7 +21,6 @@
                        decoration-warning="state == 'published'"
                        decoration-info="state == 'draft'"/>
                 <field name="skill_line_count" string="Skills Evaluated"/>
-                <field name="tot_comp_survey" string="Answers"/>
                 <field name="final_interview" string="Final Interview"/>
             </list>
         </field>
@@ -71,10 +70,11 @@
                                 <i class="fa fa-clock-o me-1"/>
                                 <strong>In Progress:</strong>
                                 This appraisal is still being reviewed.
-                                Final skill updates will be applied when HR
+                                Skill feedback details are hidden until HR
                                 finalizes the appraisal.
                             </div>
-                            <field name="appraisal_skill_line_ids" nolabel="1" readonly="1">
+                            <field name="appraisal_skill_line_ids" nolabel="1" readonly="1"
+                                   invisible="state != 'hr_finalization'">
                                 <list create="false" edit="false" delete="false"
                                       decoration-success="level_change == 'improved'"
                                       decoration-danger="level_change == 'declined'"

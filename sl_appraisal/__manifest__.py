@@ -5,7 +5,7 @@
     'description': """
         Extends Open HRMS Appraisals for Samalink:
         - 3-stage workflow: Draft → Published → HR Finalization
-        - Skills evaluation linked to survey questions
+        - Skills evaluation and role-based feedback
         - Auto-update employee skills on HR approval
         - Employee self-service "My Appraisals" portal
     """,
@@ -15,13 +15,14 @@
     'depends': [
         'oh_appraisal',
         'hr_skills',
-        'survey',
         'samalink_security_groups',
     ],
     'data': [
+        'security/sl_appraisal_groups.xml',
         'security/ir.model.access.csv',
         'security/sl_appraisal_security.xml',
         'data/stages.xml',
+        'data/ir_cron_data.xml',
         'views/manager_feedback_views.xml',
         'views/hr_appraisal_views.xml',
         'views/hr_employee_views.xml',

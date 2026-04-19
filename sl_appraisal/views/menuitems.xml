@@ -9,63 +9,95 @@
     <record id="oh_appraisal.hr_appraisal_menu" model="ir.ui.menu">
         <field name="action" ref="sl_appraisal.sl_hr_appraisal_action"/>
         <field name="groups_id" eval="[(6, 0, [
-            ref('oh_appraisal.oh_appraisal_group_manager'),
-            ref('samalink_security_groups.group_samalink_hr_officer')
+            ref('sl_appraisal.group_appraisal_manager'),
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator')
         ])]"/>
     </record>
 
     <record id="oh_appraisal.hr_appraisal_menu_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [
-            ref('oh_appraisal.oh_appraisal_group_manager'),
-            ref('samalink_security_groups.group_samalink_hr_officer')
+            ref('sl_appraisal.group_appraisal_manager'),
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator')
         ])]"/>
+    </record>
+
+    <!-- Hide unwanted submenus -->
+    <record id="oh_appraisal.hr_appraisal_menu_answers" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <menuitem id="sl_menu_appraisal_model"
+              name="Appraisal Model"
+              parent="oh_appraisal.hr_appraisal_menu_root"
+              action="sl_hr_appraisal_action"
+              sequence="14"
+              groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr"/>
+
+    <record id="sl_menu_appraisal_model" model="ir.ui.menu">
+        <field name="active" eval="False"/>
     </record>
 
     <!-- ============================================================
          MY APPRAISALS MENU — for employees
          ============================================================ -->
-    <menuitem id="sl_menu_my_appraisals"
-              name="My Appraisals"
-              action="sl_action_my_appraisals"
-              sequence="15"/>
+    <record id="sl_menu_my_appraisals" model="ir.ui.menu">
+        <field name="name">My Appraisals</field>
+        <field name="active" eval="True"/>
+        <field name="parent_id" eval="False"/>
+        <field name="action" ref="sl_appraisal.sl_action_my_appraisals"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('samalink_security_groups.group_samalink_employee')
+        ])]"/>
+    </record>
 
     <!-- ============================================================
          WHITELIST for samalink_security_groups
          ============================================================ -->
 
-    <!-- Add My Appraisals to Employee group whitelist -->
+    <!-- Add main Appraisal menus to HR Officer whitelist -->
+    <record id="sl_appraisal.group_appraisal_hr" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+    </record>
+
+    <record id="sl_appraisal.group_appraisal_administrator" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+    </record>
+
+    <!-- Appraisal manager whitelist -->
+    <record id="sl_appraisal.group_appraisal_manager" model="res.groups">
+        <field name="whitelisted_menu_ids" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+        <field name="menu_access" eval="[
+            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
+            (4, ref('oh_appraisal.hr_appraisal_menu'))
+        ]"/>
+    </record>
+
+    <!-- My Appraisals should be employee-only -->
     <record id="samalink_security_groups.group_samalink_employee" model="res.groups">
         <field name="whitelisted_menu_ids" eval="[
-            (4, ref('sl_menu_my_appraisals')),
+            (4, ref('sl_menu_my_appraisals'))
         ]"/>
         <field name="menu_access" eval="[
-            (4, ref('sl_menu_my_appraisals')),
-        ]"/>
-    </record>
-
-    <!-- Add main Appraisal menus to HR Officer whitelist -->
-    <record id="samalink_security_groups.group_samalink_hr_officer" model="res.groups">
-        <field name="whitelisted_menu_ids" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
-        ]"/>
-        <field name="menu_access" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-            (4, ref('oh_appraisal.hr_appraisal_menu_answers')),
-        ]"/>
-    </record>
-
-    <!-- Make appraisal menu visible for manager-type groups in Samalink -->
-    <record id="oh_appraisal.oh_appraisal_group_manager" model="res.groups">
-        <field name="whitelisted_menu_ids" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
-        ]"/>
-        <field name="menu_access" eval="[
-            (4, ref('oh_appraisal.hr_appraisal_menu_root')),
-            (4, ref('oh_appraisal.hr_appraisal_menu')),
+            (4, ref('sl_menu_my_appraisals'))
         ]"/>
     </record>
 

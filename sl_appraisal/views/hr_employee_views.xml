@@ -15,7 +15,7 @@
                         type="object"
                         class="oe_stat_button"
                         icon="fa-trophy"
-                        groups="samalink_security_groups.group_samalink_hr_officer,base.group_system">
+                        groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
                     <div class="o_stat_info">
                         <field name="appraisal_count" class="o_stat_value"/>
                         <span class="o_stat_text">Appraisals</span>
@@ -26,7 +26,7 @@
             <!-- Last appraisal date in work info -->
             <field name="coach_id" position="after">
                 <field name="last_appraisal_date" readonly="1"
-                       groups="samalink_security_groups.group_samalink_hr_officer,base.group_system"/>
+                       groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
             </field>
         </field>
     </record>
@@ -69,13 +69,13 @@
                               decoration-success="state == 'hr_finalization'"
                               decoration-warning="state == 'published'"
                               decoration-bf="state == 'draft'">
-                            <field name="appraisal_deadline" string="Date"/>
+                            <field name="date_from" string="Period From"/>
+                            <field name="date_to" string="Period To"/>
                             <field name="state" widget="badge"
                                    decoration-success="state == 'hr_finalization'"
                                    decoration-warning="state == 'published'"
                                    decoration-info="state == 'draft'"/>
                             <field name="skill_line_count" string="Skills Evaluated"/>
-                            <field name="tot_comp_survey" string="Survey Answers"/>
                             <field name="creater_id" string="Created By"/>
                         </list>
                     </field>
@@ -87,12 +87,15 @@
                             class="btn-primary mb-2"/>
                     <field name="appraisal_skill_history_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false"
-                              default_order="appraisal_date desc">
-                            <field name="appraisal_date" string="Date"/>
+                              default_order="date_to desc">
+                            <field name="date_from" string="Period From"/>
+                            <field name="date_to" string="Period To"/>
                             <field name="skill_type_id"/>
                             <field name="skill_id"/>
                             <field name="old_level_id" string="Before"/>
+                            <field name="old_level_progress" widget="progressbar" string="Before %"/>
                             <field name="new_level_id" string="After"/>
+                            <field name="new_level_progress" widget="progressbar" string="After %"/>
                             <field name="change_state" widget="badge"
                                    decoration-success="change_state == 'improved'"
                                    decoration-warning="change_state == 'same'"
@@ -121,12 +124,15 @@
         <field name="name">appraisal.skill.history.tree</field>
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false" default_order="appraisal_date desc">
-                <field name="appraisal_date"/>
+            <list create="false" edit="false" delete="false" default_order="date_to desc">
+                <field name="date_from"/>
+                <field name="date_to"/>
                 <field name="skill_type_id"/>
                 <field name="skill_id"/>
                 <field name="old_level_id"/>
+                <field name="old_level_progress" widget="progressbar" string="Before %"/>
                 <field name="new_level_id"/>
+                <field name="new_level_progress" widget="progressbar" string="After %"/>
                 <field name="change_state"/>
             </list>
         </field>
@@ -136,10 +142,10 @@
         <field name="name">appraisal.skill.history.graph</field>
         <field name="model">appraisal.skill.history</field>
         <field name="arch" type="xml">
-            <graph string="Skills Timeline" type="bar" stacked="1">
-                <field name="appraisal_date" interval="month"/>
-                <field name="change_state"/>
-                <field name="id" type="measure"/>
+            <graph string="Skills Timeline" type="line" sample="1">
+                <field name="date_to" interval="day"/>
+                <field name="skill_id"/>
+                <field name="new_level_progress" type="measure"/>
             </graph>
         </field>
     </record>

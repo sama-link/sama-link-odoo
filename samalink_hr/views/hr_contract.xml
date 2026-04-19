@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <group name="top_info_left" position="inside">
                     <field name="work_location_id"/>
+                    <field name="medical_insurance"/>
                 </group>
                 <group name="salary" position="inside">
                     <field name="salary_payment_method"/>

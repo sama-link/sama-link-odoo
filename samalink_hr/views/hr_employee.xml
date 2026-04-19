@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <field name="mobile_phone" position="after">
                     <field name="work_location_id"/>
+                    <field name="medical_insurance"/>
                 </field>
                 <group name="identification_group" position="inside">
                     <field name="allow_check_from_odoo"/>
