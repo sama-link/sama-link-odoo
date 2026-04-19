@@ -118,31 +118,17 @@ class HrAppraisal(models.Model):
         digits=(16, 2),
         help="Additional score entered by HR (0 to 15).")
 
-    final_hr_score = fields.Float(
-        string='Final HR Score (%)',
-        digits=(16, 2),
-        help="Final score set by Appraisal Administrator and used in total score.")
-
-    manual_score_display = fields.Float(
-        string='Score Tab Value (%)',
-        compute='_compute_manual_score_display',
-        readonly=True,
-        help="Displays the score entered in the Score tab before finalization, and final HR score after.")
-
     total_score = fields.Float(
         string='Total Score (%)',
-        compute='_compute_scores',
+        compute='_compute_total_score',
+        inverse='_inverse_total_score',
         store=True,
         digits=(16, 2),
-        help="Sum of Skills Average and Manual Score.")
+        help="Sum of Skills Average and Manual Score. Editable by Appraisal Administrator only.")
 
     manual_score_reason = fields.Text(
         string='Score Reason',
         help="Reason for the manual score adjustment.")
-
-    final_reason = fields.Text(
-        string='Final Reason',
-        help="Optional reason provided by Administrator for the final score.")
 
     # ─── Overrides ────────────────────────────────────────────────────
 
@@ -155,25 +141,22 @@ class HrAppraisal(models.Model):
         'appraisal_skill_line_ids',
         'appraisal_skill_line_ids.computed_current_level_progress',
         'appraisal_skill_line_ids.final_level_progress',
-        'final_hr_score',
     )
     def _compute_scores(self):
         for rec in self:
             percentages = []
             for line in rec.appraisal_skill_line_ids:
-                # Prefer final approved level; fallback to current level.
                 value = line.final_level_progress or line.computed_current_level_progress or 0
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
-            rec.total_score = rec.skill_average_score + (rec.final_hr_score or 0.0)
 
-    @api.depends('manual_score', 'final_hr_score', 'state')
-    def _compute_manual_score_display(self):
+    @api.depends('skill_average_score', 'manual_score')
+    def _compute_total_score(self):
         for rec in self:
-            if rec.state == 'hr_finalization':
-                rec.manual_score_display = rec.final_hr_score or 0.0
-            else:
-                rec.manual_score_display = rec.manual_score or 0.0
+            rec.total_score = (rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)
+
+    def _inverse_total_score(self):
+        pass
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -239,13 +222,11 @@ class HrAppraisal(models.Model):
                     "Only one person can be selected to access the appraisal form."
                 ))
 
-    @api.constrains('manual_score', 'manual_score_reason', 'final_hr_score', 'total_score')
+    @api.constrains('manual_score', 'manual_score_reason', 'total_score')
     def _check_score_limits(self):
         for rec in self:
             if rec.manual_score < 0 or rec.manual_score > 15:
                 raise ValidationError(_("Manual score must be between 0 and 15."))
-            if rec.final_hr_score < 0 or rec.final_hr_score > 15:
-                raise ValidationError(_("Final HR score must be between 0 and 15."))
             if rec.manual_score and not rec.manual_score_reason:
                 raise ValidationError(_("Score reason is mandatory when manual score is set."))
             if rec.total_score > 100:
@@ -447,13 +428,6 @@ class HrAppraisal(models.Model):
         is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
         if not is_selected_user and not force_batch_submit:
             raise AccessError(_("Only selected manager/employee can submit."))
-
-        # Snapshot final HR score from manual score at submit time.
-        # Use sudo() for these internal bookkeeping writes because the
-        # manager-restriction guard in write() does not whitelist
-        # final_hr_score / hr_skill_score_level_id.  Access was already
-        # validated above, so escalating here is safe.
-        self.sudo().final_hr_score = self.manual_score or 0.0
 
         # On submit, initialize HR score from manager feedback score once.
         for line in self.sudo().appraisal_skill_line_ids:

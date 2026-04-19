@@ -80,7 +80,7 @@
                                    invisible="state != 'hr_finalization'"/>
                             <field name="skill_line_count" string="Skills Evaluated"/>
                             <field name="skill_average_score" readonly="1"/>
-                            <field name="manual_score_display" readonly="1"/>
+                            <field name="manual_score" readonly="1"/>
                             <field name="total_score" readonly="1"/>
                         </group>
                     </group>
@@ -179,18 +179,14 @@
                                     <field name="manual_score"
                                            readonly="state != 'published' or is_in_access_plan == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="final_hr_score"
+                                    <field name="total_score"
                                            readonly="is_appraisal_admin == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="total_score" readonly="1"/>
                                 </group>
                                 <group>
                                     <field name="manual_score_reason"
                                            readonly="state != 'published' or is_in_access_plan == False"
                                            required="manual_score &gt; 0"
-                                           groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
-                                    <field name="final_reason"
-                                           readonly="is_appraisal_admin == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                 </group>
                             </group>

@@ -134,7 +134,8 @@
                     <separator string="Appraisals"/>
 
                     <field name="appraisal_ids" readonly="state != 'draft'"
-                           context="{'default_appraisal_batch_id': id}">
+                           context="{'default_appraisal_batch_id': id,
+                                     'form_view_ref': 'sl_appraisal.sl_hr_appraisal_view_form'}">
                         <list delete="true">
                             <field name="employee_id" readonly="1"/>
                             <field name="job_id" readonly="1" optional="show"/>

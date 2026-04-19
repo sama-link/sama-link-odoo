@@ -95,7 +95,9 @@ class HrAppraisalBatchEmployees(models.TransientModel):
             }
             if employee.parent_id.user_id:
                 vals['hr_manager_ids'] = [(6, 0, employee.parent_id.ids)]
-            appraisal_model.create(vals)
+            appraisal = appraisal_model.create(vals)
+            if employee.employee_skill_ids and not appraisal.skills_populated:
+                appraisal.action_populate_skills()
 
         batch.message_post(
             body=_("Generated %s appraisal(s) from the batch wizard.") % len(self.employee_ids)
