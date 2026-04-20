@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Security Groups v2.4.0',
-    'version': '2.4.0',
+    'version': '2.5.0',
     'summary': 'Manage security groups for Samalink',
     'description': 'Module to manage security groups and permissions in Samalink.',
     'author': '46-d-006',
@@ -30,6 +30,7 @@
         'views/hr_employee.xml',
         'views/hr_leave.xml',
         'views/res_users.xml',
+        'wizard/recalculate_overtime.xml',
         'security/res_groups.xml',
         'security/ir_rule.xml',
         'security/ir.model.access.csv',
