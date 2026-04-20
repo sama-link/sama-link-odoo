@@ -144,17 +144,18 @@
                             <field name="work_location_id" readonly="1" optional="hide"/>
                             <field name="general_manager_id" readonly="1" optional="show"/>
                             <field name="coach_manager_id" readonly="1" optional="hide"/>
-                            <field name="allowed_manager_ids" invisible="1"/>
-                            <field name="hr_manager_ids"
-                                   widget="many2many_tags"
-                                   domain="[('id', 'in', allowed_manager_ids)]"
+                            <field name="hr_manager_id"
+                                   domain="['|', ('id', '=', general_manager_id), ('id', '=', coach_manager_id)]"
+                                   readonly="state != 'draft'"
                                    optional="show"/>
-                            <field name="hr_employee_ids" widget="many2many_tags" optional="show"/>
+                            <field name="hr_employee_id"
+                                   readonly="state != 'draft'"
+                                   optional="show"/>
                             <field name="skill_average_score" readonly="1" optional="show"/>
                             <field name="manual_score" readonly="1" optional="hide"/>
                             <field name="total_score_manual_override" invisible="1"/>
                             <field name="total_score"
-                                   readonly="parent.is_appraisal_admin == False"
+                                   readonly="parent.is_appraisal_admin == False or state != 'submitted'"
                                    optional="show"/>
                             <field name="state" widget="badge" readonly="1"
                                    decoration-info="state == 'draft'"

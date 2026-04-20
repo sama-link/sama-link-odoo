@@ -159,12 +159,16 @@
                             <group>
                                 <group>
                                     <field name="hr_manager_ids"
-                                           widget="many2many_tags"
+                                           invisible="1"
+                                           readonly="1"/>
+                                    <field name="hr_employee_ids"
+                                           invisible="1"
+                                           readonly="1"/>
+                                    <field name="hr_manager_id"
                                            readonly="state != 'draft'"
                                            domain="[('id', 'in', allowed_manager_ids)]"
                                            options="{'no_create': True}"/>
-                                    <field name="hr_employee_ids"
-                                           widget="many2many_tags"
+                                    <field name="hr_employee_id"
                                            readonly="state != 'draft'"
                                            options="{'no_create': True}"/>
                                 </group>
@@ -180,7 +184,7 @@
                                            readonly="state != 'published' or is_in_access_plan == False"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                     <field name="total_score"
-                                           readonly="is_appraisal_admin == False"
+                                           readonly="is_appraisal_admin == False or state != 'submitted'"
                                            groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
                                 </group>
                                 <group>

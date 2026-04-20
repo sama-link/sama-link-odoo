@@ -93,6 +93,18 @@ class HrAppraisal(models.Model):
         'employee_id',
         string='Select Employees',
         help="Employees who can access this appraisal.")
+    hr_manager_id = fields.Many2one(
+        'hr.employee',
+        string='Select Manager',
+        compute='_compute_single_access_fields',
+        inverse='_inverse_hr_manager_id',
+        help="Single-select proxy for manager evaluator.")
+    hr_employee_id = fields.Many2one(
+        'hr.employee',
+        string='Select Employee',
+        compute='_compute_single_access_fields',
+        inverse='_inverse_hr_employee_id',
+        help="Single-select proxy for employee evaluator.")
 
     access_user_ids = fields.Many2many(
         'res.users',
@@ -220,6 +232,20 @@ class HrAppraisal(models.Model):
             | self.hr_employee_ids
         ).filtered(lambda emp: emp.user_id)
 
+    @api.depends('hr_manager_ids', 'hr_employee_ids')
+    def _compute_single_access_fields(self):
+        for rec in self:
+            rec.hr_manager_id = rec.hr_manager_ids[:1].id or False
+            rec.hr_employee_id = rec.hr_employee_ids[:1].id or False
+
+    def _inverse_hr_manager_id(self):
+        for rec in self:
+            rec.hr_manager_ids = [(6, 0, [rec.hr_manager_id.id] if rec.hr_manager_id else [])]
+
+    def _inverse_hr_employee_id(self):
+        for rec in self:
+            rec.hr_employee_ids = [(6, 0, [rec.hr_employee_id.id] if rec.hr_employee_id else [])]
+
     @api.constrains('hr_manager_ids', 'hr_employee_ids')
     def _check_single_access_person(self):
         for rec in self:
@@ -275,6 +301,14 @@ class HrAppraisal(models.Model):
         is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') or self.env.user.has_group('base.group_system')
         is_hr_officer = self.env.user.has_group('sl_appraisal.group_appraisal_hr')
         is_manager = self.env.user.has_group('sl_appraisal.group_appraisal_manager') or is_hr_officer
+
+        # Total score is admin-only and editable only in Submitted stage.
+        if 'total_score' in vals:
+            if not is_admin:
+                raise AccessError(_("Only Appraisal Administrators can edit Total Score."))
+            for rec in self:
+                if rec.state != 'submitted':
+                    raise AccessError(_("Total Score can only be edited in Submitted stage."))
 
 
 

@@ -80,7 +80,22 @@ class HrAppraisalBatch(models.Model):
                 raise UserError(_(
                     "Batch name, company, deadline, and period can only be changed in Draft state."
                 ))
-        return super().write(vals)
+        res = super().write(vals)
+
+        # Keep child appraisals synchronized with batch date controls.
+        sync_vals = {}
+        if 'date_deadline' in vals:
+            sync_vals['appraisal_deadline'] = vals.get('date_deadline')
+        if 'date_from' in vals:
+            sync_vals['date_from'] = vals.get('date_from')
+        if 'date_to' in vals:
+            sync_vals['date_to'] = vals.get('date_to')
+        if sync_vals:
+            for batch in self:
+                if batch.appraisal_ids:
+                    batch.appraisal_ids.sudo().write(sync_vals)
+
+        return res
 
     def unlink(self):
         self._check_hr_or_admin_access("delete appraisal batches")
