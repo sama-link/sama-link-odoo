@@ -17,7 +17,6 @@
                 <filter name="filter_published" string="Published" domain="[('state', '=', 'published')]"/>
                 <filter name="filter_submitted" string="Submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter name="filter_finalized" string="HR Finalized" domain="[('state', '=', 'hr_finalization')]"/>
-                <filter name="filter_close" string="Close" domain="[('state', '=', 'close')]"/>
                 <filter name="filter_mine" string="My Batches" domain="[('creator_id', '=', uid)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
@@ -33,8 +32,7 @@
         <field name="name">hr.appraisal.batch.list</field>
         <field name="model">hr.appraisal.batch</field>
         <field name="arch" type="xml">
-            <list decoration-muted="state == 'close'"
-                  decoration-info="state == 'draft'"
+            <list decoration-info="state == 'draft'"
                   decoration-primary="state == 'submitted'"
                   decoration-success="state == 'hr_finalization'">
                 <field name="name"/>
@@ -83,12 +81,6 @@
                             class="oe_highlight"
                             groups="sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'submitted'"/>
-                    <button name="action_close"
-                            string="Close"
-                            type="object"
-                            class="btn-secondary"
-                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
-                            invisible="state != 'hr_finalization'"/>
                     <button name="action_reset_to_draft"
                             string="Reset to Draft"
                             type="object"
@@ -96,7 +88,7 @@
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state == 'draft'"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,published,submitted,hr_finalization,close"/>
+                           statusbar_visible="draft,published,submitted,hr_finalization"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -153,7 +145,6 @@
                                    optional="show"/>
                             <field name="skill_average_score" readonly="1" optional="show"/>
                             <field name="manual_score" readonly="1" optional="hide"/>
-                            <field name="total_score_manual_override" invisible="1"/>
                             <field name="total_score"
                                    readonly="parent.is_appraisal_admin == False or state != 'submitted'"
                                    optional="show"/>

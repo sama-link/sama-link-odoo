@@ -15,7 +15,6 @@ class HrAppraisalBatch(models.Model):
             ('published', 'Published'),
             ('submitted', 'Submitted'),
             ('hr_finalization', 'HR Finalization'),
-            ('close', 'Close'),
         ],
         string='Status',
         default='draft',
@@ -145,16 +144,6 @@ class HrAppraisalBatch(models.Model):
         self._check_hr_or_admin_access("reset appraisal batches to draft")
         self._run_bulk_state_change('action_reset_to_draft', 'draft', _("Reset to Draft"))
 
-    def action_close(self):
-        self._check_hr_or_admin_access("close appraisal batches")
-        for batch in self:
-            if any(app.state in ('draft', 'published') for app in batch.appraisal_ids):
-                raise UserError(_(
-                    "You can only close a batch after all appraisals are submitted or finalized."
-                ))
-            batch.write({'state': 'close'})
-            batch.message_post(body=_("Batch closed."))
-
     def action_export_pdf(self):
         self._check_exportable()
         return self.env.ref('sl_appraisal.action_report_appraisal_batch_pdf').report_action(self)
@@ -208,8 +197,6 @@ class HrAppraisalBatch(models.Model):
             if not batch.appraisal_ids:
                 batch.state = 'draft'
                 continue
-            if batch.state == 'close' and not force:
-                continue
             states = set(batch.appraisal_ids.mapped('state'))
             if states == {'hr_finalization'}:
                 batch.state = 'hr_finalization'
@@ -221,11 +208,11 @@ class HrAppraisalBatch(models.Model):
                 batch.state = 'draft'
 
     def _check_exportable(self):
-        allowed_states = {'submitted', 'hr_finalization', 'close'}
+        allowed_states = {'submitted', 'hr_finalization'}
         invalid = self.filtered(lambda batch: batch.state not in allowed_states)
         if invalid:
             raise UserError(_(
-                "Export is only available for batches in Submitted, HR Finalization, or Close state."
+                "Export is only available for batches in Submitted or HR Finalization state."
             ))
 
     def _check_hr_or_admin_access(self, action_name):
