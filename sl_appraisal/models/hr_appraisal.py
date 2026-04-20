@@ -271,14 +271,14 @@ class HrAppraisal(models.Model):
 
 
         if is_hr_officer and not is_admin:
+            hr_always_allowed = {'hr_manager_ids', 'hr_employee_ids'}
             for rec in self:
-                # HR Officer can prepare draft and publish even if not selected.
                 if rec.state == 'draft':
+                    continue
+                if set(vals) <= hr_always_allowed:
                     continue
                 allowed_users = rec._get_selected_access_employees().mapped('user_id')
                 if self.env.user not in allowed_users:
-                    # Allow only publish transition while still in draft; all
-                    # other edits require being selected in access plan.
                     if vals.get('state') == 'published' and set(vals) == {'state'}:
                         continue
                     raise AccessError(_("You can edit this appraisal only if you are selected in the Access Plan."))

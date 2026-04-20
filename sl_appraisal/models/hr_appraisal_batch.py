@@ -47,11 +47,23 @@ class HrAppraisalBatch(models.Model):
         string='Appraisal Count',
         compute='_compute_appraisal_count',
     )
+    is_appraisal_admin = fields.Boolean(
+        compute='_compute_is_appraisal_admin',
+    )
 
     @api.depends('appraisal_ids')
     def _compute_appraisal_count(self):
         for batch in self:
             batch.appraisal_count = len(batch.appraisal_ids)
+
+    @api.depends_context('uid')
+    def _compute_is_appraisal_admin(self):
+        is_admin = (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        )
+        for batch in self:
+            batch.is_appraisal_admin = is_admin
 
     @api.constrains('date_from', 'date_to', 'date_deadline')
     def _check_batch_dates(self):
