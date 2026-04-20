@@ -125,6 +125,11 @@ class HrAppraisal(models.Model):
         store=True,
         digits=(16, 2),
         help="Sum of Skills Average and Manual Score. Editable by Appraisal Administrator only.")
+    total_score_manual_override = fields.Boolean(
+        string='Total Score Manual Override',
+        default=False,
+        copy=False,
+    )
 
     manual_score_reason = fields.Text(
         string='Score Reason',
@@ -150,13 +155,15 @@ class HrAppraisal(models.Model):
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
 
-    @api.depends('skill_average_score', 'manual_score')
+    @api.depends('skill_average_score', 'manual_score', 'total_score_manual_override')
     def _compute_total_score(self):
         for rec in self:
-            rec.total_score = (rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)
+            if not rec.total_score_manual_override:
+                rec.total_score = (rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)
 
     def _inverse_total_score(self):
-        pass
+        for rec in self:
+            rec.total_score_manual_override = True
 
     @api.depends_context('uid')
     def _compute_is_hr_or_admin(self):
@@ -235,6 +242,7 @@ class HrAppraisal(models.Model):
     @api.onchange('manual_score')
     def _onchange_manual_score(self):
         for rec in self:
+            rec.total_score_manual_override = False
             if rec.manual_score < 0:
                 rec.manual_score = 0
             if rec.manual_score > 15:
@@ -506,6 +514,7 @@ class HrAppraisal(models.Model):
     @api.onchange('employee_id')
     def _onchange_employee_id_limit_managers(self):
         for rec in self:
+            rec.total_score_manual_override = False
             if not rec.hr_manager_ids and rec.employee_id.parent_id.user_id:
                 rec.hr_manager_ids = rec.employee_id.parent_id
             if rec.hr_manager_ids:
