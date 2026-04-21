@@ -17,10 +17,9 @@
                     </group>
                 </group>
                 <div class="alert alert-info" role="alert">
-                    This recomputes the daily overtime reservoir for each affected
-                    (employee, day) from the employee's current working schedule,
-                    then refreshes the overtime hours on the selected attendance
-                    records and on their same-day siblings for that employee.
+                    This recalculates selected records using:
+                    worked hours - Average Hour per Day
+                    (Average Hour per Day is taken from the employee working schedule).
                 </div>
                 <footer>
                     <button string="Recalculate" type="object" name="action_recalculate" class="btn-primary"/>
