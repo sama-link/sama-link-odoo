@@ -6,17 +6,22 @@
         <field name="arch" type="xml">
             <form string="Recalculate Overtime">
                 <group>
-                    <group string="Period">
-                        <field name="date_from"/>
-                        <field name="date_to"/>
+                    <group string="Selection">
+                        <field name="selected_count"/>
+                        <field name="approved_count"/>
+                        <field name="refused_count"/>
                     </group>
-                    <group string="Filters">
-                        <field name="employee_ids" widget="many2many_tags"
-                               options="{'no_create': True}"
-                               placeholder="All employees"/>
-                        <field name="overtime_status" placeholder="All statuses"/>
+                    <group string="Options">
+                        <field name="force_update_approved"/>
+                        <field name="reset_refused_to_approve"/>
                     </group>
                 </group>
+                <div class="alert alert-info" role="alert">
+                    This recomputes the daily overtime reservoir for each affected
+                    (employee, day) from the employee's current working schedule,
+                    then refreshes the overtime hours on the selected attendance
+                    records and on their same-day siblings for that employee.
+                </div>
                 <footer>
                     <button string="Recalculate" type="object" name="action_recalculate" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
