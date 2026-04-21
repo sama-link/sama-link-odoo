@@ -187,7 +187,7 @@ class HrLoan(models.Model):
             if pending_loan_count:
                 if raise_error:
                     raise ValidationError(
-                        _("The Employee has already a pending installment"))
+                        _("لديك سلفة قيد السداد بالفعل.. برجاء التواصل مع قسم الموارد البشرية : 01033202043"))
                 else:
                     loan.multi_request_warning_shown = True
                     continue

@@ -62,6 +62,8 @@ class RecalculateOvertimeWizard(models.TransientModel):
             calendar = att.employee_id.resource_calendar_id or att.employee_id.company_id.resource_calendar_id
             average_hours_per_day = calendar.hours_per_day if calendar else 0.0
             overtime_value = att.worked_hours - average_hours_per_day
+            if overtime_value < 0.75:
+                overtime_value = 0.0
 
             values = {'overtime_hours': overtime_value}
 
