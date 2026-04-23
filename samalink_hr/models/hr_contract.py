@@ -67,5 +67,22 @@ class HrContractInherit(models.Model):
                 """,
                 (forced_calendar_id, self.env.uid, tuple(self.ids)),
             )
+
+            employee_ids = tuple(self.mapped('employee_id').ids)
+            if employee_ids:
+                self.env.cr.execute(
+                    """
+                    UPDATE resource_resource
+                       SET calendar_id = %s,
+                           write_uid = %s,
+                           write_date = NOW()
+                     WHERE id IN (
+                         SELECT resource_id FROM hr_employee WHERE id IN %s
+                     )
+                    """,
+                    (forced_calendar_id, self.env.uid, employee_ids),
+                )
+
             self.invalidate_recordset()
+            self.mapped('employee_id').invalidate_recordset()
             return True
