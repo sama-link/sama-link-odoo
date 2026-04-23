@@ -99,10 +99,21 @@ class HrPayslipRun(models.Model):
 
     def action_view_payslips(self):
         """Function to view payslips in batch"""
+        self.ensure_one()
         action = self.env.ref('hr_payroll_community.action_hr_payslip_line').sudo().read()[0]
         action['domain'] = [('slip_id.payslip_run_id', '=', self.id)]
         action['context'] = {'create': False}
-        action['view_mode'] = 'pivot,form'
+        # Open in list first so users can select exact computation lines and export.
+        action['view_mode'] = 'list,pivot,form'
+        return action
+
+    def action_export_batch_computation(self):
+        """Open batch computation details in list view for export."""
+        self.ensure_one()
+        action = self.env.ref('hr_payroll_community.action_hr_payslip_line').sudo().read()[0]
+        action['domain'] = [('slip_id.payslip_run_id', '=', self.id)]
+        action['context'] = {'create': False}
+        action['view_mode'] = 'list,pivot,form'
         return action
 
     def action_view_payslip_inputs(self):
