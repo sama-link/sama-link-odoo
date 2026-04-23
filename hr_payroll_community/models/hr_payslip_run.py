@@ -105,6 +105,16 @@ class HrPayslipRun(models.Model):
         action['view_mode'] = 'pivot,form'
         return action
 
+    def action_view_payslip_inputs(self):
+        """Open payslip inputs for the current batch for export."""
+        self.ensure_one()
+        action = self.env.ref('hr_payroll_community.action_hr_payslip_input').sudo().read()[0]
+        # Keep all input codes visible (including LO); only filter by batch.
+        action['domain'] = [('payslip_id.payslip_run_id', '=', self.id)]
+        action['context'] = {'create': False}
+        action['view_mode'] = 'list'
+        return action
+
     def action_bulk_compute_payslips(self):
         failed = []
         for slip in self.slip_ids:
