@@ -21,6 +21,8 @@
 #
 #############################################################################
 import logging
+import json
+from urllib.parse import quote
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from odoo import fields, models, _, api
@@ -115,6 +117,43 @@ class HrPayslipRun(models.Model):
         action['context'] = {'create': False}
         action['view_mode'] = 'list,pivot,form'
         return action
+
+    def action_export_batch_finance_xlsx(self):
+        """One-click export of batch payslips with finance template fields."""
+        self.ensure_one()
+        if not self.slip_ids:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("No Payslips"),
+                    'type': 'warning',
+                    'message': _("There are no payslips in this batch to export."),
+                }
+            }
+
+        export_payload = {
+            'model': 'hr.payslip',
+            'ids': False,
+            'domain': [('payslip_run_id', '=', self.id)],
+            'fields': [
+                {'name': 'employee_id/name', 'label': 'Employee/Employee Name'},
+                {'name': 'employee_id/pin', 'label': 'Employee/Visa No'},
+                {'name': 'employee_id/work_location_id/name', 'label': 'Employee/Work Location/Work Location'},
+                {'name': 'contract_id/salary_payment_method', 'label': 'Contract/Salary Payment Method'},
+                {'name': 'net_amount', 'label': 'Net Amount'},
+                {'name': 'advance_amount', 'label': 'Loan/Advance'},
+                {'name': 'contract_id/wage', 'label': 'Employee/Employee Contracts/Wage'},
+            ],
+            'groupby': [],
+            'import_compat': False,
+            'context': dict(self.env.context),
+        }
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/export/xlsx?data=%s' % quote(json.dumps(export_payload)),
+            'target': 'self',
+        }
 
     def action_view_payslip_inputs(self):
         """Open payslip inputs for the current batch for export."""

@@ -115,6 +115,12 @@ class HrPayslip(models.Model):
                                    string="Payslip Computation Details",
                                    help="Set Payslip Count")
     net_amount = fields.Float(string='Net Amount', compute='_compute_net_amount', store=True)
+    advance_amount = fields.Float(
+        string='Advance Amount',
+        compute='_compute_advance_amount',
+        store=True,
+        help="Total amount from computation details where code is ADVANCE.",
+    )
     work_location_id = fields.Many2one(related="employee_id.work_location_id", domain="[('address_id', '=', address_id)]")
     # is_officer = fields.Boolean(compute="_compute_is_officer")
 
@@ -129,6 +135,14 @@ class HrPayslip(models.Model):
         """Compute function for getting Net Amount"""
         for payslip in self:
             payslip.net_amount = payslip.line_ids.filtered(lambda line: line.code == 'NET').total
+
+    @api.depends('line_ids.total', 'line_ids.code')
+    def _compute_advance_amount(self):
+        """Compute function for getting ADVANCE amount."""
+        for payslip in self:
+            payslip.advance_amount = payslip.line_ids.filtered(
+                lambda line: line.code == 'ADVANCE'
+            ).total
 
     def _compute_details_by_salary_rule_category_ids(self):
         """Compute function for Salary Rule Category for getting

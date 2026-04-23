@@ -43,4 +43,14 @@
         <field name="export_id" ref="hr_payslip_export_template"/>
         <field name="name">net_amount</field>
     </record>
+
+    <record id="hr_payslip_export_template_advance_amount" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">advance_amount</field>
+    </record>
+
+    <record id="hr_payslip_export_template_contract_id__wage" model="ir.exports.line">
+        <field name="export_id" ref="hr_payslip_export_template"/>
+        <field name="name">contract_id/wage</field>
+    </record>
 </odoo>

@@ -110,6 +110,11 @@
                                 icon="fa-file-excel-o"
                                 type="object"
                                 string="Export Computation"/>
+                        <button name="action_export_batch_finance_xlsx"
+                                class="oe_stat_button"
+                                icon="fa-download"
+                                type="object"
+                                string="Export Batch XLSX"/>
                     </div>
                     <label for="name" class="oe_edit_only"/>
                     <h1>
