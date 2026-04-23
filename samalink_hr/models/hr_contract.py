@@ -83,6 +83,7 @@ class HrContractInherit(models.Model):
                     (forced_calendar_id, self.env.uid, employee_ids),
                 )
 
+
             self.invalidate_recordset()
             self.mapped('employee_id').invalidate_recordset()
             return True
