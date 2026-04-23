@@ -119,7 +119,16 @@
                         <field name="credit_note" readonly="state != 'draft'"/>
                     </group>
                     <separator string="Payslips"/>
-                    <field name="slip_ids" readonly="state != 'draft'"/>
+                    <field name="slip_ids" readonly="state != 'draft'">
+                        <list string="Payslips">
+                            <field name="employee_id"/>
+                            <field name="struct_id" optional="hide"/>
+                            <field name="date_from" optional="show"/>
+                            <field name="date_to" optional="show"/>
+                            <field name="state" widget="badge" optional="show"/>
+                            <field name="net_amount" string="Net Amount" sum="Total Net Amount"/>
+                        </list>
+                    </field>
                 </sheet>
             </form>
         </field>

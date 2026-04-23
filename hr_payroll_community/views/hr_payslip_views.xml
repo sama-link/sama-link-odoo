@@ -13,6 +13,7 @@
                 <field name="date_from" groups="hr_payroll.group_hr_payroll_community_user"/>
                 <field name="date_to" groups="hr_payroll.group_hr_payroll_community_user"/>
                 <field name="state"/>
+                <field name="net_amount" string="Net Amount" sum="Total Net Amount"/>
                 <field name="company_id" groups="base.group_multi_company"
                        options="{'no_create': True}"/>
                 <field name="payslip_run_id" invisible="1"/>

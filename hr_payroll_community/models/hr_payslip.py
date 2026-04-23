@@ -567,7 +567,7 @@ class HrPayslip(models.Model):
         }
         if (not employee_id) or (not date_from) or (not date_to):
             return res
-        ttyme = datetime.combine(fields.Date.from_string(date_from), time.min)
+        ttyme = datetime.combine(fields.Date.from_string(date_to), time.min)
         employee = self.env['hr.employee'].browse(employee_id)
         locale = self.env.context.get('lang') or 'en_US'
         res['value'].update({
@@ -621,7 +621,7 @@ class HrPayslip(models.Model):
         date_from = self.date_from
         date_to = self.date_to
         contract_ids = []
-        ttyme = datetime.combine(fields.Date.from_string(date_from), time.min)
+        ttyme = datetime.combine(fields.Date.from_string(date_to), time.min)
         locale = self.env.context.get('lang') or 'en_US'
         self.name = _('Salary Slip of %s for %s') % (
             employee.name, tools.ustr(
