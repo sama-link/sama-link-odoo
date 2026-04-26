@@ -15,9 +15,8 @@
 
                         <!-- Status Badge -->
                         <div class="text-center" style="margin-bottom: 25px;">
-                            <span t-attf-style="padding: 4px 16px; border-radius: 4px; font-weight: bold; color: #fff; background-color: {{ 'green' if doc.state == 'approved' else 'orange' if doc.state == 'validated' else 'gray' if doc.state == 'draft' else 'red' }};">
-                                <t t-field="doc.state"/>
-                            </span>
+                            <span t-attf-style="padding: 4px 16px; border-radius: 4px; font-weight: bold; color: #fff; background-color: {{ 'green' if doc.state == 'approved' else 'orange' if doc.state == 'validated' else 'gray' if doc.state == 'draft' else 'red' }};"
+                                  t-field="doc.state"/>
                         </div>
 
                         <!-- Employee & Company Info -->
@@ -26,19 +25,19 @@
                                 <table style="width: 100%;">
                                     <tr>
                                         <td style="padding: 4px 8px; font-weight: bold; width: 40%;">Employee</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.employee_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.employee_id"/></td>
                                     </tr>
                                     <tr t-if="doc.employee_id.job_id">
                                         <td style="padding: 4px 8px; font-weight: bold;">Job Position</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.employee_id.job_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.employee_id.job_id"/></td>
                                     </tr>
                                     <tr t-if="doc.employee_id.department_id">
                                         <td style="padding: 4px 8px; font-weight: bold;">Department</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.employee_id.department_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.employee_id.department_id"/></td>
                                     </tr>
                                     <tr t-if="doc.work_location_id">
                                         <td style="padding: 4px 8px; font-weight: bold;">Work Location</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.work_location_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.work_location_id"/></td>
                                     </tr>
                                 </table>
                             </div>
@@ -46,15 +45,15 @@
                                 <table style="width: 100%;">
                                     <tr>
                                         <td style="padding: 4px 8px; font-weight: bold; width: 40%;">Company</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.company_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.company_id"/></td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 4px 8px; font-weight: bold;">Date</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.date"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.date"/></td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 4px 8px; font-weight: bold;">Contract</td>
-                                        <td style="padding: 4px 8px;"><t t-field="doc.current_contract_id"/></td>
+                                        <td style="padding: 4px 8px;"><span t-field="doc.current_contract_id"/></td>
                                     </tr>
                                 </table>
                             </div>
@@ -86,10 +85,10 @@
                                         <t t-if="doc.based_on == 'amount'">Amount</t>
                                     </td>
                                     <td t-if="doc.based_on == 'days'" style="padding: 8px; text-align: center;">
-                                        <t t-field="doc.days"/>
+                                        <span t-field="doc.days"/>
                                     </td>
                                     <td style="padding: 8px; text-align: center; font-weight: bold;">
-                                        <t t-field="doc.amount" t-options="{'widget': 'monetary', 'display_currency': doc.company_id.currency_id}"/>
+                                        <span t-field="doc.amount" t-options="{'widget': 'monetary', 'display_currency': doc.company_id.currency_id}"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -99,7 +98,7 @@
                         <div t-if="doc.description" style="margin-bottom: 30px;">
                             <h5 style="font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Description</h5>
                             <p style="padding: 8px; background-color: #fafafa; border-radius: 4px;">
-                                <t t-field="doc.description"/>
+                                <span t-field="doc.description"/>
                             </p>
                         </div>
 
