@@ -25,6 +25,7 @@ class HrPayslip(models.Model):
                 ('date', '>=', payslip.date_from),
                 ('date', '<=', payslip.date_to),
                 ('state', '=', 'approved'),
+                ('payment_type', '=', 'with_salary'),
             ])
             payslip.bonus_amount = sum(incentives.filtered(lambda i: i.type == 'bonus').mapped('amount'))
             payslip.penalty_amount = sum(incentives.filtered(lambda i: i.type == 'penalty').mapped('amount'))

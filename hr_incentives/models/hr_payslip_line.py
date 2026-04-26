@@ -16,6 +16,7 @@ class HrPayslipLine(models.Model):
                     ('date', '>=', date_from),
                     ('date', '<=', date_to),
                     ('state', '=', 'approved'),
+                    ('payment_type', '=', 'with_salary'),
                 ])
                 line.update({'related_records_count': incentives_count})
 
@@ -35,5 +36,6 @@ class HrPayslipLine(models.Model):
                 ('date', '>=', date_from),
                 ('date', '<=', date_to),
                 ('state', '=', 'approved'),
+                ('payment_type', '=', 'with_salary'),
             ]
             return action

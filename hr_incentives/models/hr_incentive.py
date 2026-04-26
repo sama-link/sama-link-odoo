@@ -16,6 +16,10 @@ class HrIncentive(models.Model):
         ('bonus', 'Bonus'),
         ('penalty', 'Penalty')
     ], string='Incentive Type', required=True, default='bonus')
+    payment_type = fields.Selection([
+        ('with_salary', 'With Salary'),
+        ('immediate', 'Immediate'),
+    ], string='Payment Type', required=True, default='with_salary', tracking=True)
     based_on = fields.Selection([
         ('days', 'Days'),
         ('amount', 'Amount')
