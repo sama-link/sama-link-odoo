@@ -1,0 +1,11 @@
+<odoo>
+    <record id="action_report_hr_incentive" model="ir.actions.report">
+        <field name="name">Incentive</field>
+        <field name="model">hr.incentive</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">hr_incentives.report_hr_incentive_template</field>
+        <field name="report_file">hr_incentives.report_hr_incentive_template</field>
+        <field name="binding_model_id" ref="model_hr_incentive"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

@@ -13,6 +13,8 @@
         'security/ir.model.access.csv',
         'security/ir_rule.xml',
         'views/hr_payslip.xml',
+        'report/hr_incentive_report.xml',
+        'report/hr_incentive_report_template.xml',
     ],
     'installable': True,
     'application': True,
