@@ -17,8 +17,6 @@ class HrContractInherit(models.Model):
         ('sama_tech_downtown', 'سما تكنولوجي الحسن على محمد (وسط البلد)'),
         ('sama_tech_hadayek', 'سما تكنولوجي الحسن على محمد (حدائق القبة)')
     ], string="Medical Insurance")
-    _SCHEDULE_CONFLICT_MSG = "Changing the contract on this employee changes their working schedule"
-
     def write(self, vals):
         is_archiving = ('active' in vals and not vals['active'])
         is_closing = ('state' in vals and vals['state'] in ['close', 'cancel'])
@@ -48,8 +46,11 @@ class HrContractInherit(models.Model):
         try:
             return super(HrContractInherit, self).write(vals)
         except (ValidationError, UserError) as err:
-            # Force-skip the specific working schedule/leave consistency blocker.
-            if not vals.get('resource_calendar_id') or self._SCHEDULE_CONFLICT_MSG not in str(err):
+            # Force-skip the working schedule / leave consistency blocker.
+            # We no longer match a specific English message string because
+            # str(err) is translated into the user's language (e.g. Arabic),
+            # which caused HR managers to be blocked while admin was not.
+            if not vals.get('resource_calendar_id'):
                 raise
 
             fallback_vals = dict(vals)
