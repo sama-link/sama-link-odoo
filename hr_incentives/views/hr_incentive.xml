@@ -9,6 +9,7 @@
                     <button name="action_refuse" string="Refuse" type="object" invisible="state != 'validated'" groups="hr_incentives.group_hr_incentives_manager" class="btn-outline-danger" confirm="Are you sure you want to refuse this incentive?"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state != 'approved'" groups="hr_incentives.group_hr_incentives_manager" class="btn-secondary" confirm="Are you sure you want to cancel this incentive?"/>
                     <button name="action_draft" string="Set to Draft" type="object" invisible="state != 'validated'" groups="hr_incentives.group_hr_incentives_officer" class="btn-secondary" confirm="Are you sure you want to set this incentive to draft?"/>
+                    <button name="%(hr_incentives.action_report_hr_incentive)d" string="Print" type="action" invisible="state != 'approved'" class="btn-secondary" icon="fa-print"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated"/>
                 </header>
                 <sheet>
