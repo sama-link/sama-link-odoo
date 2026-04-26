@@ -138,7 +138,7 @@ class HrPayslipRun(models.Model):
             'domain': [('payslip_run_id', '=', self.id)],
             'fields': [
                 {'name': 'employee_id/name', 'label': 'Employee/Employee Name', 'type': 'char'},
-                {'name': 'employee_id/pin', 'label': 'Employee/Visa No', 'type': 'char'},
+                {'name': 'employee_id/visa_no', 'label': 'Employee/Visa No', 'type': 'char'},
                 {'name': 'employee_id/work_location_id/name', 'label': 'Employee/Work Location/Work Location', 'type': 'char'},
                 {'name': 'contract_id/salary_payment_method', 'label': 'Contract/Salary Payment Method', 'type': 'char'},
                 {'name': 'net_amount', 'label': 'Net Amount', 'type': 'float'},
