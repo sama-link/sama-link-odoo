@@ -16,6 +16,9 @@
         'oh_appraisal',
         'hr_skills',
         'samalink_security_groups',
+        'hr_attendance_deviation',
+        'hr_incentives',
+        'samalink_hr',
     ],
     'data': [
         'security/sl_appraisal_groups.xml',
@@ -29,6 +32,7 @@
         'views/hr_appraisal_batch_views.xml',
         'views/hr_employee_views.xml',
         'views/my_appraisals_views.xml',
+        'views/admin_score_config_views.xml',
         'reports/appraisal_batch_report.xml',
         'reports/appraisal_batch_report_template.xml',
         'views/menuitems.xml',

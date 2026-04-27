@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_admin_score_config_form" model="ir.ui.view">
+        <field name="name">appraisal.admin.score.config.form</field>
+        <field name="model">appraisal.admin.score.config</field>
+        <field name="arch" type="xml">
+            <form string="Administration Score Configuration" create="false" delete="false">
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                    </group>
+                    <group string="Score Rules">
+                        <group>
+                            <field name="absence_points"/>
+                            <field name="late_points"/>
+                        </group>
+                        <group>
+                            <field name="penalty_points"/>
+                            <field name="bonus_points"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_open_admin_score_config" model="ir.actions.server">
+        <field name="name">Administration Score Configuration</field>
+        <field name="model_id" ref="model_appraisal_admin_score_config"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_config()</field>
+    </record>
+</odoo>

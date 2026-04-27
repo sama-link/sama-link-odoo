@@ -1,3 +1,4 @@
+from datetime import datetime, time
 from odoo import api, fields, models, _, Command
 from odoo.exceptions import UserError, AccessError, ValidationError
 
@@ -130,6 +131,59 @@ class HrAppraisal(models.Model):
         digits=(16, 2),
         help="Additional score entered by HR (0 to 15).")
 
+    absence_count = fields.Integer(
+        string='Unexcused Absence Days',
+        compute='_compute_administration_scores',
+    )
+    absence_score = fields.Float(
+        string='Absence Score',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+    )
+    late_count = fields.Integer(
+        string='Late Days',
+        compute='_compute_administration_scores',
+    )
+    late_score = fields.Float(
+        string='Late Score',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+    )
+    penalty_count = fields.Integer(
+        string='Penalties',
+        compute='_compute_administration_scores',
+    )
+    penalty_score = fields.Float(
+        string='Penalty Score',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+    )
+    bonus_count = fields.Integer(
+        string='Bonuses',
+        compute='_compute_administration_scores',
+    )
+    bonus_score = fields.Float(
+        string='Bonus Score',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+    )
+    admin_score = fields.Float(
+        string='Administration Score (%)',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+        help="Starts from 100 and is adjusted by absence/late/penalty/bonus scoring.",
+    )
+    weighted_skill_score = fields.Float(
+        string='Weighted Skills + Manual (70%)',
+        compute='_compute_weighted_score_breakdown',
+        digits=(16, 2),
+    )
+    weighted_admin_score = fields.Float(
+        string='Weighted Administration (30%)',
+        compute='_compute_weighted_score_breakdown',
+        digits=(16, 2),
+    )
+
     total_score = fields.Float(
         string='Total Score (%)',
         compute='_compute_total_score',
@@ -167,11 +221,82 @@ class HrAppraisal(models.Model):
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
 
-    @api.depends('skill_average_score', 'manual_score', 'total_score_manual_override')
+    @api.depends('skill_average_score', 'manual_score')
+    def _compute_weighted_score_breakdown(self):
+        for rec in self:
+            rec.weighted_skill_score = ((rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)) * 0.7
+            rec.weighted_admin_score = (rec.admin_score or 0.0) * 0.3
+
+    @api.depends('employee_id', 'date_from', 'date_to')
+    def _compute_administration_scores(self):
+        incentive_model = self.env['hr.incentive'].sudo()
+        absence_model = self.env['hr.absent.entry'].sudo()
+        attendance_model = self.env['hr.attendance'].sudo()
+        config = self.env['appraisal.admin.score.config'].sudo().get_config()
+        allowed_late_minutes = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'hr_attendance_deviation.allowed_late_minutes',
+                default=15,
+            )
+        )
+        allowed_late_hours = allowed_late_minutes / 60.0
+        for rec in self:
+            rec.absence_count = 0
+            rec.late_count = 0
+            rec.penalty_count = 0
+            rec.bonus_count = 0
+            rec.absence_score = 0.0
+            rec.late_score = 0.0
+            rec.penalty_score = 0.0
+            rec.bonus_score = 0.0
+            rec.admin_score = 100.0
+            if not rec.employee_id or not rec.date_from or not rec.date_to:
+                continue
+
+            date_from_midnight = datetime.combine(rec.date_from, time.min)
+            date_to_end = datetime.combine(rec.date_to, time.max)
+
+            rec.absence_count = absence_model.search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('date', '>=', rec.date_from),
+                ('date', '<=', rec.date_to),
+                ('leave_entry_id', '=', False),
+            ])
+            rec.late_count = attendance_model.search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('check_in', '>=', date_from_midnight),
+                ('check_in', '<=', date_to_end),
+                ('late_check_in_approved', '=', True),
+                ('late_check_in', '>', allowed_late_hours),
+            ])
+            rec.penalty_count = incentive_model.search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('date', '>=', rec.date_from),
+                ('date', '<=', rec.date_to),
+                ('state', '=', 'approved'),
+                ('payment_type', '=', 'with_salary'),
+                ('type', '=', 'penalty'),
+            ])
+            rec.bonus_count = incentive_model.search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('date', '>=', rec.date_from),
+                ('date', '<=', rec.date_to),
+                ('state', '=', 'approved'),
+                ('payment_type', '=', 'with_salary'),
+                ('type', '=', 'bonus'),
+            ])
+            rec.absence_score = rec.absence_count * (config.absence_points or 0.0)
+            rec.late_score = rec.late_count * (config.late_points or 0.0)
+            rec.penalty_score = rec.penalty_count * (config.penalty_points or 0.0)
+            rec.bonus_score = rec.bonus_count * (config.bonus_points or 0.0)
+            raw_admin_score = 100.0 + rec.absence_score + rec.late_score + rec.penalty_score + rec.bonus_score
+            rec.admin_score = min(100.0, max(0.0, raw_admin_score))
+
+    @api.depends('skill_average_score', 'manual_score', 'admin_score', 'total_score_manual_override')
     def _compute_total_score(self):
         for rec in self:
             if not rec.total_score_manual_override:
-                rec.total_score = (rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)
+                rec.total_score = (((rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)) * 0.7) + ((rec.admin_score or 0.0) * 0.3)
 
     def _inverse_total_score(self):
         for rec in self:
@@ -255,15 +380,13 @@ class HrAppraisal(models.Model):
                     "Only one person can be selected to access the appraisal form."
                 ))
 
-    @api.constrains('manual_score', 'manual_score_reason', 'total_score')
+    @api.constrains('manual_score', 'manual_score_reason')
     def _check_score_limits(self):
         for rec in self:
             if rec.manual_score < 0 or rec.manual_score > 15:
                 raise ValidationError(_("Manual score must be between 0 and 15."))
             if rec.manual_score and not rec.manual_score_reason:
                 raise ValidationError(_("Score reason is mandatory when manual score is set."))
-            if rec.total_score > 100:
-                raise ValidationError(_("Total score cannot exceed 100%%."))
 
     @api.onchange('manual_score')
     def _onchange_manual_score(self):
@@ -273,17 +396,21 @@ class HrAppraisal(models.Model):
                 rec.manual_score = 0
             if rec.manual_score > 15:
                 rec.manual_score = 15
-            max_by_total = max(0.0, 100.0 - (rec.skill_average_score or 0.0))
+            max_by_total = max(0.0, (100.0 / 0.7) - (rec.skill_average_score or 0.0))
             if rec.manual_score > max_by_total:
                 rec.manual_score = max_by_total
                 return {
                     'warning': {
                         'title': _("Score adjusted"),
                         'message': _(
-                            "Manual score was reduced so the total does not exceed 100%%."
+                            "Manual score was reduced so the weighted total does not exceed 100%%."
                         ),
                     }
                 }
+
+    def action_refresh_administration_score(self):
+        self.ensure_one()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 
