@@ -16,6 +16,11 @@ class AppraisalAdminScoreConfig(models.Model):
         default=-5.0,
         required=True,
     )
+    early_leaving_points = fields.Float(
+        string='Points Per Early Leaving Day',
+        default=-5.0,
+        required=True,
+    )
     penalty_points = fields.Float(
         string='Points Per Penalty',
         default=-15.0,

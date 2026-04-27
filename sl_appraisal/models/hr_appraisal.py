@@ -149,6 +149,19 @@ class HrAppraisal(models.Model):
         compute='_compute_administration_scores',
         digits=(16, 2),
     )
+    early_leaving_count = fields.Integer(
+        string='Early Leaving Days',
+        compute='_compute_administration_scores',
+    )
+    early_leaving_score = fields.Float(
+        string='Early Leaving Score',
+        compute='_compute_administration_scores',
+        digits=(16, 2),
+    )
+    period_days = fields.Integer(
+        string='Period Days',
+        compute='_compute_administration_scores',
+    )
     penalty_count = fields.Integer(
         string='Penalties',
         compute='_compute_administration_scores',
@@ -233,26 +246,23 @@ class HrAppraisal(models.Model):
         absence_model = self.env['hr.absent.entry'].sudo()
         attendance_model = self.env['hr.attendance'].sudo()
         config = self.env['appraisal.admin.score.config'].sudo().get_config()
-        allowed_late_minutes = int(
-            self.env['ir.config_parameter'].sudo().get_param(
-                'hr_attendance_deviation.allowed_late_minutes',
-                default=15,
-            )
-        )
-        allowed_late_hours = allowed_late_minutes / 60.0
         for rec in self:
             rec.absence_count = 0
             rec.late_count = 0
+            rec.early_leaving_count = 0
+            rec.period_days = 0
             rec.penalty_count = 0
             rec.bonus_count = 0
             rec.absence_score = 0.0
             rec.late_score = 0.0
+            rec.early_leaving_score = 0.0
             rec.penalty_score = 0.0
             rec.bonus_score = 0.0
             rec.admin_score = 100.0
             if not rec.employee_id or not rec.date_from or not rec.date_to:
                 continue
 
+            rec.period_days = (rec.date_to - rec.date_from).days + 1
             date_from_midnight = datetime.combine(rec.date_from, time.min)
             date_to_end = datetime.combine(rec.date_to, time.max)
 
@@ -262,13 +272,22 @@ class HrAppraisal(models.Model):
                 ('date', '<=', rec.date_to),
                 ('leave_entry_id', '=', False),
             ])
-            rec.late_count = attendance_model.search_count([
+
+            attendances = attendance_model.search([
                 ('employee_id', '=', rec.employee_id.id),
                 ('check_in', '>=', date_from_midnight),
                 ('check_in', '<=', date_to_end),
-                ('late_check_in_approved', '=', True),
-                ('late_check_in', '>', allowed_late_hours),
             ])
+            late_data = attendances.filtered(
+                'late_check_in_approved'
+            ).get_late_days_hours()
+            rec.late_count = late_data['late_days']
+
+            early_data = attendances.filtered(
+                'early_check_out_approved'
+            ).get_early_leaving_days_hours()
+            rec.early_leaving_count = early_data['early_leaving_days']
+
             rec.penalty_count = incentive_model.search_count([
                 ('employee_id', '=', rec.employee_id.id),
                 ('date', '>=', rec.date_from),
@@ -287,9 +306,17 @@ class HrAppraisal(models.Model):
             ])
             rec.absence_score = rec.absence_count * (config.absence_points or 0.0)
             rec.late_score = rec.late_count * (config.late_points or 0.0)
+            rec.early_leaving_score = rec.early_leaving_count * (config.early_leaving_points or 0.0)
             rec.penalty_score = rec.penalty_count * (config.penalty_points or 0.0)
             rec.bonus_score = rec.bonus_count * (config.bonus_points or 0.0)
-            raw_admin_score = 100.0 + rec.absence_score + rec.late_score + rec.penalty_score + rec.bonus_score
+            raw_admin_score = (
+                100.0
+                + rec.absence_score
+                + rec.late_score
+                + rec.early_leaving_score
+                + rec.penalty_score
+                + rec.bonus_score
+            )
             rec.admin_score = min(100.0, max(0.0, raw_admin_score))
 
     @api.depends('skill_average_score', 'manual_score', 'admin_score', 'total_score_manual_override')

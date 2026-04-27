@@ -179,21 +179,41 @@
 
                         <page string="🧮 Administration Score" name="administration_score_tab"
                               groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
-                            <group>
+                            <group string="Period">
                                 <group>
+                                    <field name="period_days" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Score Components"/>
+                            <group col="2">
+                                <group string="Absence">
                                     <field name="absence_count" readonly="1"/>
                                     <field name="absence_score" readonly="1"/>
+                                </group>
+                                <group string="Late Arrival">
                                     <field name="late_count" readonly="1"/>
                                     <field name="late_score" readonly="1"/>
                                 </group>
-                                <group>
+                            </group>
+                            <group col="2">
+                                <group string="Early Leaving">
+                                    <field name="early_leaving_count" readonly="1"/>
+                                    <field name="early_leaving_score" readonly="1"/>
+                                </group>
+                                <group string="Penalties">
                                     <field name="penalty_count" readonly="1"/>
                                     <field name="penalty_score" readonly="1"/>
+                                </group>
+                            </group>
+                            <group col="2">
+                                <group string="Bonuses">
                                     <field name="bonus_count" readonly="1"/>
                                     <field name="bonus_score" readonly="1"/>
                                 </group>
+                                <group/>
                             </group>
-                            <group>
+                            <separator string="Administration Total"/>
+                            <group string="Total">
                                 <group>
                                     <field name="admin_score" readonly="1"/>
                                 </group>
@@ -205,7 +225,7 @@
                                 </group>
                             </group>
                             <div class="alert alert-info mt-2" role="alert">
-                                Administration score starts from 100, then applies absence/late/penalty/bonus point adjustments, and is clamped between 0 and 100.
+                                Administration score starts from 100, then applies absence/late/early leaving/penalty/bonus point adjustments, and is clamped between 0 and 100.
                             </div>
                         </page>
 

@@ -13,6 +13,7 @@
                         <group>
                             <field name="absence_points"/>
                             <field name="late_points"/>
+                            <field name="early_leaving_points"/>
                         </group>
                         <group>
                             <field name="penalty_points"/>
