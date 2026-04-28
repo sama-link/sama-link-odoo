@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from odoo import models
 
 class HrPayslipLine(models.Model):
@@ -60,6 +60,53 @@ class HrPayslipLine(models.Model):
                 credits[(iso_year, iso_week)] += 1
         return credits
 
+    def _get_approved_timeoff_dates(self, employee, date_from, date_to):
+        from_date_midnight = datetime.combine(date_from, time.min)
+        end_of_to_date = datetime.combine(date_to, time.max)
+        approved_leaves = self.env['hr.leave'].search([
+            ('employee_id', '=', employee.id),
+            ('state', '=', 'validate'),
+            ('date_from', '<=', end_of_to_date),
+            ('date_to', '>=', from_date_midnight),
+        ])
+        timeoff_dates = set()
+        for leave in approved_leaves:
+            start_day = max(leave.date_from.date(), date_from)
+            end_day = min(leave.date_to.date(), date_to)
+            cursor_date = start_day
+            while cursor_date <= end_day:
+                timeoff_dates.add(cursor_date)
+                cursor_date += timedelta(days=1)
+        return timeoff_dates
+
+    def _get_compensation_stats(self, slip, absent_entries=None):
+        employee = slip.employee_id
+        date_from = slip.date_from
+        date_to = slip.date_to
+        absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
+            ('employee_id', '=', employee.id),
+            ('date', '>=', date_from),
+            ('date', '<=', date_to),
+            ('leave_entry_id', '=', False),
+        ])
+        if not absent_entries:
+            return 0, set()
+
+        approved_timeoff_dates = self._get_approved_timeoff_dates(employee, date_from, date_to)
+        friday_credits = self._get_weekly_friday_attendance_credits(employee, date_from, date_to)
+        compensated_absences = 0
+        compensated_weeks = set()
+        for absent_entry in absent_entries.sorted('date'):
+            if absent_entry.date.weekday() == 4 or absent_entry.date in approved_timeoff_dates:
+                continue
+            iso_year, iso_week, _ = absent_entry.date.isocalendar()
+            week_key = (iso_year, iso_week)
+            if friday_credits.get(week_key, 0) > 0:
+                friday_credits[week_key] -= 1
+                compensated_absences += 1
+                compensated_weeks.add(week_key)
+        return compensated_absences, compensated_weeks
+
     def _compute_adjusted_absent_penalty_count(self, slip):
         employee = slip.employee_id
         date_from = slip.date_from
@@ -75,17 +122,7 @@ class HrPayslipLine(models.Model):
         if not self._is_friday_swap_in_scope(slip):
             return len(absent_entries)
 
-        friday_credits = self._get_weekly_friday_attendance_credits(employee, date_from, date_to)
-        compensated_absences = 0
-        for absent_entry in absent_entries.sorted('date'):
-            if absent_entry.date.weekday() == 4:
-                continue
-            iso_year, iso_week, _ = absent_entry.date.isocalendar()
-            week_key = (iso_year, iso_week)
-            if friday_credits.get(week_key, 0) > 0:
-                friday_credits[week_key] -= 1
-                compensated_absences += 1
-
+        compensated_absences, _ = self._get_compensation_stats(slip, absent_entries=absent_entries)
         return len(absent_entries) - compensated_absences
 
     def _compute_adjusted_rest_allow_count(self, slip):
@@ -100,6 +137,9 @@ class HrPayslipLine(models.Model):
         ])
         if not rest_entries or not self._is_friday_swap_in_scope(slip):
             return len(rest_entries)
+        _, compensated_weeks = self._get_compensation_stats(slip)
+        if not compensated_weeks:
+            return len(rest_entries)
 
         attendance_dates = {
             check_in.date() for check_in in self.env['hr.attendance'].search([
@@ -111,7 +151,11 @@ class HrPayslipLine(models.Model):
         friday_rest_with_attendance = sum(
             1
             for rest_entry in rest_entries
-            if rest_entry.date_start.date().weekday() == 4 and rest_entry.date_start.date() in attendance_dates
+            if (
+                rest_entry.date_start.date().weekday() == 4
+                and rest_entry.date_start.date() in attendance_dates
+                and (rest_entry.date_start.date().isocalendar()[0], rest_entry.date_start.date().isocalendar()[1]) in compensated_weeks
+            )
         )
         return max(len(rest_entries) - friday_rest_with_attendance, 0)
 
