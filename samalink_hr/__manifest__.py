@@ -6,7 +6,7 @@
     'author': '46-d-006',
     'website': 'https://edara.digital',
     'category': 'Human Resources',
-    'depends': ['base', 'hr', 'samalink_security_groups', 'hr_contract'],
+    'depends': ['base', 'hr', 'samalink_security_groups', 'hr_contract', 'payroll'],
     'data': [
         'security/ir.model.access.csv',
         'views/hr_employee.xml',
@@ -15,6 +15,7 @@
         'views/hr_work_entry.xml',
         'views/hr_absent_entry.xml',
         'views/hr_job.xml',
+        'views/res_config_settings_views.xml',
     ],
     'installable': True,
     'application': False,

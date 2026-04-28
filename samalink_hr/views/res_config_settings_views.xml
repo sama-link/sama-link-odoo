@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_samalink_hr_friday_swap" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.samalink.hr.friday.swap</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="payroll.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='payroll']" position="inside">
+                <block title="Friday Swap Settings" id="samalink_hr_friday_swap_settings">
+                    <setting
+                        id="samalink_hr_friday_swap_excluded_schedules"
+                        string="Excluded Working Schedules"
+                        help="Employees on these schedules are excluded from Friday swap payroll adjustments."
+                    >
+                        <field name="friday_swap_excluded_schedule_ids" widget="many2many_tags"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
