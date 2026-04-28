@@ -6,7 +6,7 @@
     'author': '46-d-006',
     'website': 'https://edara.digital',
     'category': 'Human Resources',
-    'depends': ['base', 'hr', 'samalink_security_groups', 'hr_contract', 'payroll'],
+    'depends': ['base', 'hr', 'samalink_security_groups', 'hr_contract'],
     'data': [
         'security/ir.model.access.csv',
         'views/hr_employee.xml',
