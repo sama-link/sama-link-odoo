@@ -138,29 +138,7 @@ class HrPayslipLine(models.Model):
             ('date_stop', '<=', end_of_to_date),
             ('work_entry_type_id.code', '=', 'REST100')
         ])
-        if not rest_entries or not self._is_friday_swap_in_scope(slip):
-            return len(rest_entries)
-        _, compensated_weeks = self._get_compensation_stats(slip)
-        if not compensated_weeks:
-            return len(rest_entries)
-
-        attendance_dates = {
-            check_in.date() for check_in in self.env['hr.attendance'].search([
-                ('employee_id', '=', employee.id),
-                ('check_in', '>=', from_date_midnight),
-                ('check_in', '<=', end_of_to_date),
-            ]).mapped('check_in')
-        }
-        friday_rest_with_attendance = sum(
-            1
-            for rest_entry in rest_entries
-            if (
-                rest_entry.date_start.date().weekday() == 4
-                and rest_entry.date_start.date() in attendance_dates
-                and self._get_friday_week_key(rest_entry.date_start.date()) in compensated_weeks
-            )
-        )
-        return max(len(rest_entries) - friday_rest_with_attendance, 0)
+        return len(rest_entries)
 
     def _compute_related_records_count(self):
         for line in self:

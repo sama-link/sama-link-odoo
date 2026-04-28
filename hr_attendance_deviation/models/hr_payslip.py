@@ -245,37 +245,13 @@ class HrPayslip(models.Model):
         for payslip in self:
             from_date_midnight = datetime.combine(payslip.date_from, time.min)
             end_of_to_date = datetime.combine(payslip.date_to, time.max)
-            rest_entries = self.env['hr.work.entry'].search([
+            weekend_days = self.env['hr.work.entry'].search_count([
                 ('employee_id', '=', payslip.employee_id.id),
                 ('date_start', '>=', from_date_midnight),
                 ('date_stop', '<=', end_of_to_date),
                 ('work_entry_type_id.code', '=', 'REST100')
             ])
-            if not rest_entries or not payslip._is_friday_swap_in_scope():
-                payslip.weekend_days = len(rest_entries)
-                continue
-            _, compensated_weeks = payslip._get_compensation_stats()
-            if not compensated_weeks:
-                payslip.weekend_days = len(rest_entries)
-                continue
-
-            attendance_dates = {
-                check_in.date() for check_in in self.env['hr.attendance'].search([
-                    ('employee_id', '=', payslip.employee_id.id),
-                    ('check_in', '>=', from_date_midnight),
-                    ('check_in', '<=', end_of_to_date),
-                ]).mapped('check_in')
-            }
-            friday_rest_with_attendance = sum(
-                1
-                for rest_entry in rest_entries
-                if (
-                    rest_entry.date_start.date().weekday() == 4
-                    and rest_entry.date_start.date() in attendance_dates
-                    and payslip._get_friday_week_key(rest_entry.date_start.date()) in compensated_weeks
-                )
-            )
-            payslip.weekend_days = max(len(rest_entries) - friday_rest_with_attendance, 0)
+            payslip.weekend_days = weekend_days
 
     def _compute_days_attended(self):
         for payslip in self:
