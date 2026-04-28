@@ -8,6 +8,11 @@ _logger = logging.getLogger(__name__)
 
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
+    def _get_friday_week_key(self, day):
+        """Return the anchor Friday date for a Friday->Thursday payroll week."""
+        offset = (day.weekday() - 4) % 7
+        return day - timedelta(days=offset)
+
 
     late_days = fields.Float(
         string='Late Days',
@@ -125,8 +130,7 @@ class HrPayslip(models.Model):
         for check_in in attendance_dates:
             check_day = check_in.date()
             if check_day.weekday() == 4:
-                iso_year, iso_week, _ = check_day.isocalendar()
-                credits[(iso_year, iso_week)] += 1
+                credits[self._get_friday_week_key(check_day)] += 1
         return credits
 
     def _get_approved_timeoff_dates(self):
@@ -167,8 +171,7 @@ class HrPayslip(models.Model):
         for absent_entry in absent_entries.sorted('date'):
             if absent_entry.date.weekday() == 4 or absent_entry.date in approved_timeoff_dates:
                 continue
-            iso_year, iso_week, _ = absent_entry.date.isocalendar()
-            week_key = (iso_year, iso_week)
+            week_key = self._get_friday_week_key(absent_entry.date)
             if friday_credits.get(week_key, 0) > 0:
                 friday_credits[week_key] -= 1
                 compensated_absences += 1
@@ -269,7 +272,7 @@ class HrPayslip(models.Model):
                 if (
                     rest_entry.date_start.date().weekday() == 4
                     and rest_entry.date_start.date() in attendance_dates
-                    and (rest_entry.date_start.date().isocalendar()[0], rest_entry.date_start.date().isocalendar()[1]) in compensated_weeks
+                    and payslip._get_friday_week_key(rest_entry.date_start.date()) in compensated_weeks
                 )
             )
             payslip.weekend_days = max(len(rest_entries) - friday_rest_with_attendance, 0)
