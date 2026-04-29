@@ -132,18 +132,36 @@ class HrPayslipRun(models.Model):
                 }
             }
 
+        # Pick export language from employees' linked users when possible.
+        # If batch contains mixed languages, fall back to current UI context/user.
+        employee_langs = {lang for lang in self.slip_ids.mapped('employee_id.user_id.lang') if lang}
+        export_lang = self.env.context.get('lang') or self.env.user.lang or 'en_US'
+        if len(employee_langs) == 1:
+            export_lang = list(employee_langs)[0]
+        is_arabic = (export_lang or '').startswith('ar')
+
+        labels = {
+            'employee_name': 'الموظف/اسم الموظف' if is_arabic else _('Employee/Employee Name'),
+            'visa_no': 'الموظف/رقم التأشيرة' if is_arabic else _('Employee/Visa No'),
+            'work_location': 'الموظف/موقع العمل/موقع العمل' if is_arabic else _('Employee/Work Location/Work Location'),
+            'payment_method': 'العقد/طريقة دفع الراتب' if is_arabic else _('Contract/Salary Payment Method'),
+            'net_amount': 'صافي المبلغ' if is_arabic else _('Net Amount'),
+            'loan_advance': 'قرض/سلفة' if is_arabic else _('Loan/Advance'),
+            'wage': 'الموظف/عقود الموظف/الأجر' if is_arabic else _('Employee/Employee Contracts/Wage'),
+        }
+
         export_payload = {
             'model': 'hr.payslip',
             'ids': False,
             'domain': [('payslip_run_id', '=', self.id)],
             'fields': [
-                {'name': 'employee_id/name', 'label': _('Employee/Employee Name'), 'type': 'char'},
-                {'name': 'employee_id/visa_no', 'label': _('Employee/Visa No'), 'type': 'char'},
-                {'name': 'employee_id/work_location_id/name', 'label': _('Employee/Work Location/Work Location'), 'type': 'char'},
-                {'name': 'contract_id/salary_payment_method', 'label': _('Contract/Salary Payment Method'), 'type': 'char'},
-                {'name': 'net_amount', 'label': _('Net Amount'), 'type': 'float'},
-                {'name': 'advance_amount', 'label': _('Loan/Advance'), 'type': 'float'},
-                {'name': 'contract_id/wage', 'label': _('Employee/Employee Contracts/Wage'), 'type': 'float'},
+                {'name': 'employee_id/name', 'label': labels['employee_name'], 'type': 'char'},
+                {'name': 'employee_id/visa_no', 'label': labels['visa_no'], 'type': 'char'},
+                {'name': 'employee_id/work_location_id/name', 'label': labels['work_location'], 'type': 'char'},
+                {'name': 'contract_id/salary_payment_method', 'label': labels['payment_method'], 'type': 'char'},
+                {'name': 'net_amount', 'label': labels['net_amount'], 'type': 'float'},
+                {'name': 'advance_amount', 'label': labels['loan_advance'], 'type': 'float'},
+                {'name': 'contract_id/wage', 'label': labels['wage'], 'type': 'float'},
             ],
             'groupby': [],
             'import_compat': False,
