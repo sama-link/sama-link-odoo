@@ -182,6 +182,23 @@
         </record>
 
         <!-- ============================================================
+             MULTI-COMPANY COMPATIBILITY OVERRIDES
+             ============================================================ -->
+        <!-- Use allowed companies (company_ids) instead of only the
+             current company (user.company_id), otherwise cross-company
+             appraisal handling triggers access popups. -->
+        <record id="oh_appraisal.hr_appraisal_company_rule" model="ir.rule">
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+        </record>
+        <record id="hr_employee_transfer.hr_employee_rule_company" model="ir.rule">
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
+        <!-- ============================================================
              DISABLE OLD oh_appraisal GLOBAL RULES
              (They conflict with our new, stricter rules)
              ============================================================ -->
