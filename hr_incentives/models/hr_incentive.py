@@ -28,6 +28,13 @@ class HrIncentive(models.Model):
     amount = fields.Float(string='Amount', compute="_compute_amount", store=True, readonly=False, tracking=True)
     date = fields.Date(string='Date', default=fields.Date.today, tracking=True)
     description = fields.Text(string='Description', tracking=True)
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'hr_incentive_ir_attachments_rel',
+        'incentive_id',
+        'attachment_id',
+        string='Attachments',
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('validated', 'First Approval'),
