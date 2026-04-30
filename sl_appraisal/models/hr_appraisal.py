@@ -447,12 +447,20 @@ class HrAppraisal(models.Model):
         """Only HR Officers and Administrators can create appraisals."""
         self._check_hr_or_admin_access("create appraisals")
         vals['state'] = 'draft'
+        if vals.get('employee_id'):
+            employee = self.env['hr.employee'].browse(vals['employee_id'])
+            if employee.company_id:
+                vals['company_id'] = employee.company_id.id
         vals = self._apply_default_manager_to_vals(vals)
         record = super().create(vals)
         return record
 
     def write(self, vals):
         """Restrict writes by role and appraisal access plan."""
+        if vals.get('employee_id'):
+            employee = self.env['hr.employee'].browse(vals['employee_id'])
+            if employee.company_id:
+                vals['company_id'] = employee.company_id.id
         is_admin = self.env.user.has_group('sl_appraisal.group_appraisal_administrator') or self.env.user.has_group('base.group_system')
         is_hr_officer = self.env.user.has_group('sl_appraisal.group_appraisal_hr')
         is_manager = self.env.user.has_group('sl_appraisal.group_appraisal_manager') or is_hr_officer
@@ -704,6 +712,8 @@ class HrAppraisal(models.Model):
     def _onchange_employee_id_limit_managers(self):
         for rec in self:
             rec.total_score_manual_override = False
+            if rec.employee_id.company_id:
+                rec.company_id = rec.employee_id.company_id
             if not rec.hr_manager_ids and rec.employee_id.parent_id.user_id:
                 rec.hr_manager_ids = rec.employee_id.parent_id
             if rec.hr_manager_ids:
