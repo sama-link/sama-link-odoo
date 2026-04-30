@@ -192,12 +192,6 @@
                 ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
             </field>
         </record>
-        <record id="hr_employee_transfer.hr_employee_rule_company" model="ir.rule">
-            <field name="domain_force">
-                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
-            </field>
-        </record>
-
         <!-- ============================================================
              DISABLE OLD oh_appraisal GLOBAL RULES
              (They conflict with our new, stricter rules)
