@@ -31,6 +31,9 @@
                     <group>
                         <field name="description"/>
                     </group>
+                    <group>
+                        <field name="attachment_ids" widget="many2many_binary" string="Attachments"/>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>

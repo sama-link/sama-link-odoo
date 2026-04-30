@@ -192,7 +192,6 @@
                 ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
             </field>
         </record>
-        
         <!-- ============================================================
              DISABLE OLD oh_appraisal GLOBAL RULES
              (They conflict with our new, stricter rules)

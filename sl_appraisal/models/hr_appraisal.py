@@ -319,6 +319,7 @@ class HrAppraisal(models.Model):
             )
             rec.admin_score = min(100.0, max(0.0, raw_admin_score))
 
+
     @api.depends('skill_average_score', 'manual_score', 'admin_score', 'total_score_manual_override')
     def _compute_total_score(self):
         for rec in self:
