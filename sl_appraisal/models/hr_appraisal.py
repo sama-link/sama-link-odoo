@@ -457,6 +457,7 @@ class HrAppraisal(models.Model):
 
     def write(self, vals):
         """Restrict writes by role and appraisal access plan."""
+        # Keep appraisal company aligned with selected employee company.
         if vals.get('employee_id'):
             employee = self.env['hr.employee'].browse(vals['employee_id'])
             if employee.company_id:

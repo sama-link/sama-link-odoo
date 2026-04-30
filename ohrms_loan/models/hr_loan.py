@@ -25,6 +25,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 _logger = logging.getLogger(__name__)
 
@@ -112,10 +113,13 @@ class HrLoan(models.Model):
     def check_fully_paid(self):
         self._compute_total_amount()
         for loan in self:
-            if loan.state == 'approve' and loan.balance_amount == 0:
+            precision = loan.currency_id.rounding or 0.01
+            if loan.state == 'approve' and float_is_zero(
+                    loan.balance_amount, precision_rounding=precision):
                 loan.write({'state': 'paid'})
                 loan.action_archive()
-            elif loan.state == 'paid' and loan.balance_amount > 0:
+            elif loan.state == 'paid' and float_compare(
+                    loan.balance_amount, 0.0, precision_rounding=precision) > 0:
                 loan.write({'state': 'approve', 'active': True})
 
     def action_mark_as_paid(self):
@@ -126,7 +130,11 @@ class HrLoan(models.Model):
         """Batch action to mark multiple loans as fully paid from list view.
         Only works on approved loans with zero balance."""
         self._compute_total_amount()
-        invalid = self.filtered(lambda l: l.state != 'approve' or l.balance_amount != 0)
+        invalid = self.filtered(
+            lambda l: l.state != 'approve' or not float_is_zero(
+                l.balance_amount, precision_rounding=l.currency_id.rounding or 0.01
+            )
+        )
         if invalid:
             names = ', '.join(invalid.mapped('name'))
             raise UserError(_(
@@ -265,11 +273,15 @@ class HrLoan(models.Model):
     def _compute_total_amount(self):
         """ Compute total loan amount,balance amount and total paid amount"""
         for loan in self:
+            precision = loan.currency_id.rounding or 0.01
             total_paid = 0.0
             for line in loan.loan_lines:
                 if line.paid:
                     total_paid += line.amount
-            balance_amount = loan.loan_amount - total_paid
+            total_paid = loan.currency_id.round(total_paid)
+            balance_amount = loan.currency_id.round(loan.loan_amount - total_paid)
+            if float_is_zero(balance_amount, precision_rounding=precision):
+                balance_amount = 0.0
             loan.total_amount = loan.loan_amount
             loan.balance_amount = balance_amount
             loan.total_paid_amount = total_paid
