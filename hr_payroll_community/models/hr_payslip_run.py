@@ -190,17 +190,20 @@ class HrPayslipRun(models.Model):
                 with self.env.cr.savepoint():
                     slip.invalidate_recordset()
                     
-                    # 1. Back up any manual inputs
+                    # 1. Back up any manual inputs (include loan_line_ids so LO stays linked)
                     saved_inputs = []
                     for il in slip.input_line_ids:
                         if il.amount != 0:
-                            saved_inputs.append({
+                            entry = {
                                 'name': il.name,
                                 'code': il.code,
                                 'amount': il.amount,
                                 'contract_id': il.contract_id.id,
                                 'sequence': il.sequence,
-                            })
+                            }
+                            if 'loan_line_ids' in il._fields:
+                                entry['loan_line_ids'] = list(il.loan_line_ids.ids)
+                            saved_inputs.append(entry)
                             
                     # 2. Sync physical dates to match any fresh batch changes
                     slip.date_from = self.date_start
@@ -209,13 +212,36 @@ class HrPayslipRun(models.Model):
                     # 3. Regen working days / schedules / generic inputs for the NEW dates
                     slip.onchange_employee()
                     
-                    # 4. Inject backed-up custom manual inputs securely 
+                    # 4. Inject backed-up custom manual inputs securely
+                    Input = slip.env['hr.payslip.input']
                     for s_input in saved_inputs:
-                        match = slip.input_line_ids.filtered(lambda l: l.code == s_input['code'])
+                        match = slip.input_line_ids.filtered(
+                            lambda l, c=s_input['code']: l.code == c)
+                        loan_ids = s_input.get('loan_line_ids')
                         if match:
-                            match[0].amount = s_input['amount']
+                            write_vals = {'amount': s_input['amount']}
+                            if (
+                                loan_ids is not None
+                                and 'loan_line_ids' in Input._fields
+                            ):
+                                write_vals['loan_line_ids'] = [(6, 0, loan_ids)]
+                            match[0].write(write_vals)
                         else:
-                            slip.input_line_ids = [(0, 0, s_input)]
+                            create_vals = {
+                                'name': s_input['name'],
+                                'code': s_input['code'],
+                                'amount': s_input['amount'],
+                                'contract_id': s_input['contract_id'],
+                                'sequence': s_input['sequence'],
+                            }
+                            if (
+                                s_input.get('loan_line_ids') is not None
+                                and 'loan_line_ids' in Input._fields
+                            ):
+                                create_vals['loan_line_ids'] = [
+                                    (6, 0, s_input['loan_line_ids'])
+                                ]
+                            slip.input_line_ids = [(0, 0, create_vals)]
                             
                     # 5. Execute computation math with all perfect dates, manual values, and new rules
                     slip.action_compute_sheet()

@@ -625,6 +625,23 @@ class HrPayslip(models.Model):
         })
         return res
 
+    def _payslip_manual_input_backup_vals(self, manual):
+        """Build create vals when preserving non-zero inputs during onchanges.
+
+        Structure-only fields (e.g. loan_line_ids from loan modules) must be
+        kept; otherwise installments stay linked to salary but never mark paid.
+        """
+        vals = {
+            'name': manual.name,
+            'code': manual.code,
+            'amount': manual.amount,
+            'contract_id': manual.contract_id.id,
+            'sequence': manual.sequence,
+        }
+        if 'loan_line_ids' in manual._fields and manual.loan_line_ids:
+            vals['loan_line_ids'] = [(6, 0, manual.loan_line_ids.ids)]
+        return vals
+
     @api.onchange('employee_id', )
     def onchange_employee(self):
         _logger.info("onchange_employee triggered for employee_id=%s, date_from=%s, date_to=%s", self.employee_id.id if self.employee_id else None, self.date_from, self.date_to)
@@ -668,13 +685,7 @@ class HrPayslip(models.Model):
         # 1. Preserve existing manual inputs exactly as they were (re-injected purely to avoid NewId bugs)
         for manual in self.input_line_ids:
             if manual.amount != 0:
-                commands.append((0, 0, {
-                    'name': manual.name,
-                    'code': manual.code,
-                    'amount': manual.amount,
-                    'contract_id': manual.contract_id.id,
-                    'sequence': manual.sequence,
-                }))
+                commands.append((0, 0, self._payslip_manual_input_backup_vals(manual)))
                 manual_codes.append(manual.code)
                 
         # 2. Append new structure inputs if they aren't duplicates
@@ -723,13 +734,7 @@ class HrPayslip(models.Model):
         manual_codes = []
         for manual in self.input_line_ids:
             if manual.amount != 0:
-                commands.append((0, 0, {
-                    'name': manual.name,
-                    'code': manual.code,
-                    'amount': manual.amount,
-                    'contract_id': manual.contract_id.id,
-                    'sequence': manual.sequence,
-                }))
+                commands.append((0, 0, self._payslip_manual_input_backup_vals(manual)))
                 manual_codes.append(manual.code)
         for r in input_line_ids:
             if r.get('code') not in manual_codes:
@@ -764,13 +769,7 @@ class HrPayslip(models.Model):
         manual_codes = []
         for manual in self.input_line_ids:
             if manual.amount != 0:
-                commands.append((0, 0, {
-                    'name': manual.name,
-                    'code': manual.code,
-                    'amount': manual.amount,
-                    'contract_id': manual.contract_id.id,
-                    'sequence': manual.sequence,
-                }))
+                commands.append((0, 0, self._payslip_manual_input_backup_vals(manual)))
                 manual_codes.append(manual.code)
         for r in input_line_ids:
             if r.get('code') not in manual_codes:
