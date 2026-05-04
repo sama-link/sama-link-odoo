@@ -13,7 +13,6 @@
                     <field name="allow_check_from_odoo"/>
                 </group>
                 <header position="inside">
-                    <button name="action_generate_absent_entries" string="Generate Absent Entries" type="object"/>
                     <button name="action_add_data_from_job_position" string="Add Data From Job Position" type="object"/>
                 </header>
                 <div name="button_box" position="inside">

@@ -1,0 +1,18 @@
+<odoo>
+    <record id="hr_work_entry_view_tree_samalink_header" model="ir.ui.view">
+        <field name="name">hr.work.entry.list.samalink.header</field>
+        <field name="model">hr.work.entry</field>
+        <field name="inherit_id" ref="hr_work_entry.hr_work_entry_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="%(samalink_hr.action_adjust_work_entries_wizard)d"
+                            string="Adjust Flexible Rest"
+                            type="action"
+                            class="btn-secondary"
+                            groups="hr.group_hr_user"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+</odoo>

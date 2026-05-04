@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from odoo import models
+from odoo import models, _
 
 
 def _count_weekdays_in_range(date_from, date_to, weekday):
@@ -103,22 +103,13 @@ class HrPayslipLine(models.Model):
             return action
         elif self.salary_rule_id.code == 'REST_ALLOW':
             if self._is_flexible_schedule(self.slip_id):
-                # Flexible schedules: REST100 entries were converted to WORK100,
-                # so show a notification with the computed rest day count instead.
-                rest_count = self._compute_adjusted_rest_allow_count(self.slip_id)
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Rest Days (Flexible Schedule)',
-                        'type': 'info',
-                        'message': (
-                            'This employee is on a flexible rest day schedule. '
-                            'Rest days are calculated from the schedule configuration: '
-                            '%d rest day(s) in this payslip period.'
-                        ) % rest_count,
-                        'sticky': False,
-                    }
+                    'type': 'ir.actions.act_window',
+                    'name': _('Rest days in payslip period'),
+                    'res_model': 'hr.payslip.rest.days.wizard',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {'default_payslip_id': self.slip_id.id},
                 }
             from_date_midnight = datetime.combine(date_from, time.min)
             end_of_to_date = datetime.combine(date_to, time.max)

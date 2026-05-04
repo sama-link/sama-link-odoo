@@ -3,14 +3,14 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 
-class GenerateAbsentEntriesWizard(models.TransientModel):
-    _name = 'hr.generate.entries.wizard'
-    _description = 'Generate Absence Entries'
+class AdjustWorkEntriesWizard(models.TransientModel):
+    _name = 'hr.adjust.work.entries.wizard'
+    _description = 'Adjust Work Entries (Flexible Rest Days)'
 
     employee_ids = fields.Many2many(
         'hr.employee',
         string='Employees',
-        help='Leave empty to generate for all employees with active contracts.',
+        help='Leave empty to adjust for all employees with active contracts.',
     )
     date_from = fields.Date(
         string='From',
@@ -37,18 +37,21 @@ class GenerateAbsentEntriesWizard(models.TransientModel):
             ('contract_id.state', '=', 'open'),
         ])
 
-    def action_generate(self):
+    def action_adjust(self):
         self.ensure_one()
         employees = self._get_target_employees()
-        if employees:
-            employees.action_generate_absent_entries(self.date_from, self.date_to)
+        self.env['hr.work.entry'].action_adjust_flexible_rest_days(
+            self.date_from,
+            self.date_to,
+            employee_ids=self.employee_ids or None,
+        )
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Success'),
                 'type': 'success',
-                'message': _('Absence entries generated for %d employee(s).') % len(employees),
+                'message': _('Work entries adjusted for %d employee(s).') % len(employees),
                 'next': {'type': 'ir.actions.act_window_close'},
             },
         }
