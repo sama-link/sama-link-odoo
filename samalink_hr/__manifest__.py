@@ -12,6 +12,8 @@
     'data': [
         'security/ir.model.access.csv',
         'data/ir_cron_data.xml',
+        # Wizard action must load before views that reference %(action_generate_entries_wizard)d
+        'wizard/generate_entries_wizard_views.xml',
         'views/hr_employee.xml',
         'views/hr_contract.xml',
         'views/hr_attendance.xml',
@@ -20,7 +22,6 @@
         'views/hr_job.xml',
         'views/resource_calendar_views.xml',
         'views/res_config_settings_views.xml',
-        'wizard/generate_entries_wizard_views.xml',
     ],
     'installable': True,
     'application': False,
