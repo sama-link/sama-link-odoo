@@ -1,3 +1,4 @@
+from . import ir_http
 from . import hr_absent_entry
 from . import hr_employee
 from . import hr_contract
