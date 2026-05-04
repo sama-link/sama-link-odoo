@@ -23,6 +23,12 @@
         <field name="model">hr.absent.entry</field>
         <field name="arch" type="xml">
             <list string="Absent Entries" create="false" delete="true">
+                <header>
+                    <button name="%(samalink_hr.action_generate_entries_wizard)d"
+                            string="Generate Entries"
+                            type="action"
+                            class="btn-primary"/>
+                </header>
                 <field name="employee_id"/>
                 <field name="date"/>
             </list>

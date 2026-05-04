@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form View -->
+    <record id="view_generate_entries_wizard_form" model="ir.ui.view">
+        <field name="name">hr.generate.entries.wizard.form</field>
+        <field name="model">hr.generate.entries.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Entries">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group>
+                        <field name="generate_absent_entries"/>
+                        <field name="adjust_work_entries"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="employee_ids" widget="many2many_tags"
+                           placeholder="Leave empty for all employees with active contracts"/>
+                </group>
+                <footer>
+                    <button name="action_generate" string="Generate" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the wizard -->
+    <record id="action_generate_entries_wizard" model="ir.actions.act_window">
+        <field name="name">Generate Entries</field>
+        <field name="res_model">hr.generate.entries.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
