@@ -121,10 +121,13 @@ class HrPayslip(models.Model):
 
     def _get_weekly_friday_attendance_credits(self):
         self.ensure_one()
+        anchor_from = self._get_friday_week_key(self.date_from)
+        credit_from_dt = datetime.combine(anchor_from, time.min)
+        credit_to_dt = datetime.combine(self.date_to, time.max)
         attendance_dates = self.env['hr.attendance'].search([
             ('employee_id', '=', self.employee_id.id),
-            ('check_in', '>=', self.date_from),
-            ('check_in', '<=', self.date_to),
+            ('check_in', '>=', credit_from_dt),
+            ('check_in', '<=', credit_to_dt),
         ]).mapped('check_in')
         credits = defaultdict(int)
         for check_in in attendance_dates:
@@ -133,10 +136,12 @@ class HrPayslip(models.Model):
                 credits[self._get_friday_week_key(check_day)] += 1
         return credits
 
-    def _get_approved_timeoff_dates(self):
+    def _get_approved_timeoff_dates(self, range_date_from=None, range_date_to=None):
         self.ensure_one()
-        from_date_midnight = datetime.combine(self.date_from, time.min)
-        end_of_to_date = datetime.combine(self.date_to, time.max)
+        date_from = range_date_from or self.date_from
+        date_to = range_date_to or self.date_to
+        from_date_midnight = datetime.combine(date_from, time.min)
+        end_of_to_date = datetime.combine(date_to, time.max)
         approved_leaves = self.env['hr.leave'].search([
             ('employee_id', '=', self.employee_id.id),
             ('state', '=', 'validate'),
@@ -145,8 +150,8 @@ class HrPayslip(models.Model):
         ])
         timeoff_dates = set()
         for leave in approved_leaves:
-            start_day = max(leave.date_from.date(), self.date_from)
-            end_day = min(leave.date_to.date(), self.date_to)
+            start_day = max(leave.date_from.date(), date_from)
+            end_day = min(leave.date_to.date(), date_to)
             cursor_date = start_day
             while cursor_date <= end_day:
                 timeoff_dates.add(cursor_date)
@@ -154,29 +159,57 @@ class HrPayslip(models.Model):
         return timeoff_dates
 
     def _get_compensation_stats(self, absent_entries=None):
+        """Globally allocate each Friday credit to the first eligible absence in that week (Fri→Thu).
+
+        Only absences with date <= payslip date_to are considered for ordering, so the next
+        month never affects this payslip's allocation.
+        """
         self.ensure_one()
-        absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
+        slip_absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
             ('employee_id', '=', self.employee_id.id),
             ('date', '>=', self.date_from),
             ('date', '<=', self.date_to),
             ('leave_entry_id', '=', False),
         ])
-        if not absent_entries:
+        if not slip_absent_entries:
             return 0, set()
 
-        approved_timeoff_dates = self._get_approved_timeoff_dates()
+        anchor_from = self._get_friday_week_key(self.date_from)
+        approved_timeoff_dates = self._get_approved_timeoff_dates(anchor_from, self.date_to)
         friday_credits = self._get_weekly_friday_attendance_credits()
-        compensated_absences = 0
-        compensated_weeks = set()
-        for absent_entry in absent_entries.sorted('date'):
+        original_credits = dict(friday_credits)
+
+        week_keys_to_allocate = set()
+        for absent_entry in slip_absent_entries:
             if absent_entry.date.weekday() == 4 or absent_entry.date in approved_timeoff_dates:
                 continue
             week_key = self._get_friday_week_key(absent_entry.date)
-            if friday_credits.get(week_key, 0) > 0:
-                friday_credits[week_key] -= 1
-                compensated_absences += 1
-                compensated_weeks.add(week_key)
-        return compensated_absences, compensated_weeks
+            if original_credits.get(week_key, 0) > 0:
+                week_keys_to_allocate.add(week_key)
+
+        compensated_entry_ids = set()
+        Absent = self.env['hr.absent.entry']
+        for week_key in week_keys_to_allocate:
+            credit_count = original_credits.get(week_key, 0)
+            if credit_count <= 0:
+                continue
+            week_end = week_key + timedelta(days=6)
+            period_end = min(week_end, self.date_to)
+            week_absents = Absent.search([
+                ('employee_id', '=', self.employee_id.id),
+                ('date', '>=', week_key),
+                ('date', '<=', period_end),
+                ('leave_entry_id', '=', False),
+            ], order='date asc, id asc')
+            eligible = [
+                a for a in week_absents
+                if a.date.weekday() != 4 and a.date not in approved_timeoff_dates
+            ]
+            for absent_entry in eligible[:credit_count]:
+                compensated_entry_ids.add(absent_entry.id)
+
+        compensated_on_slip = sum(1 for a in slip_absent_entries if a.id in compensated_entry_ids)
+        return compensated_on_slip, set()
 
     @api.depends('employee_id', 'date_from', 'date_to')
     def _compute_absent_days(self):

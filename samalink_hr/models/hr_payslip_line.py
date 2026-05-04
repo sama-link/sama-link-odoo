@@ -52,10 +52,14 @@ class HrPayslipLine(models.Model):
         return self._get_slip_schedule_name(slip) not in self._get_excluded_schedule_names()
 
     def _get_weekly_friday_attendance_credits(self, employee, date_from, date_to):
+        """Include anchor Friday before date_from so Fri→Thu weeks crossing month boundaries match."""
+        anchor_from = self._get_friday_week_key(date_from)
+        credit_from_dt = datetime.combine(anchor_from, time.min)
+        credit_to_dt = datetime.combine(date_to, time.max)
         attendance_dates = self.env['hr.attendance'].search([
             ('employee_id', '=', employee.id),
-            ('check_in', '>=', date_from),
-            ('check_in', '<=', date_to),
+            ('check_in', '>=', credit_from_dt),
+            ('check_in', '<=', credit_to_dt),
         ]).mapped('check_in')
         credits = defaultdict(int)
         for check_in in attendance_dates:
@@ -84,31 +88,60 @@ class HrPayslipLine(models.Model):
         return timeoff_dates
 
     def _get_compensation_stats(self, slip, absent_entries=None):
+        """Globally allocate each Friday credit to the first eligible absence in that week (Fri→Thu).
+
+        Eligible absences for ordering are in [week_anchor .. min(week_end, slip.date_to)], so
+        days after this payslip never affect allocation (no dependency on the next month).
+        Earlier days in the same week may still be in a previous calendar month (cross-month).
+        """
         employee = slip.employee_id
         date_from = slip.date_from
         date_to = slip.date_to
-        absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
+        slip_absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
             ('employee_id', '=', employee.id),
             ('date', '>=', date_from),
             ('date', '<=', date_to),
             ('leave_entry_id', '=', False),
         ])
-        if not absent_entries:
+        if not slip_absent_entries:
             return 0, set()
 
-        approved_timeoff_dates = self._get_approved_timeoff_dates(employee, date_from, date_to)
+        anchor_from = self._get_friday_week_key(date_from)
+        approved_timeoff_dates = self._get_approved_timeoff_dates(employee, anchor_from, date_to)
         friday_credits = self._get_weekly_friday_attendance_credits(employee, date_from, date_to)
-        compensated_absences = 0
-        compensated_weeks = set()
-        for absent_entry in absent_entries.sorted('date'):
+        original_credits = dict(friday_credits)
+
+        week_keys_to_allocate = set()
+        for absent_entry in slip_absent_entries:
             if absent_entry.date.weekday() == 4 or absent_entry.date in approved_timeoff_dates:
                 continue
             week_key = self._get_friday_week_key(absent_entry.date)
-            if friday_credits.get(week_key, 0) > 0:
-                friday_credits[week_key] -= 1
-                compensated_absences += 1
-                compensated_weeks.add(week_key)
-        return compensated_absences, compensated_weeks
+            if original_credits.get(week_key, 0) > 0:
+                week_keys_to_allocate.add(week_key)
+
+        compensated_entry_ids = set()
+        Absent = self.env['hr.absent.entry']
+        for week_key in week_keys_to_allocate:
+            credit_count = original_credits.get(week_key, 0)
+            if credit_count <= 0:
+                continue
+            week_end = week_key + timedelta(days=6)
+            period_end = min(week_end, date_to)
+            week_absents = Absent.search([
+                ('employee_id', '=', employee.id),
+                ('date', '>=', week_key),
+                ('date', '<=', period_end),
+                ('leave_entry_id', '=', False),
+            ], order='date asc, id asc')
+            eligible = [
+                a for a in week_absents
+                if a.date.weekday() != 4 and a.date not in approved_timeoff_dates
+            ]
+            for absent_entry in eligible[:credit_count]:
+                compensated_entry_ids.add(absent_entry.id)
+
+        compensated_on_slip = sum(1 for a in slip_absent_entries if a.id in compensated_entry_ids)
+        return compensated_on_slip, set()
 
     def _compute_adjusted_absent_penalty_count(self, slip):
         employee = slip.employee_id
