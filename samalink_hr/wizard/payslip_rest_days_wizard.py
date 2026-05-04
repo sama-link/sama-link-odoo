@@ -23,7 +23,7 @@ class HrPayslipRestDaysWizard(models.TransientModel):
                 slip = self.env['hr.payslip'].browse(payslip_id)
                 res['line_ids'] = [
                     (0, 0, {'rest_date': d})
-                    for d in slip._samalink_get_scheduled_rest_dates()
+                    for d in slip._samalink_get_actual_rest_dates()
                 ]
         return res
 

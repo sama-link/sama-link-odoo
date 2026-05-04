@@ -64,25 +64,16 @@ class HrPayslip(models.Model):
             },
         }
 
-    def _samalink_get_scheduled_rest_dates(self):
-        """Dates in the payslip period that count as default rest (Fri / Fri+Sat) for flexible schedules."""
+    def _samalink_get_actual_rest_dates(self):
+        """Actual rest days taken (flexible rules) in the payslip period."""
         self.ensure_one()
+        if not self.employee_id or not self.date_from or not self.date_to:
+            return []
         contract = self.contract_id
         if not contract or not contract.resource_calendar_id:
             return []
-        cal = contract.resource_calendar_id
-        if not cal.flexible_rest_day:
+        if not contract.resource_calendar_id.flexible_rest_day:
             return []
-        rest_per_week = int(cal.rest_days_per_week or '1')
-        out = []
-        cur = self.date_from
-        while cur <= self.date_to:
-            wd = cur.weekday()
-            if rest_per_week == 1:
-                if wd == 4:
-                    out.append(cur)
-            else:
-                if wd in (4, 5):
-                    out.append(cur)
-            cur += timedelta(days=1)
-        return out
+        return self.employee_id._samalink_get_actual_rest_dates_flexible(
+            self.date_from, self.date_to,
+        )

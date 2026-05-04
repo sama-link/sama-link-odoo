@@ -6,7 +6,10 @@
     'author': '46-d-006',
     'website': 'https://edara.digital',
     'category': 'Human Resources',
-    'depends': ['hr_attendance', 'hr_work_entry', 'hr_payroll_community', 'hr_contract', 'hr_zk_api_attendance'],
+    'depends': [
+        'hr_attendance', 'hr_work_entry', 'hr_payroll_community', 'hr_contract',
+        'hr_zk_api_attendance', 'samalink_hr',
+    ],
     'data': [
         'security/ir_groups.xml',
         'security/ir_rule.xml',

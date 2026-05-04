@@ -30,14 +30,14 @@ class HrPayslipLine(models.Model):
         ])
 
     def _compute_adjusted_rest_allow_count(self, slip):
-        """Calculate rest days based on the work schedule configuration.
+        """Calculate rest-day count for payroll expressions / related count.
 
-        For flexible schedules:
-            rest_days_per_week=1 → count Fridays in the payslip period
-            rest_days_per_week=2 → count Fridays + Saturdays
+        For flexible schedules: same **calendar** rule as before — count Fridays
+        in the payslip period, plus Saturdays when ``rest_days_per_week`` is 2
+        (schedule entitlement in the period), **not** the number of rest days
+        actually taken.
 
-        For non-flexible schedules:
-            Use the default REST100 work entry count.
+        For non-flexible schedules: count REST100 work entries in the period.
         """
         contract = slip.contract_id
         calendar = contract.resource_calendar_id if contract else False
@@ -103,9 +103,10 @@ class HrPayslipLine(models.Model):
             return action
         elif self.salary_rule_id.code == 'REST_ALLOW':
             if self._is_flexible_schedule(self.slip_id):
+                # Drill-down: actual rest days taken (not the calendar Fri/Sat count).
                 return {
                     'type': 'ir.actions.act_window',
-                    'name': _('Rest days in payslip period'),
+                    'name': _('Rest days taken'),
                     'res_model': 'hr.payslip.rest.days.wizard',
                     'view_mode': 'form',
                     'target': 'new',
@@ -120,7 +121,7 @@ class HrPayslipLine(models.Model):
                 ('employee_id', '=', employee_id.id),
                 ('date_start', '>=', from_date_midnight),
                 ('date_stop', '<=', end_of_to_date),
-                ('work_entry_type_id.code', '=', 'REST100')
+                ('work_entry_type_id.code', '=', 'REST100'),
             ]
             return action
         elif self.salary_rule_id.code == 'ABSENT_PENALTY':

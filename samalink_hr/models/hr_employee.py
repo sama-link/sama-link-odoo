@@ -72,28 +72,17 @@ class HrEmployee(models.Model):
             employee_timeoff_dates = set(grouped_timeoff_dates.get(employee.id, []))
             schedule_rest_days = self._get_schedule_rest_weekdays(calendar) if calendar and not is_flexible else set()
 
-            # Collect all non-attended days in the period
-            non_attended_days = []
-            current_date = start_date
-            while current_date <= end_date:
-                if current_date not in employee_attendance_dates:
-                    non_attended_days.append(current_date)
-                current_date += timedelta(days=1)
-
             if is_flexible:
-                # Flexible rest day logic:
-                # Default rest days are Friday (1) or Friday+Saturday (2)
-                rest_per_week = int(calendar.rest_days_per_week or '1')
-                default_rest_weekdays = {4}  # Friday
-                if rest_per_week == 2:
-                    default_rest_weekdays.add(5)  # Saturday
-
-                real_absence_dates = self._compute_flexible_absences(
-                    employee, employee_attendance_dates, employee_timeoff_dates,
-                    public_holidays, default_rest_weekdays, non_attended_days,
+                real_absence_dates, _rest_taken = employee._samalink_flexible_split_absence_and_rest(
                     start_date, end_date,
                 )
             else:
+                non_attended_days = []
+                current_date = start_date
+                while current_date <= end_date:
+                    if current_date not in employee_attendance_dates:
+                        non_attended_days.append(current_date)
+                    current_date += timedelta(days=1)
                 # Non-flexible: standard filtering
                 real_absence_dates = []
                 for day in non_attended_days:
@@ -115,34 +104,43 @@ class HrEmployee(models.Model):
         if vals_list:
             self.env['hr.absent.entry'].create(vals_list)
 
-    def _compute_flexible_absences(self, employee, attendance_dates, timeoff_dates,
-                                    public_holidays, default_rest_weekdays,
-                                    non_attended_days, start_date, end_date):
-        """Compute real absence dates for flexible rest day schedules.
+    def _samalink_flexible_split_absence_and_rest(self, start_date, end_date):
+        """Split non-attended days into real absences vs actual rest (flexible schedule only).
 
-        Logic per Fri→Thu week:
-        1. Default rest day (Fri / Sat) not worked → rest day (skip)
-        2. Default rest day worked → earns a compensation credit
-        3. Each credit covers one non-attended weekday in the same week (earliest first)
-        4. Non-attended days covered by credits → compensated rest (skip)
-        5. Days with time-off or public holidays → skip
-        6. Remaining non-attended days → real absence
+        Returns (real_absence_dates_sorted, rest_taken_dates_sorted).
+
+        Rest taken = default Fri/Sat not worked, or another weekday not worked when covered
+        by a compensation credit from working a default rest day (same Fri→Thu week).
+        Public holidays and approved time off are excluded from both lists.
         """
-        # Group non-attended days by Fri→Thu week
-        weeks = defaultdict(list)
-        for day in non_attended_days:
-            week_key = self._get_friday_week_key(day)
-            weeks[week_key].append(day)
+        self.ensure_one()
+        employee = self
+        contract = employee.contract_id
+        calendar = contract.resource_calendar_id if contract else False
+        if not calendar or not calendar.flexible_rest_day:
+            return [], []
 
-        # Count Friday/Saturday credits per week (days employee worked on default rest days)
+        rest_per_week = int(calendar.rest_days_per_week or '1')
+        default_rest_weekdays = {4}
+        if rest_per_week == 2:
+            default_rest_weekdays.add(5)
+
+        attendance_dates = set(
+            self._get_grouped_attendance_dates(start_date, end_date).get(employee.id, [])
+        )
+        timeoff_dates = set(
+            self._get_grouped_timeoff_dates(start_date, end_date).get(employee.id, set())
+        )
+        public_holidays = self._get_public_holiday_dates(start_date, end_date)
+
+        non_attended_days = []
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date not in attendance_dates:
+                non_attended_days.append(current_date)
+            current_date += timedelta(days=1)
+
         week_credits = defaultdict(int)
-        all_dates_in_range = set()
-        cursor = start_date
-        while cursor <= end_date:
-            all_dates_in_range.add(cursor)
-            cursor += timedelta(days=1)
-
-        # Also look at the anchor week before start_date for cross-month boundary
         anchor_from = self._get_friday_week_key(start_date)
         cursor = anchor_from
         while cursor <= end_date:
@@ -152,25 +150,28 @@ class HrEmployee(models.Model):
             cursor += timedelta(days=1)
 
         real_absences = []
+        rest_taken = []
         for day in non_attended_days:
-            # Skip public holidays
             if day in public_holidays:
                 continue
-            # Skip time-off days
             if day in timeoff_dates:
                 continue
-            # Skip default rest days that were NOT worked (they are actual rest)
             if day.weekday() in default_rest_weekdays:
+                rest_taken.append(day)
                 continue
-            # This is a non-attended work day — check if it can be compensated
             week_key = self._get_friday_week_key(day)
             if week_credits.get(week_key, 0) > 0:
-                week_credits[week_key] -= 1  # Use a credit
+                week_credits[week_key] -= 1
+                rest_taken.append(day)
                 continue
-            # No credit available → real absence
             real_absences.append(day)
 
-        return real_absences
+        return sorted(real_absences), sorted(rest_taken)
+
+    def _samalink_get_actual_rest_dates_flexible(self, start_date, end_date):
+        """Dates the employee actually rested (flexible rules), excluding holidays and leave."""
+        _real, rest_taken = self._samalink_flexible_split_absence_and_rest(start_date, end_date)
+        return rest_taken
 
     @staticmethod
     def _get_friday_week_key(day):

@@ -159,24 +159,16 @@ class HrPayslip(models.Model):
             payslip.late_permission_hours = sum(late_permissions.mapped('duration'))
 
     def _compute_weekend_days(self):
-        """Calculate weekend/rest days based on schedule configuration.
-
-        For flexible schedules:
-            rest_days_per_week=1 → count Fridays in the payslip period
-            rest_days_per_week=2 → count Fridays + Saturdays
-
-        For non-flexible schedules:
-            Use the default REST100 work entry count.
-        """
+        """Calendar rest entitlement in period for flexible (Fri / Fri+Sat); else REST100 count."""
         for payslip in self:
             contract = payslip.contract_id
             calendar = contract.resource_calendar_id if contract else False
 
             if calendar and calendar.flexible_rest_day:
                 rest_per_week = int(calendar.rest_days_per_week or '1')
-                count = _count_weekdays_in_range(payslip.date_from, payslip.date_to, 4)  # Fridays
+                count = _count_weekdays_in_range(payslip.date_from, payslip.date_to, 4)
                 if rest_per_week == 2:
-                    count += _count_weekdays_in_range(payslip.date_from, payslip.date_to, 5)  # Saturdays
+                    count += _count_weekdays_in_range(payslip.date_from, payslip.date_to, 5)
                 payslip.weekend_days = count
             else:
                 from_date_midnight = datetime.combine(payslip.date_from, time.min)
