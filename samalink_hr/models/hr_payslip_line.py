@@ -21,13 +21,12 @@ class HrPayslipLine(models.Model):
 
         Since absence entries now only contain real absences
         (rest days, holidays, time-off, and compensated days are
-        filtered out at generation time), we simply count them.
+        filtered out at generation time), we simply count all entries.
         """
         return self.env['hr.absent.entry'].search_count([
             ('employee_id', '=', slip.employee_id.id),
             ('date', '>=', slip.date_from),
             ('date', '<=', slip.date_to),
-            ('leave_entry_id', '=', False),
         ])
 
     def _compute_adjusted_rest_allow_count(self, slip):
@@ -59,6 +58,12 @@ class HrPayslipLine(models.Model):
             ('date_stop', '<=', to_dt),
             ('work_entry_type_id.code', '=', 'REST100'),
         ])
+
+    def _is_flexible_schedule(self, slip):
+        """Check if the employee's schedule uses flexible rest days."""
+        contract = slip.contract_id
+        calendar = contract.resource_calendar_id if contract else False
+        return calendar and calendar.flexible_rest_day
 
     def _compute_related_records_count(self):
         for line in self:
@@ -97,6 +102,24 @@ class HrPayslipLine(models.Model):
             ]
             return action
         elif self.salary_rule_id.code == 'REST_ALLOW':
+            if self._is_flexible_schedule(self.slip_id):
+                # Flexible schedules: REST100 entries were converted to WORK100,
+                # so show a notification with the computed rest day count instead.
+                rest_count = self._compute_adjusted_rest_allow_count(self.slip_id)
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Rest Days (Flexible Schedule)',
+                        'type': 'info',
+                        'message': (
+                            'This employee is on a flexible rest day schedule. '
+                            'Rest days are calculated from the schedule configuration: '
+                            '%d rest day(s) in this payslip period.'
+                        ) % rest_count,
+                        'sticky': False,
+                    }
+                }
             from_date_midnight = datetime.combine(date_from, time.min)
             end_of_to_date = datetime.combine(date_to, time.max)
             action = self.env["ir.actions.actions"]._for_xml_id(
@@ -115,7 +138,6 @@ class HrPayslipLine(models.Model):
                 ('employee_id', '=', employee_id.id),
                 ('date', '>=', date_from),
                 ('date', '<=', date_to),
-                ('leave_entry_id', '=', False)
             ]
             action['context'] = {'default_employee_id': employee_id.id, 'initial_date': date_from}
             return action

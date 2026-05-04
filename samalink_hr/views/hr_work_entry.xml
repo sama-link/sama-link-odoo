@@ -5,6 +5,12 @@
         <field name="priority">999</field>
         <field name="arch" type="xml">
             <list create="false" edit="false" delete="false">
+                <header>
+                    <button name="%(samalink_hr.action_generate_entries_wizard)d"
+                            string="Generate Entries"
+                            type="action"
+                            class="btn-primary"/>
+                </header>
                 <field name="date_start"/>
                 <field name="date_stop"/>
                 <field name="work_entry_type_id"/>

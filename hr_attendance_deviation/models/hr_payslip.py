@@ -112,7 +112,6 @@ class HrPayslip(models.Model):
                 ('employee_id', '=', payslip.employee_id.id),
                 ('date', '>=', payslip.date_from),
                 ('date', '<=', payslip.date_to),
-                ('leave_entry_id', '=', False),
             ])
 
     def _compute_timeoff_days(self):
