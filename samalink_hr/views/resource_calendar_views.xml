@@ -10,8 +10,27 @@
                 <field name="rest_days_per_week"
                        invisible="not flexible_rest_day"/>
             </xpath>
-            <!-- Readonly only on calendar attendance lines (not other work_entry_type_id fields on the form). -->
-            <xpath expr="//field[@name='attendance_ids']//field[@name='work_entry_type_id']" position="attributes">
+        </field>
+    </record>
+
+    <!-- Odoo 18: attendance uses section_one2many; work_entry_type_id lives on resource.calendar.attendance subviews (hr_work_entry). -->
+    <record id="resource_calendar_attendance_view_tree_inherit_flexible" model="ir.ui.view">
+        <field name="name">resource.calendar.attendance.list.inherit.flexible</field>
+        <field name="model">resource.calendar.attendance</field>
+        <field name="inherit_id" ref="hr_work_entry.resource_calendar_attendance_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='work_entry_type_id']" position="attributes">
+                <attribute name="readonly">parent.flexible_rest_day</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="resource_calendar_attendance_view_form_inherit_flexible" model="ir.ui.view">
+        <field name="name">resource.calendar.attendance.form.inherit.flexible</field>
+        <field name="model">resource.calendar.attendance</field>
+        <field name="inherit_id" ref="hr_work_entry.resource_calendar_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='work_entry_type_id']" position="attributes">
                 <attribute name="readonly">parent.flexible_rest_day</attribute>
             </xpath>
         </field>
