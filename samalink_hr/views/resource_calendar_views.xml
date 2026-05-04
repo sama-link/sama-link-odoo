@@ -10,8 +10,8 @@
                 <field name="rest_days_per_week"
                        invisible="not flexible_rest_day"/>
             </xpath>
-            <!-- Make work_entry_type_id readonly on attendance lines when flexible -->
-            <xpath expr="//field[@name='work_entry_type_id']" position="attributes">
+            <!-- Readonly only on calendar attendance lines (not other work_entry_type_id fields on the form). -->
+            <xpath expr="//field[@name='attendance_ids']//field[@name='work_entry_type_id']" position="attributes">
                 <attribute name="readonly">parent.flexible_rest_day</attribute>
             </xpath>
         </field>
