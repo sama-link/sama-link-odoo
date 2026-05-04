@@ -108,11 +108,14 @@ class HrPayslip(models.Model):
             if not payslip.employee_id or not payslip.date_from or not payslip.date_to:
                 payslip.absent_days = 0
                 continue
-            payslip.absent_days = self.env['hr.absent.entry'].search_count([
-                ('employee_id', '=', payslip.employee_id.id),
-                ('date', '>=', payslip.date_from),
-                ('date', '<=', payslip.date_to),
-            ])
+            if 'hr.absent.entry' in self.env:
+                payslip.absent_days = self.env['hr.absent.entry'].search_count([
+                    ('employee_id', '=', payslip.employee_id.id),
+                    ('date', '>=', payslip.date_from),
+                    ('date', '<=', payslip.date_to),
+                ])
+            else:
+                payslip.absent_days = 0
 
     def _compute_timeoff_days(self):
         attendance_type = self.env.ref('hr_work_entry.work_entry_type_attendance')
@@ -164,8 +167,8 @@ class HrPayslip(models.Model):
             contract = payslip.contract_id
             calendar = contract.resource_calendar_id if contract else False
 
-            if calendar and calendar.flexible_rest_day:
-                rest_per_week = int(calendar.rest_days_per_week or '1')
+            if calendar and getattr(calendar, 'flexible_rest_day', False):
+                rest_per_week = int(getattr(calendar, 'rest_days_per_week', None) or '1')
                 count = _count_weekdays_in_range(payslip.date_from, payslip.date_to, 4)
                 if rest_per_week == 2:
                     count += _count_weekdays_in_range(payslip.date_from, payslip.date_to, 5)

@@ -26,7 +26,13 @@ class HrEmployee(models.Model):
 
     @api.constrains('parent_id')
     def _check_parent_id(self):
-        if not (self.env.user.has_group('hr.group_hr_manager') or self.env.user.has_group('samalink_security_groups.group_samalink_hr_officer')):
+        sl_officer = self.env.ref(
+            'samalink_security_groups.group_samalink_hr_officer', raise_if_not_found=False
+        )
+        can_edit_parent = self.env.user.has_group('hr.group_hr_manager') or (
+            sl_officer and self.env.user.has_group('samalink_security_groups.group_samalink_hr_officer')
+        )
+        if not can_edit_parent:
             raise UserError("You cannot change the Manager field. Please contact your administrator.")
 
     def _attendance_action_change(self, geo_information=None):
@@ -36,6 +42,15 @@ class HrEmployee(models.Model):
         if not geo_information['latitude'] or not geo_information['longitude']:
             raise UserError("Location information is required for attendance actions.")
         return super()._attendance_action_change(geo_information=geo_information)
+
+    def _samalink_new_user_group_ids(self):
+        ids = [self.env.ref('base.group_user').id]
+        sl_employee = self.env.ref(
+            'samalink_security_groups.group_samalink_employee', raise_if_not_found=False
+        )
+        if sl_employee:
+            ids.append(sl_employee.id)
+        return ids
 
     def action_create_user(self):
         self.ensure_one()
@@ -50,7 +65,7 @@ class HrEmployee(models.Model):
             'mobile': self.mobile_phone,
             'login': self.work_email,
             'partner_id': self.work_contact_id.id,
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('samalink_security_groups.group_samalink_employee').id])],
+            'groups_id': [(6, 0, self._samalink_new_user_group_ids())],
             'password': "1",
         }
         user = self.env['res.users'].sudo().create(vals)

@@ -8,7 +8,7 @@
     'category': 'Human Resources',
     'depends': [
         'hr_attendance', 'hr_work_entry', 'hr_payroll_community', 'hr_contract',
-        'hr_zk_api_attendance', 'samalink_hr',
+        'hr_zk_api_attendance',
     ],
     'data': [
         'security/ir_groups.xml',

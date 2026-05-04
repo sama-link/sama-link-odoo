@@ -9,7 +9,7 @@
     'website': 'https://edara.digital',
     'category': 'Human Resources',
     'depends': [
-        'base', 'hr', 'samalink_security_groups', 'hr_contract', 'hr_payroll_community',
+        'base', 'hr', 'hr_contract', 'hr_payroll_community',
         'resource', 'hr_work_entry', 'hr_holidays',
     ],
     'data': [
