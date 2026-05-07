@@ -45,12 +45,14 @@ class IrAttachment(models.Model):
                                        'documents to the record.')
 
     def check(self, mode, values=None):
-        """Override to allow HR users full access to all attachments.
-
+        """Override to allow HR users/managers access to attachments.
         Odoo's default check() method enforces Python-level security
         on ir.attachment that is independent of ir.rule record rules.
-        This override bypasses that check for users in hr.group_hr_user.
+        This override bypasses that check for users in hr.group_hr_user
+        or hr.group_hr_manager..
         """
-        if self.env.user.has_group('hr.group_hr_user'):
+
+        if (self.env.user.has_group('hr.group_hr_user')
+                or self.env.user.has_group('hr.group_hr_manager')):
             return
         return super().check(mode, values)
