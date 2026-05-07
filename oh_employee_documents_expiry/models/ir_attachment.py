@@ -21,7 +21,6 @@
 #
 #############################################################################
 from odoo import fields, models
-from odoo.exceptions import AccessError
 
 
 class IrAttachment(models.Model):
@@ -48,11 +47,24 @@ class IrAttachment(models.Model):
         """Override to allow HR users/managers access to attachments.
         Odoo's default check() method enforces Python-level security
         on ir.attachment that is independent of ir.rule record rules.
-        This override bypasses that check for users in hr.group_hr_user
-        or hr.group_hr_manager..
+        This override bypasses that check for HR users/managers (native and
+        Samalink groups) for attachments linked to HR document records.
         """
-
-        if (self.env.user.has_group('hr.group_hr_user')
-                or self.env.user.has_group('hr.group_hr_manager')):
-            return
+        user = self.env.user
+        is_hr_role = any([
+            user.has_group('hr.group_hr_user'),
+            user.has_group('hr.group_hr_manager'),
+            user.has_group('samalink_security_groups.group_samalink_hr_officer'),
+            user.has_group('samalink_security_groups.group_samalink_administrator'),
+            user.has_group('samalink_security_groups.group_sl_general_manager'),
+        ])
+        if is_hr_role:
+            # Allow only attachments actually linked to HR document models.
+            allowed = self.filtered(lambda att: (
+                att.res_model in ('hr.employee.document', 'hr.document')
+                or bool(att.doc_attach_rel)
+                or bool(att.attach_rel)
+            ))
+            if len(allowed) == len(self):
+                return
         return super().check(mode, values)
