@@ -43,6 +43,25 @@ class IrAttachment(models.Model):
                                   help='This field allows you to attach HR '
                                        'documents to the record.')
 
+    def _ohrms_is_hr_document_attachment(self):
+        """True if attachment belongs to employee document M2M or res_model."""
+        self.ensure_one()
+        if self.res_model in ('hr.employee.document', 'hr.document'):
+            return True
+        if self.doc_attach_rel or self.attach_rel:
+            return True
+        self.env.cr.execute(
+            """
+            SELECT (
+                EXISTS (SELECT 1 FROM doc_attach_rel r WHERE r.attach_id3 = %s)
+                OR EXISTS (SELECT 1 FROM attach_rel r2 WHERE r2.attachment_id3 = %s)
+            )
+            """,
+            (self.id, self.id),
+        )
+        row = self.env.cr.fetchone()
+        return bool(row and row[0])
+
     def check(self, mode, values=None):
         """Override to allow HR users/managers access to attachments.
         Odoo's default check() method enforces Python-level security
@@ -59,12 +78,7 @@ class IrAttachment(models.Model):
             user.has_group('samalink_security_groups.group_sl_general_manager'),
         ])
         if is_hr_role:
-            # Allow only attachments actually linked to HR document models.
-            allowed = self.filtered(lambda att: (
-                att.res_model in ('hr.employee.document', 'hr.document')
-                or bool(att.doc_attach_rel)
-                or bool(att.attach_rel)
-            ))
+            allowed = self.filtered(lambda att: att._ohrms_is_hr_document_attachment())
             if len(allowed) == len(self):
                 return
         return super().check(mode, values)

@@ -62,6 +62,32 @@ class HrEmployeeDocument(models.Model):
     ], string='Notification Type',
         help="Select type of the documents expiry notification.")
 
+    def _normalize_attachment_access_metadata(self):
+        """Set res_model/res_id/company so attachments are not owner-only."""
+        for rec in self:
+            company_id = False
+            if rec.employee_ref_id and rec.employee_ref_id.company_id:
+                company_id = rec.employee_ref_id.company_id.id
+            if not company_id:
+                company_id = self.env.company.id
+            rec.doc_attachment_ids.sudo().write({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'company_id': company_id,
+                'public': False,
+            })
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._normalize_attachment_access_metadata()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._normalize_attachment_access_metadata()
+        return res
+
     def mail_reminder(self):
         """Sending document expiry notification to employees."""
         for record in self.search([('expiry_date', '!=', False)]):

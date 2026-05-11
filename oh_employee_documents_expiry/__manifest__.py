@@ -40,6 +40,7 @@
     'depends': ['hr'],
     'data': [
         'security/ir.model.access.csv',
+        'security/ir_rule_hr_attachment.xml',
         'data/ir_cron_data.xml',
         'views/document_type_views.xml',
         'views/hr_document_views.xml',
@@ -56,4 +57,5 @@
     'installable': True,
     'auto_install': False,
     'application': False,
+    'post_init_hook': 'hooks.post_init_hook',
 }
