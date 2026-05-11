@@ -29,19 +29,27 @@ class IrAttachment(models.Model):
     'attach_rel' for attaching general HR documents to a record."""
     _inherit = 'ir.attachment'
 
-    doc_attach_rel = fields.Many2many('hr.employee.document',
-                                      'doc_attachment_ids',
-                                      'attach_id3', 'doc_id',
-                                      string="Attachment", invisible=1,
-                                      help='This field allows you to associate'
-                                           'HR employee documents with the '
-                                           'record.')
-    attach_rel = fields.Many2many('hr.document',
-                                  'attach_ids', 'attachment_id3',
-                                  'document_id',
-                                  string="Attachment", invisible=1,
-                                  help='This field allows you to attach HR '
-                                       'documents to the record.')
+    doc_attach_rel = fields.Many2many(
+        'hr.employee.document',
+        'doc_attach_rel',
+        'attach_id3',
+        'doc_id',
+        string="Attachment",
+        invisible=1,
+        help='This field allows you to associate'
+             'HR employee documents with the '
+             'record.',
+    )
+    attach_rel = fields.Many2many(
+        'hr.document',
+        'attach_rel',
+        'attach_id3',
+        'doc_id',
+        string="Attachment",
+        invisible=1,
+        help='This field allows you to attach HR '
+             'documents to the record.',
+    )
 
     def _ohrms_is_hr_document_attachment(self):
         """True if attachment belongs to employee document M2M or res_model."""
@@ -54,7 +62,7 @@ class IrAttachment(models.Model):
             """
             SELECT (
                 EXISTS (SELECT 1 FROM doc_attach_rel r WHERE r.attach_id3 = %s)
-                OR EXISTS (SELECT 1 FROM attach_rel r2 WHERE r2.attachment_id3 = %s)
+                OR EXISTS (SELECT 1 FROM attach_rel r2 WHERE r2.attach_id3 = %s)
             )
             """,
             (self.id, self.id),
