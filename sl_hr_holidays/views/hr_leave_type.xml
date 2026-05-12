@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <group name="configuration" position="inside">
                     <field name="requests_limit"/>
+                    <field name="monthly_days_limit"/>
                     <field name="enable_request_offset"/>
                     <field name="request_offset" invisible="not enable_request_offset"/>
                 </group>
