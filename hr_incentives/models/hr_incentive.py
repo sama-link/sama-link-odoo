@@ -46,6 +46,28 @@ class HrIncentive(models.Model):
     active = fields.Boolean(default=True, tracking=True)
     deleted = fields.Boolean(default=False)
 
+    def _normalize_incentive_attachment_metadata(self):
+        """Set res_model/res_id/company so incentive files are not owner-only."""
+        for rec in self:
+            company_id = rec.company_id.id if rec.company_id else self.env.company.id
+            rec.attachment_ids.sudo().write({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'company_id': company_id,
+                'public': False,
+            })
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._normalize_incentive_attachment_metadata()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._normalize_incentive_attachment_metadata()
+        return res
+
     def action_archive(self):
         for record in self:
             if record.state not in ['draft', 'cancelled']:
