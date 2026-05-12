@@ -1,8 +1,9 @@
 import logging
 import calendar
 from datetime import timedelta
-from odoo import models, api, fields
+from odoo import models, api, fields, _
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -10,6 +11,12 @@ _logger = logging.getLogger(__name__)
 
 class HrLeave(models.Model):
     _inherit = 'hr.leave'
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_if_correct_states(self):
+        if self.env.user.has_group('base.group_system'):
+            return
+        return super()._unlink_if_correct_states()
 
     request_date_from_period = fields.Selection([
         ('am', 'First Half'), ('pm', 'Second Half')],
@@ -59,6 +66,51 @@ class HrLeave(models.Model):
                 requests_count = self.search_count(domain)
                 if requests_count > record.holiday_status_id.requests_limit:
                     raise ValidationError(f"You have reached the maximum number of leave requests ({record.holiday_status_id.requests_limit}) for {record.holiday_status_id.name} in {record.request_date_from.strftime('%B %Y')}.")
+
+    @api.constrains(
+        'employee_id',
+        'request_date_from',
+        'request_date_to',
+        'holiday_status_id',
+        'number_of_days',
+        'state',
+    )
+    def _check_monthly_days_limit(self):
+        for record in self:
+            if record.state in ('refuse', 'cancel'):
+                continue
+            limit = record.holiday_status_id.monthly_days_limit
+            if not limit or float_compare(limit, 0.0, precision_rounding=0.01) <= 0:
+                continue
+            if not record.request_date_from or not record.employee_id or not record.holiday_status_id:
+                continue
+            first_day = record.request_date_from.replace(day=1)
+            last_day = record.request_date_from.replace(
+                day=calendar.monthrange(record.request_date_from.year, record.request_date_from.month)[1]
+            )
+            domain = [
+                ('employee_id', '=', record.employee_id.id),
+                ('holiday_status_id', '=', record.holiday_status_id.id),
+                ('state', 'not in', ('refuse', 'cancel')),
+                ('request_date_from', '<=', last_day),
+                '|',
+                ('request_date_to', '=', False),
+                ('request_date_to', '>=', first_day),
+            ]
+            leaves = self.search(domain)
+            leaves |= record
+            total_days = sum(leaves.mapped('number_of_days'))
+            if float_compare(total_days, limit, precision_rounding=0.01) > 0:
+                raise ValidationError(
+                    _("The total time off for %(type)s in %(month)s would be %(total).2f days, "
+                      "which exceeds the monthly limit of %(limit).2f days.")
+                    % {
+                        'type': record.holiday_status_id.display_name,
+                        'month': record.request_date_from.strftime('%B %Y'),
+                        'total': total_days,
+                        'limit': limit,
+                    }
+                )
 
     @api.constrains('request_date_from', 'holiday_status_id')
     def _check_request_offset(self):

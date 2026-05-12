@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Time Off',
-    'version': '1.0.0',
+    'version': '1.0.2',
     'summary': 'Manage HR holidays and leaves',
     'description': 'Module for managing employee holidays and leave requests.',
     'author': 'Your Company',
