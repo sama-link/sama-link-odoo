@@ -266,11 +266,11 @@ class HrAppraisal(models.Model):
             date_from_midnight = datetime.combine(rec.date_from, time.min)
             date_to_end = datetime.combine(rec.date_to, time.max)
 
+            # Match payroll / samalink_hr: absence entries are generated only for real absences.
             rec.absence_count = absence_model.search_count([
                 ('employee_id', '=', rec.employee_id.id),
                 ('date', '>=', rec.date_from),
                 ('date', '<=', rec.date_to),
-                ('leave_entry_id', '=', False),
             ])
 
             attendances = attendance_model.search([

@@ -1,177 +1,69 @@
-from collections import defaultdict
 from datetime import datetime, time, timedelta
-from odoo import models
+from odoo import models, _
+
+
+def _count_weekdays_in_range(date_from, date_to, weekday):
+    """Count occurrences of a specific weekday (0=Mon, 6=Sun) in a date range."""
+    count = 0
+    current = date_from
+    while current <= date_to:
+        if current.weekday() == weekday:
+            count += 1
+        current += timedelta(days=1)
+    return count
+
 
 class HrPayslipLine(models.Model):
     _inherit = 'hr.payslip.line'
 
-    def _get_friday_week_key(self, day):
-        """Return the anchor Friday date for a Friday->Thursday payroll week."""
-        offset = (day.weekday() - 4) % 7
-        return day - timedelta(days=offset)
-
-    def _get_excluded_schedule_names(self):
-        """Option A: exclude listed schedules from Friday swap logic."""
-        default_value = 'شيفت اداريين الفروع,شيفت الادارة'
-        raw_value = self.env['ir.config_parameter'].sudo().get_param(
-            'samalink_hr.friday_swap_excluded_schedule_names',
-            default=default_value,
-        )
-        return {name.strip() for name in (raw_value or '').split(',') if name.strip()}
-
-    def _get_excluded_schedule_ids(self):
-        raw_value = self.env['ir.config_parameter'].sudo().get_param(
-            'samalink_hr.friday_swap_excluded_schedule_ids',
-            default='',
-        )
-        schedule_ids = set()
-        for value in (raw_value or '').split(','):
-            value = value.strip()
-            if value.isdigit():
-                schedule_ids.add(int(value))
-        return schedule_ids
-
-    def _get_slip_schedule_name(self, slip):
-        contract = slip.contract_id
-        if not contract and slip.employee_id:
-            contract = self.env['hr.contract'].search([
-                ('employee_id', '=', slip.employee_id.id),
-                ('state', '=', 'open'),
-                ('date_start', '<=', slip.date_to),
-                '|',
-                ('date_end', '=', False),
-                ('date_end', '>=', slip.date_from),
-            ], limit=1)
-        return (contract.resource_calendar_id.name or '').strip() if contract else ''
-
-    def _is_friday_swap_in_scope(self, slip):
-        excluded_ids = self._get_excluded_schedule_ids()
-        schedule_id = slip.contract_id.resource_calendar_id.id if slip.contract_id else False
-        if excluded_ids and schedule_id:
-            return schedule_id not in excluded_ids
-        return self._get_slip_schedule_name(slip) not in self._get_excluded_schedule_names()
-
-    def _get_weekly_friday_attendance_credits(self, employee, date_from, date_to):
-        """Include anchor Friday before date_from so Fri→Thu weeks crossing month boundaries match."""
-        anchor_from = self._get_friday_week_key(date_from)
-        credit_from_dt = datetime.combine(anchor_from, time.min)
-        credit_to_dt = datetime.combine(date_to, time.max)
-        attendance_dates = self.env['hr.attendance'].search([
-            ('employee_id', '=', employee.id),
-            ('check_in', '>=', credit_from_dt),
-            ('check_in', '<=', credit_to_dt),
-        ]).mapped('check_in')
-        credits = defaultdict(int)
-        for check_in in attendance_dates:
-            check_day = check_in.date()
-            if check_day.weekday() == 4:  # Friday
-                credits[self._get_friday_week_key(check_day)] += 1
-        return credits
-
-    def _get_approved_timeoff_dates(self, employee, date_from, date_to):
-        from_date_midnight = datetime.combine(date_from, time.min)
-        end_of_to_date = datetime.combine(date_to, time.max)
-        approved_leaves = self.env['hr.leave'].search([
-            ('employee_id', '=', employee.id),
-            ('state', '=', 'validate'),
-            ('date_from', '<=', end_of_to_date),
-            ('date_to', '>=', from_date_midnight),
-        ])
-        timeoff_dates = set()
-        for leave in approved_leaves:
-            start_day = max(leave.date_from.date(), date_from)
-            end_day = min(leave.date_to.date(), date_to)
-            cursor_date = start_day
-            while cursor_date <= end_day:
-                timeoff_dates.add(cursor_date)
-                cursor_date += timedelta(days=1)
-        return timeoff_dates
-
-    def _get_compensation_stats(self, slip, absent_entries=None):
-        """Globally allocate each Friday credit to the first eligible absence in that week (Fri→Thu).
-
-        Eligible absences for ordering are in [week_anchor .. min(week_end, slip.date_to)], so
-        days after this payslip never affect allocation (no dependency on the next month).
-        Earlier days in the same week may still be in a previous calendar month (cross-month).
-        """
-        employee = slip.employee_id
-        date_from = slip.date_from
-        date_to = slip.date_to
-        slip_absent_entries = absent_entries if absent_entries is not None else self.env['hr.absent.entry'].search([
-            ('employee_id', '=', employee.id),
-            ('date', '>=', date_from),
-            ('date', '<=', date_to),
-            ('leave_entry_id', '=', False),
-        ])
-        if not slip_absent_entries:
-            return 0, set()
-
-        anchor_from = self._get_friday_week_key(date_from)
-        approved_timeoff_dates = self._get_approved_timeoff_dates(employee, anchor_from, date_to)
-        friday_credits = self._get_weekly_friday_attendance_credits(employee, date_from, date_to)
-        original_credits = dict(friday_credits)
-
-        week_keys_to_allocate = set()
-        for absent_entry in slip_absent_entries:
-            if absent_entry.date.weekday() == 4 or absent_entry.date in approved_timeoff_dates:
-                continue
-            week_key = self._get_friday_week_key(absent_entry.date)
-            if original_credits.get(week_key, 0) > 0:
-                week_keys_to_allocate.add(week_key)
-
-        compensated_entry_ids = set()
-        Absent = self.env['hr.absent.entry']
-        for week_key in week_keys_to_allocate:
-            credit_count = original_credits.get(week_key, 0)
-            if credit_count <= 0:
-                continue
-            week_end = week_key + timedelta(days=6)
-            period_end = min(week_end, date_to)
-            week_absents = Absent.search([
-                ('employee_id', '=', employee.id),
-                ('date', '>=', week_key),
-                ('date', '<=', period_end),
-                ('leave_entry_id', '=', False),
-            ], order='date asc, id asc')
-            eligible = [
-                a for a in week_absents
-                if a.date.weekday() != 4 and a.date not in approved_timeoff_dates
-            ]
-            for absent_entry in eligible[:credit_count]:
-                compensated_entry_ids.add(absent_entry.id)
-
-        compensated_on_slip = sum(1 for a in slip_absent_entries if a.id in compensated_entry_ids)
-        return compensated_on_slip, set()
-
     def _compute_adjusted_absent_penalty_count(self, slip):
-        employee = slip.employee_id
-        date_from = slip.date_from
-        date_to = slip.date_to
-        absent_entries = self.env['hr.absent.entry'].search([
-            ('employee_id', '=', employee.id),
-            ('date', '>=', date_from),
-            ('date', '<=', date_to),
-            ('leave_entry_id', '=', False),
-        ])
-        if not absent_entries:
-            return 0
-        if not self._is_friday_swap_in_scope(slip):
-            return len(absent_entries)
+        """Read penalty count directly from absence entries.
 
-        compensated_absences, _ = self._get_compensation_stats(slip, absent_entries=absent_entries)
-        return len(absent_entries) - compensated_absences
+        Since absence entries now only contain real absences
+        (rest days, holidays, time-off, and compensated days are
+        filtered out at generation time), we simply count all entries.
+        """
+        return self.env['hr.absent.entry'].search_count([
+            ('employee_id', '=', slip.employee_id.id),
+            ('date', '>=', slip.date_from),
+            ('date', '<=', slip.date_to),
+        ])
 
     def _compute_adjusted_rest_allow_count(self, slip):
-        employee = slip.employee_id
-        from_date_midnight = datetime.combine(slip.date_from, time.min)
-        end_of_to_date = datetime.combine(slip.date_to, time.max)
-        rest_entries = self.env['hr.work.entry'].search([
-            ('employee_id', '=', employee.id),
-            ('date_start', '>=', from_date_midnight),
-            ('date_stop', '<=', end_of_to_date),
-            ('work_entry_type_id.code', '=', 'REST100')
+        """Calculate rest-day count for payroll expressions / related count.
+
+        For flexible schedules: same **calendar** rule as before — count Fridays
+        in the payslip period, plus Saturdays when ``rest_days_per_week`` is 2
+        (schedule entitlement in the period), **not** the number of rest days
+        actually taken.
+
+        For non-flexible schedules: count REST100 work entries in the period.
+        """
+        contract = slip.contract_id
+        calendar = contract.resource_calendar_id if contract else False
+
+        if calendar and calendar.flexible_rest_day:
+            rest_per_week = int(calendar.rest_days_per_week or '1')
+            count = _count_weekdays_in_range(slip.date_from, slip.date_to, 4)  # Fridays
+            if rest_per_week == 2:
+                count += _count_weekdays_in_range(slip.date_from, slip.date_to, 5)  # Saturdays
+            return count
+
+        # Non-flexible: use default REST100 work entries
+        from_dt = datetime.combine(slip.date_from, time.min)
+        to_dt = datetime.combine(slip.date_to, time.max)
+        return self.env['hr.work.entry'].search_count([
+            ('employee_id', '=', slip.employee_id.id),
+            ('date_start', '>=', from_dt),
+            ('date_stop', '<=', to_dt),
+            ('work_entry_type_id.code', '=', 'REST100'),
         ])
-        return len(rest_entries)
+
+    def _is_flexible_schedule(self, slip):
+        """Check if the employee's schedule uses flexible rest days."""
+        contract = slip.contract_id
+        calendar = contract.resource_calendar_id if contract else False
+        return calendar and calendar.flexible_rest_day
 
     def _compute_related_records_count(self):
         for line in self:
@@ -210,6 +102,16 @@ class HrPayslipLine(models.Model):
             ]
             return action
         elif self.salary_rule_id.code == 'REST_ALLOW':
+            if self._is_flexible_schedule(self.slip_id):
+                # Drill-down: actual rest days taken (not the calendar Fri/Sat count).
+                return {
+                    'type': 'ir.actions.act_window',
+                    'name': _('Rest days taken'),
+                    'res_model': 'hr.payslip.rest.days.wizard',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {'default_payslip_id': self.slip_id.id},
+                }
             from_date_midnight = datetime.combine(date_from, time.min)
             end_of_to_date = datetime.combine(date_to, time.max)
             action = self.env["ir.actions.actions"]._for_xml_id(
@@ -219,7 +121,7 @@ class HrPayslipLine(models.Model):
                 ('employee_id', '=', employee_id.id),
                 ('date_start', '>=', from_date_midnight),
                 ('date_stop', '<=', end_of_to_date),
-                ('work_entry_type_id.code', '=', 'REST100')
+                ('work_entry_type_id.code', '=', 'REST100'),
             ]
             return action
         elif self.salary_rule_id.code == 'ABSENT_PENALTY':
@@ -228,7 +130,6 @@ class HrPayslipLine(models.Model):
                 ('employee_id', '=', employee_id.id),
                 ('date', '>=', date_from),
                 ('date', '<=', date_to),
-                ('leave_entry_id', '=', False)
             ]
             action['context'] = {'default_employee_id': employee_id.id, 'initial_date': date_from}
             return action

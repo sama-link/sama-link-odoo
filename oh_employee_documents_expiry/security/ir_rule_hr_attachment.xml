@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Without these rules, users who only match a restrictive ir.attachment
+             rule (e.g. own create_uid) cannot see files another HR user uploaded.
+             These rules OR with other group rules and only widen access for
+             attachments tied to employee document models. -->
+        <record id="ir_attachment_rule_hr_user_employee_documents" model="ir.rule">
+            <field name="name">Attachments: HR Officer — employee document files</field>
+            <field name="model_id" ref="base.model_ir_attachment"/>
+            <field name="domain_force">['|', ('res_model', '=', 'hr.employee.document'), ('res_model', '=', 'hr.document')]</field>
+            <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+        <record id="ir_attachment_rule_hr_manager_employee_documents" model="ir.rule">
+            <field name="name">Attachments: HR Manager — employee document files</field>
+            <field name="model_id" ref="base.model_ir_attachment"/>
+            <field name="domain_force">['|', ('res_model', '=', 'hr.employee.document'), ('res_model', '=', 'hr.document')]</field>
+            <field name="groups" eval="[(4, ref('hr.group_hr_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>

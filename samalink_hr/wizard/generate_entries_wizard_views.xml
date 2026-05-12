@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_generate_entries_wizard_form" model="ir.ui.view">
+        <field name="name">hr.generate.entries.wizard.form</field>
+        <field name="model">hr.generate.entries.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Absence Entries">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="employee_ids" widget="many2many_tags"
+                           placeholder="Leave empty for all employees with active contracts"/>
+                </group>
+                <footer>
+                    <button name="action_generate" string="Generate" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_generate_entries_wizard" model="ir.actions.act_window">
+        <field name="name">Generate Absence Entries</field>
+        <field name="res_model">hr.generate.entries.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_adjust_work_entries_wizard_form" model="ir.ui.view">
+        <field name="name">hr.adjust.work.entries.wizard.form</field>
+        <field name="model">hr.adjust.work.entries.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Adjust Work Entries (Flexible Rest)">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="employee_ids" widget="many2many_tags"
+                           placeholder="Leave empty for all employees with active contracts"/>
+                </group>
+                <footer>
+                    <button name="action_adjust" string="Adjust" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_adjust_work_entries_wizard" model="ir.actions.act_window">
+        <field name="name">Adjust Flexible Work Entries</field>
+        <field name="res_model">hr.adjust.work.entries.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_payslip_rest_days_wizard_form" model="ir.ui.view">
+        <field name="name">hr.payslip.rest.days.wizard.form</field>
+        <field name="model">hr.payslip.rest.days.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rest days in payslip period">
+                <field name="payslip_id" invisible="1"/>
+                <field name="line_ids" nolabel="1">
+                    <list create="false" delete="false" edit="false">
+                        <field name="rest_date"/>
+                        <field name="weekday_label"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Close" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -23,6 +23,12 @@
         <field name="model">hr.absent.entry</field>
         <field name="arch" type="xml">
             <list string="Absent Entries" create="false" delete="true">
+                <header>
+                    <button name="%(samalink_hr.action_generate_entries_wizard)d"
+                            string="Generate Absence Entries"
+                            type="action"
+                            class="btn-primary"/>
+                </header>
                 <field name="employee_id"/>
                 <field name="date"/>
             </list>
@@ -41,9 +47,21 @@
         </field>
     </record>
 
+    <record id="view_hr_absent_entry_search" model="ir.ui.view">
+        <field name="name">hr.absent.entry.search</field>
+        <field name="model">hr.absent.entry</field>
+        <field name="arch" type="xml">
+            <search string="Absent Entries">
+                <field name="employee_id"/>
+                <field name="date"/>
+            </search>
+        </field>
+    </record>
+
     <record id="action_hr_absent_entry" model="ir.actions.act_window">
         <field name="name">Absent Entries</field>
         <field name="res_model">hr.absent.entry</field>
         <field name="view_mode">calendar,list,form</field>
+        <field name="search_view_id" ref="view_hr_absent_entry_search"/>
     </record>
 </odoo>

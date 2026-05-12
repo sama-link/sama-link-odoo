@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="606" uniqueCount="308"><si><t>Name</t></si><si><t>Model</t></si><si><t>Groups</t></si><si><t>Domain</t></si><si><t>Read</t></si><si><t>Write</t></si><si><t>Create</t></si><si><t>Delete</t></si><si><t>Work entries/Employee calendar filter: only self</t></si><si><t>Work Entries Employees</t></si><si><t>User types / Internal User</t></si><si><t>[('user_id', '=', user.id)]</t></si><si><t>website_designer: Manage Website and qWeb view</t></si><si><t>View</t></si><si><t>Website / Editor and Designer</t></si><si><t>[('type', '=', 'qweb')]</t></si><si><t>website_designer: global view</t></si><si><t>[('type', '!=', 'qweb')]</t></si><si><t>Administration Settings: Manage all views</t></si><si><t>Administration / hr</t></si><si><t>[(1, '=', 1)]</t></si><si><t>Administration / Settings</t></si><si><t>res.users.settings.volumes: access their own entries</t></si><si><t>User Settings Volumes</t></si><si><t>[('user_setting_id.user_id', '=', user.id)]</t></si><si><t>Administrators can access all User Settings volumes.</t></si><si><t>Administrators can access all User Settings.</t></si><si><t>User Settings</t></si><si><t>res.users.settings: access their own entries</t></si><si><t>Users can read and delete their own keys</t></si><si><t>Users API Keys</t></si><si><t>User types / Portal</t></si><si><t>Administrators can view user keys to revoke them</t></si><si><t>Timesheets Analysis Report user</t></si><si><t>Timesheets Analysis Report</t></si><si><t>[
+                ('has_department_manager_access', '=', True),
+            ]</t></si><si><t>Time Off Summary / Report: Internal User</t></si><si><t>Time Off Summary / Report</t></si><si><t>[('has_department_manager_access', '=', True)]</t></si><si><t>Time Off Summary / Report: All Approver</t></si><si><t>Time Off / Officer: Manage all requests</t></si><si><t>Project/Task Type: manager sees all</t></si><si><t>Task Stage</t></si><si><t>Project / Administrator</t></si><si><t>Project / Manger</t></si><si><t>Project/Task Type: write own stages</t></si><si><t>Project / User</t></si><si><t>Tasks Analysis: project visibility User</t></si><si><t>Tasks Analysis</t></si><si><t>[
+        '|',
+            ('project_id.privacy_visibility', '!=', 'followers'),
+            '|',
+                ('project_id.message_partner_ids', 'in', [user.partner_id.id]),
+                '|',
+                    ('task_id.message_partner_ids', 'in', [user.partner_id.id]),
+                    ('user_ids', 'in', user.id),
+        ]</t></si><si><t>Tasks Analysis: project visibility Manager</t></si><si><t>Spreadsheet dashboard: groups</t></si><si><t>Spreadsheet Dashboard</t></si><si><t>[('group_ids', 'in', user.groups_id.ids)]</t></si><si><t>SMS Template: system group granted all</t></si><si><t>SMS Templates</t></si><si><t>SMS Template: project manager CUD on project/task</t></si><si><t>[('model', 'in', ('project.task', 'project.project'))]</t></si><si><t>Employee skill: employee: read all</t></si><si><t>Skill level for an employee</t></si><si><t>Employee skill: HR user: read all</t></si><si><t>Employees / Officer: Manage all employees</t></si><si><t>Employee skill: employee: create/write/unlink own</t></si><si><t>[('employee_id.user_id','=',user.id)]</t></si><si><t>homeworking wizard: own</t></si><si><t>Set Homework Location Wizard</t></si><si><t>[
+                ('employee_id', '=', user.employee_id.id)
+            ]</t></si><si><t>homeworking wizard: admin</t></si><si><t>Discuss.gif.favorite: User access</t></si><si><t>Save favorite GIF from Tenor API</t></si><si><t>[('create_uid', '=', user.id)]</t></si><si><t>Discuss.gif.favorite: admin full access</t></si><si><t>Administration / Access Rights</t></si><si><t>Resume: employee: read all</t></si><si><t>Resume line of an employee</t></si><si><t>Resume: HR user: all</t></si><si><t>Resume: employee: create/write/unlink own</t></si><si><t>resource.calendar.leaves: employee reads own or global</t></si><si><t>Resource Time Off Detail</t></si><si><t>['|', ('resource_id', '=', False), ('resource_id.user_id', 'in', [False, user.id])]</t></si><si><t>resource.calendar.leaves: employee modifies own</t></si><si><t>[('resource_id', '!=', False), ('resource_id.user_id', 'in', [False, user.id])]</t></si><si><t>resource.calendar.leaves: admin modifies global</t></si><si><t>[('resource_id', '=', False)]</t></si><si><t>Time Off Resources: Approver</t></si><si><t>[(1,'=',1)]</t></si><si><t>Time Off Resources: All Approver</t></si><si><t>Users can access only their own tokens</t></si><si><t>Payment Token</t></si><si><t>[('partner_id', '=', user.partner_id.id)]</t></si><si><t>User types / Public</t></si><si><t>website.controller.page: portal/public: read published pages</t></si><si><t>Model Page</t></si><si><t>Technical / Public access to arbitrary exposed model</t></si><si><t>[('website_published', '=', True)]</t></si><si><t>mail.notifications: group_user: write its own entries</t></si><si><t>Message Notifications</t></si><si><t>[('res_partner_id', '=', user.partner_id.id)]</t></si><si><t>HR Employee Documents</t></si><si><t>SamaLink / HR Officer</t></si><si><t>User can only see his/her goals or goal from the same challenge in board visibility</t></si><si><t>Gamification Goal</t></si><si><t>[
+                '|',
+                    ('user_id','=',user.id),
+                    '&amp;',
+                        ('challenge_id.user_ids','in',user.id),
+                        ('challenge_id.visibility_mode','=','ranking')]</t></si><si><t>Manager can see any goal</t></si><si><t>HR Officer can see any goal</t></si><si><t>ir.filters.admin.all.rights</t></si><si><t>Filters</t></si><si><t>ir.filters.owner</t></si><si><t>[('user_id','in',[False,user.id])]</t></si><si><t>ir.filters.own.rule.delete</t></si><si><t>Employee Skill Report: HR user</t></si><si><t>Employee Skills Report</t></si><si><t>Employee Skill Report: employee's manager</t></si><si><t>homeworking: own</t></si><si><t>Employee Location</t></si><si><t>homeworking: admin</t></si><si><t>Users can modify or delete embedded actions that they have created or that are shared</t></si><si><t>Embedded Actions</t></si><si><t>[('user_id', 'in', [user.id, False])]</t></si><si><t>Admins have all the rights on embedded actions</t></si><si><t>Employees can only modify templates they have created or been assigned</t></si><si><t>Email Templates</t></si><si><t>['|', ('create_uid', '=', user.id), ('user_id', '=', user.id)]</t></si><si><t>Mail Template Editors - Edit All Templates</t></si><si><t>Technical / Mail Template Editor</t></si><si><t>Users can read only their own devices</t></si><si><t>Devices</t></si><si><t>Administrators can read all devices</t></si><si><t>Users can read only their own device logs</t></si><si><t>Device Log</t></si><si><t>Administrators can read all device logs</t></si><si><t>Defaults: alter personal defaults</t></si><si><t>Default Values</t></si><si><t>[('user_id','=',user.id)]</t></si><si><t>Defaults: alter all defaults</t></si><si><t>spreadsheet.dashboard.share: create uid</t></si><si><t>Copy of a shared dashboard</t></si><si><t>discuss.channel.member: access their own entries</t></si><si><t>Channel Member</t></si><si><t xml:space="preserve">
+                [
+                    ('is_self', '=', True),
+                    "|",
+                        ("channel_id.channel_type", "!=", "channel"),
+                        "|",
+                            "&amp;",
+                                ("channel_id.parent_channel_id", "=", False),
+                                "|",
+                                    ("channel_id.group_public_id", "=", False),
+                                    ("channel_id.group_public_id", "in", user.groups_id.ids),
+                            "&amp;",
+                                ("channel_id.parent_channel_id", "!=", False),
+                                "|",
+                                    ("channel_id.parent_channel_id.group_public_id", "=", False),
+                                    ("channel_id.parent_channel_id.group_public_id", "in", user.groups_id.ids),
+                ]
+            </t></si><si><t>discuss.channel.member: read members of accessible channels</t></si><si><t xml:space="preserve">
+                [
+                    "|",
+                        "&amp;",
+                            ("channel_id.channel_type", "!=", "channel"),
+                            ("channel_id.is_member", "=", True),
+                        "&amp;",
+                            ("channel_id.channel_type", "=", "channel"),
+                            "|",
+                                "&amp;",
+                                    ("channel_id.parent_channel_id", "=", False),
+                                    "|",
+                                        ("channel_id.group_public_id", "=", False),
+                                        ("channel_id.group_public_id", "in", user.groups_id.ids),
+                                "&amp;",
+                                    ("channel_id.parent_channel_id", "!=", False),
+                                    "|",
+                                        ("channel_id.parent_channel_id.group_public_id", "=", False),
+                                        ("channel_id.parent_channel_id.group_public_id", "in", user.groups_id.ids),
+                ]
+            </t></si><si><t>discuss.channel.member: can join group restricted channels when group is matching</t></si><si><t xml:space="preserve">
+                [
+                    ('is_self', '=', True),
+                    ('channel_id.channel_type', '=', 'channel'),
+                    '|',
+                        ('channel_id.group_public_id', '=', False),
+                        ('channel_id.group_public_id', 'in', user.groups_id.ids)
+                ]
+            </t></si><si><t>discuss.channel.member: internal users can invite others in group restricted channels when group is matching</t></si><si><t xml:space="preserve">
+                [
+                    ('is_self', '=', False),
+                    ('channel_id.channel_type', '=', 'channel'),
+                    '|',
+                        ('channel_id.group_public_id', '=', False),
+                        ('channel_id.group_public_id', 'in', user.groups_id.ids)
+                ]
+            </t></si><si><t>discuss.channel.member: internal users can invite others in channels they are member of</t></si><si><t xml:space="preserve">
+                [
+                    ('is_self', '=', False),
+                    ('channel_id.channel_type', 'not in', ('channel', 'chat')),
+                    ('channel_id.is_member', '=', True)
+                ]
+            </t></si><si><t>discuss.channel.member: admin can manipulate all entries</t></si><si><t>Canned response: admin can do all</t></si><si><t>Canned Response</t></si><si><t>Canned Responses / Canned Response Administrator</t></si><si><t>Canned response: User read: own or in groups</t></si><si><t>['|', ('create_uid', '=', user.id), ('group_ids', 'in', user.groups_id.ids)]</t></si><si><t>Canned response: User write/unlink: own only</t></si><si><t>Burndown chart: project visibility User</t></si><si><t>Burndown Chart</t></si><si><t>[
+        '|',
+            ('project_id.privacy_visibility', '!=', 'followers'),
+            '|',
+                ('project_id.message_partner_ids', 'in', [user.partner_id.id]),
+                ('user_ids', 'in', user.id),
+        ]</t></si><si><t>Authentication Device</t></si><si><t>Attendance Officer: Restrict Overtime to managed employees</t></si><si><t>Attendance Overtime</t></si><si><t>Technical / Officer: Manage attendances</t></si><si><t xml:space="preserve">
+                [
+                '|',
+                '&amp;',
+                 ('employee_id.attendance_manager_id', '=', user.id),
+                 ('employee_id.user_id', '=', user.id),
+                '&amp;',
+                ('employee_id.user_id', '!=', user.id),
+                ('employee_id.attendance_manager_id', '=', user.id)
+                ]
+            </t></si><si><t>Attendance Admin: full access</t></si><si><t>Attendances / Administrator</t></si><si><t>Attendance base user: Read his own overtime</t></si><si><t>Technical / User: Read his own attendances</t></si><si><t>[('employee_id.user_id', '=', user.id)]</t></si><si><t>ir.attachment</t></si><si><t>Attachment</t></si><si><t>Skill History: Employee own only</t></si><si><t>Appraisal Skill Timeline</t></si><si><t>SamaLink / Employee</t></si><si><t>Skill Line: Employee own only</t></si><si><t>Appraisal Skill Evaluation Line</t></si><si><t>[
+                ('employee_id.user_id', '=', user.id),
+                ('appraisal_id.state', '=', 'hr_finalization')
+            ]</t></si><si><t>Administrators can access all activity plan templates.</t></si><si><t>Activity plan template</t></si><si><t>Manager can edit employee plan template</t></si><si><t>Employees / Administrator</t></si><si><t>[('plan_id.res_model', '=', 'hr.employee')]</t></si><si><t>Manager can manage project/task plan templates</t></si><si><t>[('plan_id.res_model', 'in', ('project.project', 'project.task'))]</t></si><si><t>Administrators can access all activity plans.</t></si><si><t>Activity Plan</t></si><si><t>Manager can edit employee plan</t></si><si><t>[('res_model', '=', 'hr.employee')]</t></si><si><t>Manager can manage project/task plans</t></si><si><t>[('res_model', 'in', ('project.project', 'project.task'))]</t></si><si><t>mail.activity: user: write/unlink only (created or assigned)</t></si><si><t>Activity</t></si><si><t>['|', ('user_id', '=', user.id), ('create_uid', '=', user.id)]</t></si><si><t>Allocations: employee: read own</t></si><si><t>Time Off Allocation</t></si><si><t>[
+            '|',
+                ('employee_id.leave_manager_id', '=', user.id),
+                ('employee_id.user_id', '=', user.id),
+        ]</t></si><si><t>Allocations: base.group_user create/write</t></si><si><t>[
+            '|',
+                '&amp;',
+                    ('employee_id.user_id', '=', user.id),
+                    ('state', '=', 'confirm'),
+                '&amp;',
+                    ('validation_type', 'in', ['manager', 'both', 'no_validation']),
+                    ('employee_id.leave_manager_id', '=', user.id),
+        ]</t></si><si><t>Allocations: see all time off: read all</t></si><si><t>Allocations base.group_user unlink</t></si><si><t>[('employee_id.user_id', '=', user.id), ('state', '=', 'draft')]</t></si><si><t>Allocations: holiday user: create/write</t></si><si><t>[
+            '|',
+                '&amp;',
+                    ('employee_id.user_id', '=', user.id),
+                    ('state', '!=', 'validate'),
+                '|',
+                    ('employee_id.user_id', '!=', user.id),
+                    ('employee_id.user_id', '=', False)
+        ]</t></si><si><t>Allocations: administrator: no limit</t></si><si><t>Time Off / Administrator</t></si><si><t>Time Off base.group_user read</t></si><si><t>Time Off</t></si><si><t>Time Off base.group_user create/write</t></si><si><t>[
+            '|',
+                '&amp;',
+                    ('employee_id.user_id', '=', user.id),
+                    ('state', 'not in', ['validate', 'validate1']),
+                '&amp;',
+                    ('validation_type', 'in', ['manager', 'both', 'no_validation']),
+                    ('employee_id.leave_manager_id', '=', user.id),
+        ]</t></si><si><t>Time Off base.group_user unlink</t></si><si><t>[('employee_id.user_id', '=', user.id), ('state', 'in', ['confirm', 'validate1'])]</t></si><si><t>Time Off Responsible read</t></si><si><t>Technical / Time Off Responsible</t></si><si><t>[
+                ('employee_id.leave_manager_id', '=', user.id),
+        ]</t></si><si><t>Time Off Responsible create/write</t></si><si><t>[
+            '|',
+                '&amp;',
+                    ('employee_id.user_id', '=', user.id),
+                    ('state', '!=', 'validate'),
+                ('employee_id.leave_manager_id', '=', user.id),
+        ]</t></si><si><t>Time Off All Approver read</t></si><si><t>Time Off All Approver create/write</t></si><si><t>Time Off Administrator</t></si><si><t>Project/Task: employees: follow required for follower-only projects</t></si><si><t>Task</t></si><si><t>[
+            '|',
+                '&amp;',
+                    ('project_id', '!=', False),
+                    '|',
+                        ('project_id.privacy_visibility', '!=', 'followers'),
+                        ('project_id.message_partner_ids', 'in', [user.partner_id.id]),
+                '|',
+                    ('message_partner_ids', 'in', [user.partner_id.id]),
+                    # to subscribe check access to the record, follower is not enough at creation
+                    ('user_ids', 'in', user.id)
+        ]</t></si><si><t>Project/Task: project manager: see all tasks linked to a project or its own tasks</t></si><si><t>[
+            '|', ('project_id', '!=', False),
+                 ('user_ids', 'in', user.id),
+        ]</t></si><si><t>Project/Task: project users: follow required for follower-only projects</t></si><si><t>Project: See private tasks</t></si><si><t>[
+            ('project_id.privacy_visibility', '!=', 'followers'),
+            '|', '|', ('project_id', '!=', False),
+                      ('parent_id', '!=', False),
+                 ('user_ids', 'in', user.id),
+        ]</t></si><si><t>Project/Task: employees: Full access to own private task only</t></si><si><t>[('project_id', '=', False), ('user_ids', 'in', user.id), ('parent_id', '=', False)]</t></si><si><t>Project/Update: employees: follow required for follower-only projects</t></si><si><t>Project Update</t></si><si><t>[
+        '|',
+            ('project_id.privacy_visibility', '!=', 'followers'),
+            '|',
+                ('project_id.message_partner_ids', 'in', [user.partner_id.id]),
+                '|',
+                    ('user_id', '=', user.id),
+                    ('project_id.user_id', '=', user.id)
+        ]</t></si><si><t>Project updates : Project user can see all project updates</t></si><si><t>Project/Milestone: employees: follow required for follower-only projects</t></si><si><t>Project Milestone</t></si><si><t>[
+        '|',
+            ('project_id.privacy_visibility', '!=', 'followers'),
+            '|',
+                ('project_id.message_partner_ids', 'in', [user.partner_id.id]),
+                ('project_id.user_id', '=', user.id),
+        ]</t></si><si><t>Project/Milestone: Project manager can see all project milestones</t></si><si><t>Project: employees: following required for follower-only projects</t></si><si><t>Project</t></si><si><t>['|',
+                                        ('privacy_visibility', '!=', 'followers'),
+                                        ('message_partner_ids', 'in', [user.partner_id.id])
+                                    ]</t></si><si><t>Project: project manager</t></si><si><t>Officer and subordinates Payslip</t></si><si><t>Pay Slip</t></si><si><t>Payroll / Officer</t></si><si><t xml:space="preserve">['|','|', ('employee_id.user_id', '=',
+                user.id), ('employee_id.department_id', '=', False),
+                ('employee_id.department_id.manager_id.user_id', '=', user.id)]
+            </t></si><si><t>All Payslip</t></si><si><t>Payroll / Manager</t></si><si><t>Loan Officer (Clear User Own Only)</t></si><si><t>Loan Request</t></si><si><t>Loans / Loan Officer</t></si><si><t>User: Modify own loan only</t></si><si><t>User IAP Account</t></si><si><t>IAP Account</t></si><si><t>['|', ('company_ids', '=', False), ('company_ids', 'in', company_ids)]</t></si><si><t>Employee Resignation User</t></si><si><t>HR Resignation</t></si><si><t>Employee Resignation Manager</t></si><si><t>SamaLink / General Manager</t></si><si><t>Resignation / Resignation/HR</t></si><si><t>Employee Resignation Administrative Manager</t></si><si><t>SamaLink / Administrative Manager</t></si><si><t>[('employee_id.administrative_manager_id.user_id', '=', user.id)]</t></si><si><t>HR Mission: employees see own records only</t></si><si><t>HR Mission</t></si><si><t>Employee Missions / User (own only)</t></si><si><t>HR Mission: managers see team records only</t></si><si><t>Employee Missions / Manager</t></si><si><t>[('employee_id.parent_id.user_id', '=', user.id)]</t></si><si><t>HR Mission: HR see all records</t></si><si><t>Employee Missions / HR</t></si><si><t>hr.incentive (Team Only)</t></si><si><t>HR Incentive</t></si><si><t>Incentives / HR Incentives Officer</t></si><si><t>[('employee_id.coach_id.user_id', '=', user.id)]</t></si><si><t>hr.incentive (Clear)</t></si><si><t>Incentives / HR Incentives Manager</t></si><si><t>Appraisal: Employee own only</t></si><si><t>HR Appraisal</t></si><si><t>HR Contract: Employee Manager</t></si><si><t>Employee Contract</t></si><si><t>Contracts / Employee Manager</t></si><si><t>['|', ('employee_id.parent_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</t></si><si><t>HR Contract: Contract Manager</t></si><si><t>Contracts / Administrator</t></si><si><t>Employee: Own Contracts</t></si><si><t xml:space="preserve">[('employee_id.user_id','=',user.id)]
+        </t></si><si><t>HR Employee Samalink Employee (Edit Own Only)</t></si><si><t>Employee</t></si><si><t xml:space="preserve">
+            [('user_id', '=', user.id)]
+        </t></si><si><t>HR Employee Samalink Employee (Clear Edit Own Only)</t></si><si><t xml:space="preserve">
+            [(1, '=', 1)]
+        </t></si><si><t>discuss.channel: can access channels (as member or as group allowed)</t></si><si><t>Discussion Channel</t></si><si><t xml:space="preserve">
+                [
+                    "|",
+                        "&amp;",
+                            ("channel_type", "!=", "channel"),
+                            ("is_member", "=", True),
+                        "&amp;",
+                            ("channel_type", "=", "channel"),
+                            "|",
+                                "&amp;",
+                                    ("parent_channel_id", "=", False),
+                                    "|",
+                                        ("group_public_id", "=", False),
+                                        ("group_public_id", "in", user.groups_id.ids),
+                                "&amp;",
+                                    ("parent_channel_id", "!=", False),
+                                    "|",
+                                        ("parent_channel_id.group_public_id", "=", False),
+                                        ("parent_channel_id.group_public_id", "in", user.groups_id.ids),
+                ]
+            </t></si><si><t>discuss.channel: admin full access</t></si><si><t>company rule employee</t></si><si><t>Companies</t></si><si><t>[('id','in', company_ids)]</t></si><si><t>company rule erp manager</t></si><si><t>All Calendar Event for employees</t></si><si><t>Calendar Event</t></si><si><t>HR: Prevent non HR officers from accessing employee bank accounts</t></si><si><t>Bank Accounts</t></si><si><t>[('partner_id.employee_ids', '=', False)]</t></si><si><t>HR: Allow HR officers from accessing employee bank accounts</t></si><si><t>Attendance Administrator: Full access</t></si><si><t>Attendance</t></si><si><t>Attendance Officer: Restrict Attendances to managed employees</t></si><si><t>Attendance base user: Read his own attendances in other apps</t></si></sst>

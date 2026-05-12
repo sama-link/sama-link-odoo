@@ -22,7 +22,7 @@
 #############################################################################
 {
     'name': 'Open HRMS Employee Documents Expiry',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'category': 'Human Resources',
     'summary': """Manages Employee Documents With Expiry Notifications.""",
     'description': """OH Addon: Manages Employee Related Documents with Expiry
@@ -40,6 +40,7 @@
     'depends': ['hr'],
     'data': [
         'security/ir.model.access.csv',
+        'security/ir_rule_hr_attachment.xml',
         'data/ir_cron_data.xml',
         'views/document_type_views.xml',
         'views/hr_document_views.xml',
@@ -56,4 +57,5 @@
     'installable': True,
     'auto_install': False,
     'application': False,
+    'post_init_hook': 'hooks.post_init_hook',
 }

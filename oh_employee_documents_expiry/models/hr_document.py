@@ -20,7 +20,7 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class HrDocument(models.Model):
@@ -36,3 +36,23 @@ class HrDocument(models.Model):
                                   'attach_id3', string="Attachment",
                                   help='You can attach the copy of your'
                                        ' document.', copy=False)
+
+    def _normalize_attachment_access_metadata(self):
+        for rec in self:
+            rec.attach_ids.sudo().write({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'company_id': self.env.company.id,
+                'public': False,
+            })
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._normalize_attachment_access_metadata()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._normalize_attachment_access_metadata()
+        return res

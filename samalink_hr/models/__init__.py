@@ -1,3 +1,4 @@
+from . import ir_http
 from . import hr_absent_entry
 from . import hr_employee
 from . import hr_contract
@@ -6,3 +7,5 @@ from . import hr_attendance
 from . import hr_payslip 
 from . import hr_job
 from . import res_config_settings
+from . import resource_calendar
+from . import hr_work_entry

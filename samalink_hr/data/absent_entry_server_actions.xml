@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action menu on list + calendar for absent entries -->
+    <record id="action_absent_entry_open_generate_wizard_server" model="ir.actions.server">
+        <field name="name">Generate Absence Entries</field>
+        <field name="model_id" ref="model_hr_absent_entry"/>
+        <field name="binding_model_id" ref="model_hr_absent_entry"/>
+        <field name="binding_view_types">list,calendar</field>
+        <field name="state">code</field>
+        <field name="code">action = env['ir.actions.act_window']._for_xml_id('samalink_hr.action_generate_entries_wizard')</field>
+    </record>
+</odoo>

@@ -7,11 +7,11 @@
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
                 <app string="Samalink HR" name="samalink_hr" groups="base.group_system">
-                    <block title="Friday Swap Settings" id="samalink_hr_friday_swap_settings">
+                    <block title="Friday Swap Settings (Deprecated)" id="samalink_hr_friday_swap_settings">
                         <setting
                             id="samalink_hr_friday_swap_excluded_schedules"
-                            string="Excluded Working Schedules"
-                            help="Employees on these schedules are excluded from Friday swap payroll adjustments."
+                            string="Excluded Working Schedules (Deprecated)"
+                            help="DEPRECATED: Use the 'Flexible Rest Days' checkbox on each Work Schedule instead. This setting will be removed in a future version."
                         >
                             <field name="friday_swap_excluded_schedule_ids" widget="many2many_tags"/>
                         </setting>
