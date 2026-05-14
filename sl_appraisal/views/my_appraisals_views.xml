@@ -32,10 +32,10 @@
         <field name="model">hr.appraisal</field>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <form create="false" edit="false" delete="false">
+            <form string="My Appraisal" create="false" edit="false" delete="false">
                 <header>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="draft,published,hr_finalization"/>
+                    <field name="state" widget="statusbar" readonly="1"
+                           statusbar_visible="draft,published,submitted,hr_finalization"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -79,29 +79,88 @@
                                       decoration-success="level_change == 'improved'"
                                       decoration-danger="level_change == 'declined'"
                                       decoration-info="level_change == 'new'">
-                                    <field name="skill_type_id"/>
-                                    <field name="skill_id"/>
+                                    <field name="skill_type_id" readonly="1"/>
+                                    <field name="skill_id" readonly="1"/>
                                     <field name="current_skill_level_id"
-                                           string="Before"/>
+                                           string="Before" readonly="1"/>
                                     <field name="current_level_progress"
-                                           widget="progressbar" string="Before %"/>
+                                           widget="progressbar" string="Before %" readonly="1"/>
                                     <field name="final_skill_level_id"
-                                           string="After"
+                                           string="After" readonly="1"
                                            invisible="state != 'hr_finalization'"/>
                                     <field name="final_level_progress"
-                                           widget="progressbar" string="After %"
+                                           widget="progressbar" string="After %" readonly="1"
                                            invisible="state != 'hr_finalization'"/>
-                                    <field name="level_change" string="Δ"
+                                    <field name="level_change" string="Δ" readonly="1"
                                            invisible="state != 'hr_finalization'"/>
-                                    <field name="state" column_invisible="True"/>
+                                    <field name="state" column_invisible="True" readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
-                        <!-- Final Evaluation Text -->
-                        <page string="📊 Final Evaluation" name="my_final_eval"
-                              invisible="state != 'hr_finalization'">
-                            <field name="final_evaluation" nolabel="1" readonly="1"/>
+                        <!-- Same administration breakdown as HR appraisal form (read-only) -->
+                        <page string="🧮 Administration Score" name="my_administration_score_tab">
+                            <group string="Period">
+                                <group>
+                                    <field name="period_days" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Score Components"/>
+                            <group col="2">
+                                <group string="Absence">
+                                    <field name="absence_count" readonly="1"/>
+                                    <field name="absence_score" readonly="1"/>
+                                </group>
+                                <group string="Late Arrival">
+                                    <field name="late_count" readonly="1"/>
+                                    <field name="late_score" readonly="1"/>
+                                </group>
+                            </group>
+                            <group col="2">
+                                <group string="Early Leaving">
+                                    <field name="early_leaving_count" readonly="1"/>
+                                    <field name="early_leaving_score" readonly="1"/>
+                                </group>
+                                <group string="Penalties">
+                                    <field name="penalty_count" readonly="1"/>
+                                    <field name="penalty_score" readonly="1"/>
+                                </group>
+                            </group>
+                            <group col="2">
+                                <group string="Bonuses">
+                                    <field name="bonus_count" readonly="1"/>
+                                    <field name="bonus_score" readonly="1"/>
+                                </group>
+                                <group/>
+                            </group>
+                            <separator string="Administration Total"/>
+                            <group string="Total">
+                                <group>
+                                    <field name="admin_score" readonly="1"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info mt-2" role="alert">
+                                Administration score starts from 100, then applies absence/late/early leaving/penalty/bonus point adjustments, and is clamped between 0 and 100.
+                            </div>
+                        </page>
+
+                        <!-- Same score summary as HR appraisal form (read-only) -->
+                        <page string="🏅 Score" name="my_score_tab">
+                            <group>
+                                <group>
+                                    <field name="skill_average_score" readonly="1"/>
+                                    <field name="manual_score" readonly="1"/>
+                                    <field name="total_score" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="weighted_skill_score" readonly="1"/>
+                                    <field name="weighted_admin_score" readonly="1"/>
+                                    <field name="manual_score_reason" readonly="1"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-warning mt-2" role="alert">
+                                Total Score = ((Skill Average + Manual Score) * 0.7) + (Administration Score * 0.3).
+                            </div>
                         </page>
                     </notebook>
                 </sheet>
