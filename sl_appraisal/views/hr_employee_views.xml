@@ -64,7 +64,8 @@
                         Your appraisal history and skill progression.
                         Finalized appraisals show approved skill changes.
                     </div>
-                    <field name="appraisal_ids" readonly="1" nolabel="1">
+                    <field name="appraisal_ids" readonly="1" nolabel="1"
+                           context="{'form_view_ref': 'sl_appraisal.sl_my_appraisals_view_form'}">
                         <list create="false" edit="false" delete="false"
                               decoration-success="state == 'hr_finalization'"
                               decoration-warning="state == 'published'"
