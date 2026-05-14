@@ -23,11 +23,13 @@
         'samalink_hr',
         'hr_attendance_deviation',
         'hr_contract',
+        'hr_timesheet',
     ],
     'data': [
         'data/server_action.xml',
         'views/hr_attendance.xml',
         'views/hr_payslip.xml',
+        'views/hr_employee_timesheet_view.xml',
         'views/hr_employee.xml',
         'views/hr_leave.xml',
         'views/res_users.xml',

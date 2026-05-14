@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Standard hr_timesheet adds <field name="has_timesheet"/> to the employee form while the
+        Python field is restricted to hr.group_hr_user and base.group_system (Odoo 18+). Users
+        without those groups do not get the field in the web client's field spec, but the arch
+        still contains the node → OwlError. Mirror the field's groups on the view node so the
+        UI is stripped for line managers (SamaLink manager groups) who are not HR users.
+    -->
+    <record id="hr_employee_view_form_has_timesheet_groups" model="ir.ui.view">
+        <field name="name">hr.employee.form.has_timesheet.groups.samalink</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <field name="has_timesheet" position="attributes">
+                <attribute name="groups">hr.group_hr_user,base.group_system</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>
