@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Standard hr_timesheet adds <field name="has_timesheet"/> to the employee form while the
-        Python field is restricted to hr.group_hr_user and base.group_system (Odoo 18+). Users
-        without those groups do not get the field in the web client's field spec, but the arch
-        still contains the node → OwlError. Mirror the field's groups on the view node so the
-        UI is stripped for line managers (SamaLink manager groups) who are not HR users.
+        hr_timesheet adds has_timesheet + stat button under hr_hourly_cost.view_employee_form (not on
+        hr.view_employee_form arch alone). Inheriting only hr.view_employee_form can fail to patch
+        the real node on some stacks.
+
+        Standard view uses groups="hr_timesheet.group_hr_timesheet_user" while the Python field on
+        hr.employee uses hr.group_hr_user + base.group_system (Odoo 18+). Anyone with the timesheet
+        group but not HR User still gets the XML nodes but not the field in the web field spec →
+        OwlError. Align both nodes with the same groups as the field so arch and fields_get match.
     -->
-    <record id="hr_employee_view_form_has_timesheet_groups" model="ir.ui.view">
-        <field name="name">hr.employee.form.has_timesheet.groups.samalink</field>
+    <record id="hr_employee_view_form_timesheet_groups_samalink" model="ir.ui.view">
+        <field name="name">hr.employee.form.timesheet.groups.samalink</field>
         <field name="model">hr.employee</field>
-        <field name="inherit_id" ref="hr.view_employee_form"/>
-        <field name="priority">90</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_employee_view_form_inherit_timesheet"/>
+        <field name="priority" eval="999"/>
         <field name="arch" type="xml">
             <field name="has_timesheet" position="attributes">
                 <attribute name="groups">hr.group_hr_user,base.group_system</attribute>
             </field>
+            <xpath expr="//button[@name='action_timesheet_from_employee']" position="attributes">
+                <attribute name="groups">hr.group_hr_user,base.group_system</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>
