@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Security Groups v2.4.0',
-    'version': '2.5.0',
+    'version': '2.5.1',
     'summary': 'Manage security groups for Samalink',
     'description': 'Module to manage security groups and permissions in Samalink.',
     'author': '46-d-006',
@@ -23,11 +23,13 @@
         'samalink_hr',
         'hr_attendance_deviation',
         'hr_contract',
+        'hr_timesheet',
     ],
     'data': [
         'data/server_action.xml',
         'views/hr_attendance.xml',
         'views/hr_payslip.xml',
+        'views/hr_employee_timesheet_view.xml',
         'views/hr_employee.xml',
         'views/hr_leave.xml',
         'views/res_users.xml',

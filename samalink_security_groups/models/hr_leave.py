@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 class HrLeave(models.Model):
     _inherit = 'hr.leave'
 
-    def action_approve(self):
+    def action_approve(self, check_state=True):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
         is_sl_timeoff_mgr = self.env.user.has_group('samalink_security_groups.group_sl_timeoff_manager')
@@ -36,7 +36,7 @@ class HrLeave(models.Model):
             timeoff_group.sudo().write({'users': [(4, self.env.user.id)]})
 
         try:
-            res = super().action_approve()
+            res = super().action_approve(check_state)
         finally:
             if needs_elevation and self.env.user.has_group('hr_holidays.group_hr_holidays_user'):
                 timeoff_group.sudo().write({'users': [(3, self.env.user.id)]})
