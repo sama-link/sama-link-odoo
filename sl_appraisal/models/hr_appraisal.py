@@ -385,6 +385,26 @@ class HrAppraisal(models.Model):
             | self.hr_employee_ids
         ).filtered(lambda emp: emp.user_id)
 
+    def _grant_appraisal_manager_group(self, employees=None):
+        """Grant Appraisal / Manager to Access Plan users (not while Draft)."""
+        group = self.env.ref(
+            'sl_appraisal.group_appraisal_manager', raise_if_not_found=False)
+        if not group:
+            return
+        appraisals = self.filtered(lambda r: r.state != 'draft')
+        if employees is None:
+            if not appraisals:
+                return
+            employees = self.env['hr.employee']
+            for rec in appraisals:
+                employees |= rec._get_selected_access_employees()
+        else:
+            employees = employees.filtered('user_id')
+        users = employees.mapped('user_id').filtered('active')
+        users_to_grant = users.filtered(lambda u: group not in u.groups_id)
+        if users_to_grant:
+            users_to_grant.sudo().write({'groups_id': [(4, group.id)]})
+
     @api.depends('hr_manager_ids', 'hr_employee_ids')
     def _compute_single_access_fields(self):
         for rec in self:
@@ -394,10 +414,12 @@ class HrAppraisal(models.Model):
     def _inverse_hr_manager_id(self):
         for rec in self:
             rec.hr_manager_ids = [(6, 0, [rec.hr_manager_id.id] if rec.hr_manager_id else [])]
+        self.filtered(lambda r: r.state != 'draft')._grant_appraisal_manager_group()
 
     def _inverse_hr_employee_id(self):
         for rec in self:
             rec.hr_employee_ids = [(6, 0, [rec.hr_employee_id.id] if rec.hr_employee_id else [])]
+        self.filtered(lambda r: r.state != 'draft')._grant_appraisal_manager_group()
 
     @api.constrains('hr_manager_ids', 'hr_employee_ids')
     def _check_single_access_person(self):
@@ -452,8 +474,7 @@ class HrAppraisal(models.Model):
             if employee.company_id:
                 vals['company_id'] = employee.company_id.id
         vals = self._apply_default_manager_to_vals(vals)
-        record = super().create(vals)
-        return record
+        return super().create(vals)
 
     def write(self, vals):
         """Restrict writes by role and appraisal access plan."""
@@ -547,7 +568,14 @@ class HrAppraisal(models.Model):
                 raise AccessError(
                     _("Only HR Officers and Administrators can change "
                       "the appraisal status."))
-        return super().write(vals)
+        access_fields = {'hr_manager_ids', 'hr_employee_ids', 'hr_manager_id', 'hr_employee_id'}
+        grant_after_write = bool(access_fields & set(vals))
+        if vals.get('state') and vals['state'] != 'draft':
+            grant_after_write = True
+        result = super().write(vals)
+        if grant_after_write:
+            self.filtered(lambda r: r.state != 'draft')._grant_appraisal_manager_group()
+        return result
 
     def unlink(self):
         """Only allow deletion by HR/Admin and only in draft state."""
