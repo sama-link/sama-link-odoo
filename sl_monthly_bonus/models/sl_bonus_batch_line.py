@@ -45,6 +45,11 @@ class SlBonusBatchLine(models.Model):
                                       help='Final approved evaluation percentage (0–100).')
     evaluation_source = fields.Char(string='Evaluation Source', readonly=True,
                                     help='Reference to the appraisal record used.')
+    eval_treated_as_full = fields.Boolean(
+        string='Eval Treated As 100%', readonly=True,
+        help='True when this line had no finalized appraisal and the batch '
+             'setting "Treat Missing Evaluation as 100%" was enabled.',
+    )
     # Inputs by category (for transparency)
     target_amount = fields.Monetary(string='Target Amount', currency_field='currency_id', readonly=True)
     achieved_amount = fields.Monetary(string='Achieved Amount', currency_field='currency_id', readonly=True)
@@ -174,6 +179,24 @@ class SlBonusBatchLine(models.Model):
             'context': {
                 'default_line_id': self.id,
                 'default_new_amount': self.bonus_amount,
+            },
+        }
+
+    def action_compute_this_line(self):
+        """Per-row recompute for a single employee, gated by the parent batch state."""
+        self.ensure_one()
+        if not self._is_hr():
+            raise AccessError(_("Only HR Manager / Admin can recompute lines."))
+        if self.batch_id.state in ('approved', 'locked'):
+            raise UserError(_("Cannot recompute a single line on an approved/locked batch."))
+        self.batch_id.action_compute_employees([self.employee_id.id])
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Line Recomputed'),
+                'message': _("Refreshed bonus for %s.") % self.employee_id.name,
+                'type': 'success', 'sticky': False,
             },
         }
 

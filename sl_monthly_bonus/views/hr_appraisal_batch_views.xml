@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_hr_appraisal_batch_form_bonus" model="ir.ui.view">
+            <field name="name">hr.appraisal.batch.form.bonus</field>
+            <field name="model">hr.appraisal.batch</field>
+            <field name="inherit_id" ref="sl_appraisal.view_hr_appraisal_batch_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_open_or_create_bonus_batch"
+                            type="object"
+                            string="💰 Compute Bonuses"
+                            class="oe_highlight"
+                            invisible="state != 'hr_finalization'"
+                            groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
+                            help="Open the bonus batch for this period (or create it if none exists)."/>
+                </xpath>
+                <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                    <button name="action_open_or_create_bonus_batch"
+                            type="object" class="oe_stat_button"
+                            icon="fa-money"
+                            invisible="bonus_batch_count == 0"
+                            groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin">
+                        <field name="bonus_batch_state" widget="statinfo" string="Bonus Batch"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

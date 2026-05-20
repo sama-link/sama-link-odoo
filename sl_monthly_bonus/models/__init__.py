@@ -16,3 +16,5 @@ from . import sl_bonus_self_estimate
 from . import sl_bonus_calculator
 from . import hr_employee
 from . import hr_job
+from . import hr_appraisal_batch
+from . import sl_bonus_dashboard

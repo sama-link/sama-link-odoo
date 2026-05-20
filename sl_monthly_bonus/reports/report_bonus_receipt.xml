@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_bonus_receipt_document">
+            <t t-call="web.external_layout">
+                <t t-set="o" t-value="o"/>
+                <div class="page" style="direction:rtl; text-align:right;">
+                    <h2>إيصال مكافأة شهرية / Bonus Receipt</h2>
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>الموظف / Employee:</strong>
+                                <span t-field="o.employee_id"/>
+                            </p>
+                            <p><strong>القسم / Department:</strong>
+                                <span t-field="o.department_id"/>
+                            </p>
+                            <p><strong>المسمى الوظيفي / Job:</strong>
+                                <span t-field="o.job_id"/>
+                            </p>
+                            <p><strong>الفئة / Category:</strong>
+                                <span t-field="o.category"/>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>الشهر / Month:</strong>
+                                <span t-esc="o.period_start.strftime('%Y-%m')"/>
+                            </p>
+                            <p><strong>الدفعة / Batch:</strong>
+                                <span t-field="o.batch_id.name"/>
+                            </p>
+                            <p><strong>حالة الدفعة / Batch State:</strong>
+                                <span t-field="o.batch_id.state"/>
+                            </p>
+                            <p><strong>الراتب الأساسي / Basic Salary:</strong>
+                                <span t-field="o.basic_salary"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </p>
+                            <p><strong>نسبة التقييم / Evaluation %:</strong>
+                                <span t-field="o.evaluation_percent"/> %
+                            </p>
+                        </div>
+                    </div>
+
+                    <t t-if="o.is_excluded">
+                        <div class="alert alert-warning" role="alert" style="direction:rtl;">
+                            🚫 <strong>مستثنى / Excluded:</strong>
+                            <span t-field="o.exclusion_reason"/>
+                        </div>
+                    </t>
+
+                    <h4>مفردات الاحتساب / Calculation Breakdown</h4>
+                    <table class="table table-sm table-bordered" style="direction:rtl;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:right;">البند / Label</th>
+                                <th style="text-align:right;">القيمة / Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="o.component_ids" t-as="c">
+                                <td><span t-field="c.label"/></td>
+                                <td><span t-field="c.value"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <t t-if="o.manual_override_reason">
+                        <h4>تعديل يدوي / Manual Override</h4>
+                        <table class="table table-sm" style="direction:rtl;">
+                            <tr>
+                                <th>المبلغ بعد التعديل / Override Amount</th>
+                                <td><span t-field="o.manual_override_amount"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                            </tr>
+                            <tr>
+                                <th>المعدِّل / By</th>
+                                <td><span t-field="o.manual_override_by"/></td>
+                            </tr>
+                            <tr>
+                                <th>التاريخ / On</th>
+                                <td><span t-field="o.manual_override_on"/></td>
+                            </tr>
+                            <tr>
+                                <th>السبب / Reason</th>
+                                <td><span t-field="o.manual_override_reason"/></td>
+                            </tr>
+                        </table>
+                    </t>
+
+                    <t t-if="o.eval_treated_as_full">
+                        <div class="alert alert-info" role="alert" style="direction:rtl;">
+                            ⚠ هذا السطر اعتُبر تقييمه 100٪ بناءً على إعداد الدفعة (لم يوجد تقييم معتمد).
+                        </div>
+                    </t>
+
+                    <h3 style="margin-top: 20px;">
+                        <strong>المكافأة الصافية / Net Bonus:</strong>
+                        <span t-field="o.bonus_amount"
+                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                    </h3>
+                </div>
+            </t>
+        </template>
+
+        <template id="report_bonus_receipt">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="sl_monthly_bonus.report_bonus_receipt_document" t-lang="lang or 'ar_001'"/>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

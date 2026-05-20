@@ -40,6 +40,12 @@ class SlBonusCalculator(models.AbstractModel):
         evaluation_pct, eval_source = self._get_evaluation_percent(employee, period_start, period_end)
         result['line_vals']['evaluation_percent'] = evaluation_pct
         result['line_vals']['evaluation_source'] = eval_source
+        # Audit flag: was the 100% fallback used for this employee?
+        result['line_vals']['eval_treated_as_full'] = bool(
+            evaluation_pct == 100.0
+            and self.env.context.get('sl_bonus_treat_missing_eval_as_full')
+            and 'treated as 100%' in (eval_source or '')
+        )
         # Surface the most common operational issue (no finalized appraisal yet) as a
         # readable, HR-friendly hint on the line. This is set BEFORE the category formula
         # runs so the formula may override with a more specific config issue.
@@ -101,6 +107,10 @@ class SlBonusCalculator(models.AbstractModel):
            'hr_finalization' (final). If found, use its total_score.
         2. Else, look for the latest hr_finalization appraisal up to period_end.
         3. Else, return 0% and an explanatory source.
+
+        Honors the per-batch ``treat_missing_eval_as_full`` setting via context:
+        if no finalized appraisal exists, the calculator returns 100% with an
+        audit-visible source string. The line breakdown will mark this clearly.
         """
         Appraisal = self.env['hr.appraisal'].sudo()
         domain = [
@@ -119,6 +129,9 @@ class SlBonusCalculator(models.AbstractModel):
                                   order='date_to desc', limit=1)
         if latest:
             return float(latest.total_score or 0.0), f"hr.appraisal#{latest.id} (latest before period)"
+        # 3. fallback — optionally treat as 100%
+        if self.env.context.get('sl_bonus_treat_missing_eval_as_full'):
+            return 100.0, _("No finalized appraisal — treated as 100% per batch setting")
         return 0.0, _("No finalized appraisal found")
 
     def _get_period_staging(self, model_name, employee, period_start, period_end):

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_bonus_department_document">
+            <t t-call="web.external_layout">
+                <div class="page" style="direction:rtl; text-align:right;">
+                    <h2>تقرير أداء الأقسام / Department Performance</h2>
+                    <p>
+                        <strong>الدفعة:</strong>
+                        <span t-field="o.name"/> —
+                        <span t-esc="o.period_start.strftime('%Y-%m')"/>
+                    </p>
+                    <t t-set="by_dept" t-value="o._department_performance_rows()"/>
+
+                    <table class="table table-bordered" style="direction:rtl;">
+                        <thead>
+                            <tr>
+                                <th>القسم / Department</th>
+                                <th>إجمالي / Lines</th>
+                                <th>المستحقّون / Eligible</th>
+                                <th>المستثنون / Excluded</th>
+                                <th>متوسط التقييم %</th>
+                                <th>إجمالي المكافآت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="by_dept" t-as="d">
+                                <td><span t-esc="d['department']"/></td>
+                                <td><span t-esc="d['count']"/></td>
+                                <td><span t-esc="d['eligible']"/></td>
+                                <td><span t-esc="d['excluded']"/></td>
+                                <td>
+                                    <span t-esc="d['avg_eval']"/>%
+                                </td>
+                                <td>
+                                    <span t-esc="d['total']"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </template>
+
+        <template id="report_bonus_department">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="sl_monthly_bonus.report_bonus_department_document" t-lang="lang or 'ar_001'"/>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

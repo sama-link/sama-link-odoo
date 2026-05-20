@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_bonus_payout_document">
+            <t t-call="web.external_layout">
+                <div class="page" style="direction:rtl; text-align:right;">
+                    <h2>كشف صرف المكافآت الشهرية / Monthly Bonus Payout Sheet</h2>
+                    <p>
+                        <strong>الدفعة / Batch:</strong>
+                        <span t-field="o.name"/> —
+                        <span t-esc="o.period_start.strftime('%Y-%m')"/>
+                        |
+                        <strong>الحالة / State:</strong>
+                        <span t-field="o.state"/>
+                    </p>
+                    <p>
+                        <strong>إجمالي الموظفين / Lines:</strong>
+                        <span t-field="o.line_count"/>
+                        |
+                        <strong>المستحقّون / Eligible:</strong>
+                        <span t-field="o.paid_count"/>
+                        |
+                        <strong>المستثنون / Excluded:</strong>
+                        <span t-field="o.excluded_count"/>
+                    </p>
+                    <t t-if="o.treat_missing_eval_as_full">
+                        <div class="alert alert-danger" role="alert" style="direction:rtl;">
+                            ⚠ <strong>هذه الدفعة تعتبر التقييم الناقص كاملًا 100٪.</strong>
+                            Lines without a finalized evaluation were paid at 100% per batch setting.
+                        </div>
+                    </t>
+
+                    <table class="table table-sm table-striped" style="direction:rtl;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الموظف / Employee</th>
+                                <th>القسم / Department</th>
+                                <th>المسمى / Job</th>
+                                <th>الفئة</th>
+                                <th>التقييم %</th>
+                                <th>المحسوب / Computed</th>
+                                <th>المكافأة / Bonus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="i" t-value="0"/>
+                            <t t-foreach="o.line_ids.filtered(lambda l: not l.is_excluded)" t-as="l">
+                                <t t-set="i" t-value="i+1"/>
+                                <tr>
+                                    <td><span t-esc="i"/></td>
+                                    <td><span t-field="l.employee_id"/></td>
+                                    <td><span t-field="l.department_id"/></td>
+                                    <td><span t-field="l.job_id"/></td>
+                                    <td><span t-field="l.category"/></td>
+                                    <td><span t-esc="'%.2f' % (l.evaluation_percent or 0.0)"/>%</td>
+                                    <td><span t-field="l.computed_amount"
+                                              t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
+                                    <td><strong><span t-field="l.bonus_amount"
+                                              t-options='{"widget":"monetary","display_currency":o.currency_id}'/></strong></td>
+                                </tr>
+                            </t>
+                            <tr>
+                                <th colspan="7" style="text-align:left;">الإجمالي / Total</th>
+                                <th><span t-field="o.total_amount"
+                                          t-options='{"widget":"monetary","display_currency":o.currency_id}'/></th>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <t t-set="excluded_lines" t-value="o.line_ids.filtered(lambda l: l.is_excluded)"/>
+                    <t t-if="excluded_lines">
+                        <h4>المستثنون / Excluded</h4>
+                        <table class="table table-sm" style="direction:rtl;">
+                            <thead>
+                                <tr>
+                                    <th>الموظف</th>
+                                    <th>الفئة</th>
+                                    <th>السبب / Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="excluded_lines" t-as="l">
+                                    <td><span t-field="l.employee_id"/></td>
+                                    <td><span t-field="l.category"/></td>
+                                    <td><span t-field="l.exclusion_reason"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <p style="margin-top:30px;">
+                        تم الإعداد بواسطة:
+                        <span t-field="o.created_by"/>
+                        |
+                        تم الاعتماد بواسطة:
+                        <span t-field="o.approved_by"/>
+                        |
+                        تاريخ الاعتماد:
+                        <span t-field="o.approved_on"/>
+                    </p>
+                </div>
+            </t>
+        </template>
+
+        <template id="report_bonus_payout">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="sl_monthly_bonus.report_bonus_payout_document" t-lang="lang or 'ar_001'"/>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════ Report action: Employee bonus receipt ════════════════ -->
+        <record id="action_report_bonus_receipt" model="ir.actions.report">
+            <field name="name">Bonus Receipt</field>
+            <field name="model">sl.bonus.batch.line</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">sl_monthly_bonus.report_bonus_receipt</field>
+            <field name="report_file">sl_monthly_bonus.report_bonus_receipt</field>
+            <field name="binding_model_id" ref="model_sl_bonus_batch_line"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ════════════════ Report action: Monthly accounting payout sheet ════════════════ -->
+        <record id="action_report_bonus_payout" model="ir.actions.report">
+            <field name="name">Bonus Payout Sheet</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">sl_monthly_bonus.report_bonus_payout</field>
+            <field name="report_file">sl_monthly_bonus.report_bonus_payout</field>
+            <field name="binding_model_id" ref="model_sl_bonus_batch"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ════════════════ Report action: Department performance ════════════════ -->
+        <record id="action_report_bonus_department" model="ir.actions.report">
+            <field name="name">Department Performance</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">sl_monthly_bonus.report_bonus_department</field>
+            <field name="report_file">sl_monthly_bonus.report_bonus_department</field>
+            <field name="binding_model_id" ref="model_sl_bonus_batch"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ════════════════ Report action: Employee yearly history ════════════════ -->
+        <record id="action_report_bonus_yearly" model="ir.actions.report">
+            <field name="name">Employee Yearly Bonus History</field>
+            <field name="model">hr.employee</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">sl_monthly_bonus.report_bonus_yearly</field>
+            <field name="report_file">sl_monthly_bonus.report_bonus_yearly</field>
+            <field name="binding_model_id" ref="hr.model_hr_employee"/>
+            <field name="binding_type">report</field>
+        </record>
+    </data>
+</odoo>

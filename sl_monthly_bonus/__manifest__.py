@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
@@ -13,7 +13,9 @@
         - Branch / area managers (basic_salary x branch tier x evaluation)
 
         Includes Edara staging (local/mock only), self-service estimate, audit log,
-        and Arabic-friendly views. No external payment or messaging integration.
+        Arabic RTL UI, dashboard, QWeb + XLSX reports, smart-link with the
+        existing appraisal module, per-employee compute wizard, and an
+        Admin-only emergency state-change tool.
     """,
     'author': 'Samalink',
     'website': 'https://edara.digital',
@@ -40,9 +42,19 @@
         'views/sl_bonus_batch_views.xml',
         'views/sl_bonus_self_service_views.xml',
         'views/sl_bonus_audit_views.xml',
+        'views/sl_bonus_dashboard_views.xml',
         'views/hr_employee_views.xml',
+        'views/hr_job_bonus_views.xml',
+        'views/hr_appraisal_batch_views.xml',
         'wizard/sl_bonus_manual_adjust_views.xml',
         'wizard/sl_bonus_edara_import_views.xml',
+        'wizard/sl_bonus_compute_wizard_views.xml',
+        'wizard/sl_bonus_state_change_wizard_views.xml',
+        'reports/sl_bonus_reports.xml',
+        'reports/report_bonus_receipt.xml',
+        'reports/report_bonus_payout.xml',
+        'reports/report_bonus_department.xml',
+        'reports/report_bonus_yearly.xml',
         'views/sl_bonus_menus.xml',
         # Loaded LAST: needs both group_bonus_* records and menu xmlids to exist.
         'security/sl_bonus_samalink_bridge.xml',

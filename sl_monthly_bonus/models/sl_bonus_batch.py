@@ -35,6 +35,14 @@ class SlBonusBatch(models.Model):
         string='Bonus Lines', copy=False,
     )
     line_count = fields.Integer(compute='_compute_counts', store=True)
+    paid_count = fields.Integer(
+        string='Eligible / Paid Count', compute='_compute_counts', store=True,
+        help='Number of lines that will be paid (non-excluded, non-zero).',
+    )
+    computed_count = fields.Integer(
+        string='Computed Count', compute='_compute_counts', store=True,
+        help='Number of lines whose engine result is non-zero, including overrides.',
+    )
     total_amount = fields.Monetary(
         string='Total', compute='_compute_counts', store=True,
         currency_field='currency_id',
@@ -44,6 +52,20 @@ class SlBonusBatch(models.Model):
         'res.currency',
         default=lambda self: self.env.company.currency_id,
         readonly=True,
+    )
+    treat_missing_eval_as_full = fields.Boolean(
+        string='Treat Missing Evaluation as 100%',
+        default=False, tracking=True, copy=False,
+        help='If enabled, employees without a finalized monthly evaluation receive a '
+             '100% evaluation for this batch instead of 0%. This is an exceptional, '
+             'audited setting — every line affected by it is marked and the reason '
+             'is shown on the line breakdown and the printed receipt.',
+    )
+    appraisal_batch_id = fields.Many2one(
+        'hr.appraisal.batch', string='Linked Appraisal Batch',
+        ondelete='set null', tracking=True,
+        help='Appraisal batch for the same period that fed evaluations into this run. '
+             'Created automatically when the bonus batch is opened from an appraisal batch.',
     )
     created_by = fields.Many2one(
         'res.users', readonly=True, default=lambda self: self.env.user,
@@ -73,6 +95,14 @@ class SlBonusBatch(models.Model):
             rec.line_count = len(rec.line_ids)
             rec.total_amount = sum(l.bonus_amount for l in rec.line_ids if not l.is_excluded)
             rec.excluded_count = sum(1 for l in rec.line_ids if l.is_excluded)
+            rec.paid_count = sum(
+                1 for l in rec.line_ids
+                if not l.is_excluded and (l.bonus_amount or 0.0) > 0
+            )
+            rec.computed_count = sum(
+                1 for l in rec.line_ids
+                if (l.computed_amount or 0.0) > 0 or (l.bonus_amount or 0.0) > 0
+            )
 
     @api.constrains('period_start', 'period_end')
     def _check_period(self):
@@ -183,29 +213,149 @@ class SlBonusBatch(models.Model):
         if not self._is_admin():
             raise AccessError(_("Only Admin can reset a batch to draft."))
         for rec in self:
+            old_state = rec.state
             rec.write({
                 'state': 'draft',
                 'approved_by': False, 'approved_on': False,
                 'locked_by': False, 'locked_on': False,
             })
+            self.env['sl.bonus.audit.log'].sudo().log_change(
+                model=self._name, res_id=rec.id,
+                action='reset_to_draft',
+                old_value=old_state, new_value='draft',
+                reason='Admin reset to draft',
+                batch_id=rec.id,
+            )
+
+    def action_open_manual_state_change(self):
+        """Open the Admin-only manual state change wizard for stuck batches."""
+        self.ensure_one()
+        if not self._is_admin():
+            raise AccessError(_("Only Admin can manually change a batch state."))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sl.bonus.state.change.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_batch_id': self.id},
+        }
+
+    def action_export_payout_xlsx(self):
+        """Header button — download the Bonus Payout XLSX for this batch."""
+        self.ensure_one()
+        if self.state not in ('hr_review', 'approved', 'locked'):
+            raise UserError(_(
+                "Payout sheet is only available once the batch reaches HR Review or later."
+            ))
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/sl_monthly_bonus/batch/{self.id}/payout.xlsx',
+            'target': 'self',
+        }
+
+    def action_print_payout_pdf(self):
+        """Header button — print the QWeb payout PDF."""
+        self.ensure_one()
+        if self.state not in ('hr_review', 'approved', 'locked'):
+            raise UserError(_(
+                "Payout PDF is only available once the batch reaches HR Review or later."
+            ))
+        return self.env.ref('sl_monthly_bonus.action_report_bonus_payout').report_action(self)
+
+    def action_print_department_pdf(self):
+        self.ensure_one()
+        return self.env.ref('sl_monthly_bonus.action_report_bonus_department').report_action(self)
+
+    def _department_performance_rows(self):
+        """Used by the Department Performance QWeb report. Returns a list of dicts:
+        [{'department', 'count', 'eligible', 'excluded', 'avg_eval', 'total'}]
+        sorted by department name.
+        """
+        self.ensure_one()
+        bucket = {}
+        for l in self.line_ids:
+            key = l.department_id.id or 0
+            agg = bucket.setdefault(key, {
+                'department': l.department_id.name or _('No Department'),
+                'count': 0, 'eligible': 0, 'excluded': 0,
+                'sum_eval': 0.0, 'total': 0.0,
+            })
+            agg['count'] += 1
+            agg['sum_eval'] += l.evaluation_percent or 0.0
+            if l.is_excluded:
+                agg['excluded'] += 1
+            else:
+                agg['eligible'] += 1
+                agg['total'] += l.bonus_amount or 0.0
+        rows = []
+        for agg in bucket.values():
+            rows.append({
+                'department': agg['department'],
+                'count': agg['count'],
+                'eligible': agg['eligible'],
+                'excluded': agg['excluded'],
+                'avg_eval': round((agg['sum_eval'] / agg['count']) if agg['count'] else 0.0, 2),
+                'total': round(agg['total'], 2),
+            })
+        return sorted(rows, key=lambda r: r['department'])
+
+    def action_open_compute_wizard(self):
+        """Open the per-employee / per-group compute wizard."""
+        self.ensure_one()
+        self._ensure_hr()
+        if self.state not in ('data_ready', 'computed', 'hr_review'):
+            raise UserError(_(
+                "Per-employee compute is only allowed when the batch is in "
+                "Data Ready / Computed / HR Review (not in '%s')."
+            ) % self.state)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sl.bonus.compute.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_batch_id': self.id},
+        }
+
+    def action_compute_employees(self, employee_ids):
+        """Compute (or recompute) bonus lines for a specific set of employees only.
+
+        Safe to call repeatedly. Manual overrides on those lines are preserved.
+        Other lines on the batch are left untouched.
+        Returns the affected sl.bonus.batch.line recordset.
+        """
+        self.ensure_one()
+        self._ensure_hr()
+        if self.state not in ('data_ready', 'computed', 'hr_review'):
+            raise UserError(_(
+                "Cannot compute employees: batch is in '%s' state. "
+                "Allowed states: Data Ready / Computed / HR Review."
+            ) % self.state)
+        Employee = self.env['hr.employee'].sudo()
+        employees = Employee.browse(employee_ids).exists()
+        if not employees:
+            raise UserError(_("Please select at least one employee to compute."))
+        affected = self._compute_subset(employees)
+        # Stay in Computed (or stay in HR Review — re-entry is intentional).
+        target_state = 'computed' if self.state in ('data_ready', 'computed') else self.state
+        self.write({
+            'state': target_state,
+            'last_computed_on': fields.Datetime.now(),
+            'last_computed_by': self.env.user.id,
+        })
+        self.message_post(body=_(
+            "Recomputed %(n)s employee(s) by %(user)s."
+        ) % {'n': len(employees), 'user': self.env.user.name})
+        return affected
 
     # ── Compute engine ────────────────────────────────────────────────
     def _compute_lines(self):
-        """Refresh batch lines for all active employees in the company.
+        """Refresh batch lines for ALL active employees in the company.
 
-        Safe to run repeatedly. Manual overrides (line.manual_override_amount with
-        manual_override_reason) are preserved across recomputes; only the input
-        snapshot and the calculation breakdown components are refreshed for those
-        lines. Lines whose employee is no longer active are removed.
-
-        Runs internal writes/unlinks via sudo() so that HR users (who can trigger
-        compute via action_compute) don't hit access errors on the internal
-        bookkeeping. Outer permission gating already happened in action_compute.
+        Safe to run repeatedly. Manual overrides are preserved. Lines whose
+        employee is no longer active are removed. The compute pass propagates
+        treat_missing_eval_as_full via context so the calculator can honor it.
         """
         self.ensure_one()
-        Calc = self.env['sl.bonus.calculator'].sudo()
-        Line = self.env['sl.bonus.batch.line'].sudo()
-        Component = self.env['sl.bonus.batch.line.component'].sudo()
         employees = self.env['hr.employee'].sudo().search([
             ('company_id', 'in', [self.company_id.id, False]),
             ('active', '=', True),
@@ -215,8 +365,24 @@ class SlBonusBatch(models.Model):
                 "No active employees found for company '%s'. "
                 "Make sure at least one employee exists before computing bonuses."
             ) % self.company_id.name)
+        self._refresh_lines_for(employees, prune_others=True)
+
+    def _compute_subset(self, employees):
+        """Refresh lines for a subset of employees. Untouched lines stay as-is."""
+        self.ensure_one()
+        return self._refresh_lines_for(employees, prune_others=False)
+
+    def _refresh_lines_for(self, employees, prune_others):
+        """Shared refresh logic used by both full and subset compute paths."""
+        self.ensure_one()
+        Calc = self.env['sl.bonus.calculator'].sudo().with_context(
+            sl_bonus_treat_missing_eval_as_full=self.treat_missing_eval_as_full,
+        )
+        Line = self.env['sl.bonus.batch.line'].sudo()
+        Component = self.env['sl.bonus.batch.line.component'].sudo()
         existing_lines = {l.employee_id.id: l for l in self.sudo().line_ids}
         seen_emp_ids = set()
+        affected = self.env['sl.bonus.batch.line'].sudo()
         for emp in employees:
             seen_emp_ids.add(emp.id)
             result = Calc.calculate_for_employee(emp, self.period_start, self.period_end)
@@ -225,14 +391,11 @@ class SlBonusBatch(models.Model):
             line_vals['employee_id'] = emp.id
             if emp.id in existing_lines:
                 line = existing_lines[emp.id].sudo()
-                # Preserve manual override on the bonus_amount column.
                 has_override = bool(line.manual_override_reason) and line.manual_override_amount is not False
                 if has_override:
-                    overridden_amount = line.manual_override_amount
-                    line.write({**line_vals, 'bonus_amount': overridden_amount})
+                    line.write({**line_vals, 'bonus_amount': line.manual_override_amount})
                 else:
                     line.write(line_vals)
-                # Replace components atomically via sudo (HR otherwise may lack unlink).
                 if line.component_ids:
                     line.component_ids.sudo().unlink()
             else:
@@ -241,10 +404,12 @@ class SlBonusBatch(models.Model):
                 Component.create([
                     dict(c, line_id=line.id) for c in result['components']
                 ])
-        # Remove lines for employees no longer present (e.g. archived since last run).
-        to_remove = self.sudo().line_ids.filtered(lambda l: l.employee_id.id not in seen_emp_ids)
-        if to_remove:
-            to_remove.sudo().unlink()
+            affected |= line
+        if prune_others:
+            to_remove = self.sudo().line_ids.filtered(lambda l: l.employee_id.id not in seen_emp_ids)
+            if to_remove:
+                to_remove.sudo().unlink()
+        return affected
 
     def unlink(self):
         """Deletion policy:

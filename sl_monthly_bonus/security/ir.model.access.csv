@@ -57,3 +57,10 @@ access_manual_adjust_wizard_hr,bonus.manual.adjust.wiz.hr,model_sl_bonus_manual_
 access_manual_adjust_wizard_admin,bonus.manual.adjust.wiz.admin,model_sl_bonus_manual_adjust_wizard,group_bonus_admin,1,1,1,1
 access_edara_import_wizard_hr,bonus.edara.import.wiz.hr,model_sl_bonus_edara_import_wizard,group_bonus_hr_manager,1,1,1,1
 access_edara_import_wizard_admin,bonus.edara.import.wiz.admin,model_sl_bonus_edara_import_wizard,group_bonus_admin,1,1,1,1
+access_compute_wizard_hr,bonus.compute.wiz.hr,model_sl_bonus_compute_wizard,group_bonus_hr_manager,1,1,1,1
+access_compute_wizard_admin,bonus.compute.wiz.admin,model_sl_bonus_compute_wizard,group_bonus_admin,1,1,1,1
+access_state_change_wizard_admin,bonus.state.change.wiz.admin,model_sl_bonus_state_change_wizard,group_bonus_admin,1,1,1,1
+access_dashboard_line_manager,bonus.dashboard.mgr,model_sl_bonus_dashboard_line,group_bonus_manager,1,0,0,0
+access_dashboard_line_hr,bonus.dashboard.hr,model_sl_bonus_dashboard_line,group_bonus_hr_manager,1,0,0,0
+access_dashboard_line_admin,bonus.dashboard.admin,model_sl_bonus_dashboard_line,group_bonus_admin,1,0,0,0
+

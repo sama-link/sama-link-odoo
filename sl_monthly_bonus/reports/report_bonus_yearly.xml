@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_bonus_yearly_document">
+            <t t-call="web.external_layout">
+                <div class="page" style="direction:rtl; text-align:right;">
+                    <h2>سجل المكافآت السنوي / Yearly Bonus History</h2>
+                    <p>
+                        <strong>الموظف:</strong> <span t-field="o.name"/>
+                        |
+                        <strong>القسم:</strong> <span t-field="o.department_id"/>
+                        |
+                        <strong>المسمى:</strong> <span t-field="o.job_id"/>
+                    </p>
+                    <t t-set="lines" t-value="env['sl.bonus.batch.line'].sudo().search([('employee_id','=',o.id), ('batch_id.state','in',['approved','locked'])], order='period_start desc')"/>
+                    <t t-if="not lines">
+                        <p class="text-muted">لا توجد دفعات معتمدة لهذا الموظف بعد.</p>
+                    </t>
+                    <t t-else="">
+                        <table class="table table-sm table-bordered" style="direction:rtl;">
+                            <thead>
+                                <tr>
+                                    <th>الشهر</th>
+                                    <th>الدفعة</th>
+                                    <th>الفئة</th>
+                                    <th>التقييم %</th>
+                                    <th>المحسوب</th>
+                                    <th>المكافأة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="total" t-value="0.0"/>
+                                <t t-foreach="lines" t-as="l">
+                                    <t t-set="total" t-value="total + (l.bonus_amount or 0.0)"/>
+                                    <tr>
+                                        <td><span t-esc="l.period_start.strftime('%Y-%m')"/></td>
+                                        <td><span t-field="l.batch_id.name"/></td>
+                                        <td><span t-field="l.category"/></td>
+                                        <td><span t-esc="'%.2f' % (l.evaluation_percent or 0.0)"/>%</td>
+                                        <td>
+                                            <span t-field="l.computed_amount"
+                                                  t-options='{"widget":"monetary","display_currency":l.currency_id}'/>
+                                        </td>
+                                        <td>
+                                            <strong>
+                                                <span t-field="l.bonus_amount"
+                                                      t-options='{"widget":"monetary","display_currency":l.currency_id}'/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <tr>
+                                    <th colspan="5" style="text-align:left;">الإجمالي / Total</th>
+                                    <th><span t-esc="'%.2f' % total"/></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                </div>
+            </t>
+        </template>
+
+        <template id="report_bonus_yearly">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="sl_monthly_bonus.report_bonus_yearly_document" t-lang="lang or 'ar_001'"/>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

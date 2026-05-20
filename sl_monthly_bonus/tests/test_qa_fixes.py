@@ -126,6 +126,9 @@ class TestQAFixes(TransactionCase):
         from calendar import monthrange
         start = date(prev_year, prev_month, 1)
         end = date(prev_year, prev_month, monthrange(prev_year, prev_month)[1])
+        # Self-clean any stale row for this period to make the test deterministic
+        # regardless of what's already in the DB.
+        Batch.search([('period_start', '=', start), ('period_end', '=', end)]).unlink()
         pre = Batch.create({
             'name': 'Pre-existing Previous Month',
             'period_start': start, 'period_end': end,

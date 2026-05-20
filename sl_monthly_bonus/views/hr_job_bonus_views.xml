@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_hr_job_bonus_category_tree" model="ir.ui.view">
+            <field name="name">hr.job.bonus.category.tree</field>
+            <field name="model">hr.job</field>
+            <field name="arch" type="xml">
+                <list string="Job Bonus Categories" editable="bottom"
+                      decoration-warning="bonus_category == 'none'"
+                      decoration-success="bonus_category in ('service','sales','stock','installation','branch_manager')">
+                    <field name="name" readonly="1"/>
+                    <field name="department_id" readonly="1" optional="show"/>
+                    <field name="bonus_category"/>
+                    <field name="no_of_employee" string="Employees" readonly="1" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_hr_job_bonus_category_search" model="ir.ui.view">
+            <field name="name">hr.job.bonus.category.search</field>
+            <field name="model">hr.job</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="department_id"/>
+                    <field name="bonus_category"/>
+                    <filter string="Unmapped (no monthly bonus)" name="f_none"
+                            domain="[('bonus_category','=','none')]"/>
+                    <filter string="Service" name="f_service" domain="[('bonus_category','=','service')]"/>
+                    <filter string="Sales" name="f_sales" domain="[('bonus_category','=','sales')]"/>
+                    <filter string="Stock" name="f_stock" domain="[('bonus_category','=','stock')]"/>
+                    <filter string="Installation" name="f_install" domain="[('bonus_category','=','installation')]"/>
+                    <filter string="Branch Manager" name="f_bm" domain="[('bonus_category','=','branch_manager')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Bonus Category" name="g_cat" context="{'group_by': 'bonus_category'}"/>
+                        <filter string="Department" name="g_dept" context="{'group_by': 'department_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_hr_job_bonus_category" model="ir.actions.act_window">
+            <field name="name">Job Bonus Categories</field>
+            <field name="res_model">hr.job</field>
+            <field name="view_mode">list</field>
+            <field name="view_id" ref="view_hr_job_bonus_category_tree"/>
+            <field name="search_view_id" ref="view_hr_job_bonus_category_search"/>
+            <field name="context">{'search_default_f_none': 1, 'search_default_g_cat': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">No job positions yet.</p>
+                <p>Map every job to a bonus category. Jobs left at
+                <code>No Monthly Bonus</code> will pay 0 with a clear exclusion reason.</p>
+            </field>
+        </record>
+    </data>
+</odoo>
