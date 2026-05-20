@@ -64,12 +64,12 @@
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'draft'"/>
                     <button name="action_refresh_skills_from_job"
-                            string="Refresh Skills from Job"
+                            string="Refresh Skills"
                             type="object"
                             class="btn-secondary"
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'draft'"
-                            confirm="This will refresh skills on all draft appraisals in this batch from each employee's job position. Existing skill lines on each appraisal are kept. Continue?"/>
+                            confirm="This will refresh skills on all draft appraisals from each employee card. Continue?"/>
                     <button name="action_publish_all"
                             string="Publish All"
                             type="object"

@@ -305,6 +305,13 @@ class HrEmployee(models.Model):
             vals.update({
                 'resume_line_ids': [resume_line_ids],
             })
+        job_skill_ids = set(job.skill_ids.ids)
+        skills_to_remove = self.employee_skill_ids.filtered(
+            lambda es: es.skill_id.id not in job_skill_ids
+        )
+        if skills_to_remove:
+            skills_to_remove.unlink()
+
         existing_employee_skills = self.employee_skill_ids.mapped('skill_id')
         job_skills_to_add = job.skill_ids.filtered(lambda skill: skill not in existing_employee_skills)
         for skill in job_skills_to_add:

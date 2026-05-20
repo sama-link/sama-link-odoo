@@ -580,55 +580,45 @@ class HrAppraisal(models.Model):
             'skills_populated': True,
         })
 
-    def _get_skill_level_for_job_sync(self, skill):
-        """Return the employee's level for a skill, or the type default level."""
+    def _sync_skill_lines_from_employee(self):
+        """Mirror appraisal skill lines from the employee card (draft appraisals only)."""
         self.ensure_one()
         employee = self.employee_id
-        emp_skill = employee.employee_skill_ids.filtered(
-            lambda s: s.skill_id.id == skill.id
-        )
-        if emp_skill:
-            return emp_skill.skill_level_id
-        return skill.skill_type_id.skill_level_ids.filtered(
-            lambda level: level.default_level
-        )[:1]
+        if not employee:
+            raise UserError(_("Please select an employee first."))
 
-    def _sync_skill_lines_from_job_position(self):
-        """Add job skills missing on the appraisal; update levels; keep existing lines."""
-        self.ensure_one()
-        employee = self.employee_id
-        if not employee.job_id:
-            raise UserError(
-                _("Employee %s has no job position assigned.") % employee.name
-            )
-        employee.action_add_data_from_job_position()
-
-        job_skills = employee.job_id.skill_ids
+        emp_skills = employee.employee_skill_ids
         existing_lines = self.appraisal_skill_line_ids
-        existing_skill_ids = set(existing_lines.mapped('skill_id').ids)
+        emp_skill_ids = set(emp_skills.mapped('skill_id').ids)
         create_commands = []
 
-        for skill in job_skills:
-            level = self._get_skill_level_for_job_sync(skill)
-            if skill.id in existing_skill_ids:
-                if not level:
-                    continue
-                line = existing_lines.filtered(lambda l: l.skill_id.id == skill.id)
-                line.write({'current_skill_level_id': level.id})
-            elif level:
+        for emp_skill in emp_skills:
+            skill = emp_skill.skill_id
+            line = existing_lines.filtered(lambda l: l.skill_id.id == skill.id)
+            if line:
+                line.sudo().write({
+                    'skill_type_id': emp_skill.skill_type_id.id,
+                    'current_skill_level_id': emp_skill.skill_level_id.id,
+                })
+            else:
                 create_commands.append(Command.create({
-                    'skill_type_id': skill.skill_type_id.id,
+                    'skill_type_id': emp_skill.skill_type_id.id,
                     'skill_id': skill.id,
-                    'current_skill_level_id': level.id,
+                    'current_skill_level_id': emp_skill.skill_level_id.id,
                 }))
 
+        lines_to_remove = existing_lines.filtered(
+            lambda l: l.skill_id.id not in emp_skill_ids
+        )
+        if lines_to_remove:
+            lines_to_remove.sudo().unlink()
         if create_commands:
-            self.write({'appraisal_skill_line_ids': create_commands})
-        if job_skills or existing_lines:
-            self.skills_populated = True
+            self.sudo().write({'appraisal_skill_line_ids': create_commands})
+
+        self.skills_populated = bool(emp_skills)
 
     def action_refresh_skills_from_job(self):
-        """Refresh appraisal skills from the employee job position (draft only)."""
+        """Refresh draft appraisal skill lines from the employee card."""
         drafts = self.filtered(lambda a: a.state == 'draft')
         if not drafts:
             raise UserError(_("Skills can only be refreshed on draft appraisals."))
@@ -638,19 +628,8 @@ class HrAppraisal(models.Model):
                   "Open draft appraisals only.")
             )
         for appraisal in drafts:
-            if not appraisal.employee_id:
-                raise UserError(_("Please select an employee first."))
-            appraisal._sync_skill_lines_from_job_position()
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Refresh Skills'),
-                'type': 'success',
-                'message': _('Skills refreshed from job position for %s appraisal(s).')
-                % len(drafts),
-            },
-        }
+            appraisal._sync_skill_lines_from_employee()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_publish(self):
         """Move appraisal from Draft → Published."""
