@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sl_bonus_manual_adjust_form" model="ir.ui.view">
+            <field name="name">sl.bonus.manual.adjust.wizard.form</field>
+            <field name="model">sl.bonus.manual.adjust.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Manual Bonus Adjustment">
+                    <group>
+                        <field name="employee_id" readonly="1"/>
+                        <field name="current_amount" readonly="1"/>
+                        <field name="new_amount"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group string="Reason (mandatory)">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <footer>
+                        <button name="action_apply" type="object" string="Apply" class="oe_highlight"/>
+                        <button special="cancel" string="Cancel" class="btn btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

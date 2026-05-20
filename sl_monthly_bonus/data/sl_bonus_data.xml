@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Default 3 profitability tier records -->
+        <record id="tier_low" model="sl.bonus.branch.profit.tier">
+            <field name="name">Low (factor &lt; 1)</field>
+            <field name="code">low</field>
+            <field name="sequence">10</field>
+            <field name="factor_min">0</field>
+            <field name="factor_max">1</field>
+            <field name="factor_min_inclusive" eval="True"/>
+            <field name="factor_max_inclusive" eval="False"/>
+            <field name="description">Branch underperformance: factor below 1.</field>
+        </record>
+        <record id="tier_base" model="sl.bonus.branch.profit.tier">
+            <field name="name">Base (1 – 1.5)</field>
+            <field name="code">base</field>
+            <field name="sequence">20</field>
+            <field name="factor_min">1</field>
+            <field name="factor_max">1.5</field>
+            <field name="factor_min_inclusive" eval="True"/>
+            <field name="factor_max_inclusive" eval="True"/>
+            <field name="description">Branch within base profitability range.</field>
+        </record>
+        <record id="tier_high" model="sl.bonus.branch.profit.tier">
+            <field name="name">High (&gt; 1.5)</field>
+            <field name="code">high</field>
+            <field name="sequence">30</field>
+            <field name="factor_min">1.5</field>
+            <field name="factor_max">0</field>
+            <field name="factor_min_inclusive" eval="False"/>
+            <field name="factor_max_inclusive" eval="False"/>
+            <field name="description">Branch outperformance: factor above 1.5.</field>
+        </record>
+
+        <!-- System parameters: Edara local-only by default -->
+        <record id="ir_param_edara_enabled" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_enabled</field>
+            <field name="value">0</field>
+        </record>
+        <record id="ir_param_edara_endpoint" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_endpoint</field>
+            <field name="value"></field>
+        </record>
+    </data>
+</odoo>

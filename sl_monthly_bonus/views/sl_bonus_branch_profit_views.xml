@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sl_bonus_branch_profit_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.branch.profit.tree</field>
+            <field name="model">sl.bonus.branch.profit</field>
+            <field name="arch" type="xml">
+                <list string="Branch Profitability" decoration-success="state=='approved'" decoration-muted="state=='draft'">
+                    <field name="work_location_id"/>
+                    <field name="department_id" optional="hide"/>
+                    <field name="period_start"/>
+                    <field name="factor"/>
+                    <field name="tier_id"/>
+                    <field name="state"/>
+                    <field name="approved_by"/>
+                </list>
+            </field>
+        </record>
+        <record id="view_sl_bonus_branch_profit_form" model="ir.ui.view">
+            <field name="name">sl.bonus.branch.profit.form</field>
+            <field name="model">sl.bonus.branch.profit</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_approve" type="object" string="Approve"
+                                class="oe_highlight" invisible="state != 'draft'"
+                                groups="sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                        <button name="action_reset_draft" type="object" string="Reset to Draft"
+                                invisible="state == 'draft'"
+                                groups="sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="work_location_id"/>
+                                <field name="department_id"/>
+                                <field name="period_start"/>
+                            </group>
+                            <group>
+                                <field name="factor"/>
+                                <field name="tier_id"/>
+                                <field name="approved_by" readonly="1"/>
+                                <field name="approved_on" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Note">
+                            <field name="note" nolabel="1"/>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        <record id="action_sl_bonus_branch_profit" model="ir.actions.act_window">
+            <field name="name">Branch Profitability</field>
+            <field name="res_model">sl.bonus.branch.profit</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════════ Batch ════════════════════ -->
+        <record id="view_sl_bonus_batch_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.tree</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="arch" type="xml">
+                <list decoration-info="state=='draft'"
+                      decoration-warning="state in ('data_ready','computed','hr_review')"
+                      decoration-success="state=='approved'"
+                      decoration-muted="state=='locked'">
+                    <field name="name"/>
+                    <field name="period_label"/>
+                    <field name="state"/>
+                    <field name="line_count"/>
+                    <field name="excluded_count"/>
+                    <field name="total_amount"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_sl_bonus_batch_form" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.form</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_mark_data_ready" type="object" string="Mark Data Ready"
+                                invisible="state != 'draft'" class="oe_highlight"/>
+                        <button name="action_compute" type="object" string="Compute Bonuses"
+                                invisible="state not in ('data_ready','computed','hr_review')"
+                                class="oe_highlight"/>
+                        <button name="action_send_to_review" type="object" string="Send to HR Review"
+                                invisible="state != 'computed'"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="state != 'hr_review'" class="oe_highlight"/>
+                        <button name="action_lock" type="object" string="Lock"
+                                invisible="state != 'approved'"
+                                groups="sl_monthly_bonus.group_bonus_admin"/>
+                        <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                                groups="sl_monthly_bonus.group_bonus_admin"
+                                confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,data_ready,computed,hr_review,approved,locked"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="state != 'draft'"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="company_id" readonly="state != 'draft'"/>
+                                <field name="period_start" readonly="state != 'draft'"/>
+                                <field name="period_end" readonly="state != 'draft'"/>
+                                <field name="period_label" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="line_count"/>
+                                <field name="excluded_count"/>
+                                <field name="total_amount"/>
+                                <field name="currency_id"/>
+                                <field name="created_by" readonly="1"/>
+                                <field name="last_computed_on" readonly="1"/>
+                                <field name="last_computed_by" readonly="1"/>
+                                <field name="approved_by" readonly="1"/>
+                                <field name="approved_on" readonly="1"/>
+                                <field name="locked_by" readonly="1"/>
+                                <field name="locked_on" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Bonus Lines">
+                                <field name="line_ids" readonly="state in ('approved','locked')">
+                                    <list decoration-muted="is_excluded == True">
+                                        <field name="employee_id"/>
+                                        <field name="department_id" optional="show"/>
+                                        <field name="job_id"/>
+                                        <field name="category"/>
+                                        <field name="basic_salary" optional="hide"/>
+                                        <field name="evaluation_percent"/>
+                                        <field name="computed_amount"/>
+                                        <field name="bonus_amount"/>
+                                        <field name="manual_override_reason" optional="hide"/>
+                                        <field name="is_excluded"/>
+                                        <field name="exclusion_reason" optional="hide"/>
+                                        <field name="currency_id" column_invisible="True"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Note">
+                                <field name="note" nolabel="1"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sl_bonus_batch_search" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.search</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="period_start"/>
+                    <filter string="Draft" name="f_draft" domain="[('state','=','draft')]"/>
+                    <filter string="Computed" name="f_computed" domain="[('state','=','computed')]"/>
+                    <filter string="HR Review" name="f_hr_review" domain="[('state','=','hr_review')]"/>
+                    <filter string="Approved" name="f_approved" domain="[('state','=','approved')]"/>
+                    <filter string="Locked" name="f_locked" domain="[('state','=','locked')]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_batch" model="ir.actions.act_window">
+            <field name="name">Monthly Bonus Batches</field>
+            <field name="res_model">sl.bonus.batch</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <record id="action_sl_bonus_batch_open_prev_month_server" model="ir.actions.server">
+            <field name="name">Open Bonus Batch for Previous Month</field>
+            <field name="model_id" ref="model_sl_bonus_batch"/>
+            <field name="state">code</field>
+            <field name="code">action = model.action_open_for_previous_month()</field>
+        </record>
+
+        <!-- ════════════════════ Batch Line ════════════════════ -->
+        <record id="view_sl_bonus_batch_line_form" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.line.form</field>
+            <field name="model">sl.bonus.batch.line</field>
+            <field name="arch" type="xml">
+                <form create="0" delete="0">
+                    <header>
+                        <button name="action_open_manual_adjust" type="object" string="Manual Adjust"
+                                class="oe_highlight"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
+                                invisible="batch_state in ('locked',)"/>
+                        <button name="action_clear_override" type="object" string="Clear Override"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
+                                invisible="not manual_override_reason"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="employee_id" readonly="1"/>
+                                <field name="department_id" readonly="1"/>
+                                <field name="job_id" readonly="1"/>
+                                <field name="work_location_id" readonly="1"/>
+                                <field name="category" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="period_start" readonly="1"/>
+                                <field name="period_end" readonly="1"/>
+                                <field name="basic_salary" readonly="1"/>
+                                <field name="evaluation_percent" readonly="1"/>
+                                <field name="evaluation_source" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Category Inputs">
+                            <group>
+                                <field name="service_pct" invisible="category != 'service'" readonly="1"/>
+                                <field name="target_amount" invisible="category != 'sales'" readonly="1"/>
+                                <field name="achieved_amount" invisible="category != 'sales'" readonly="1"/>
+                                <field name="achievement_percent" invisible="category != 'sales'" readonly="1"/>
+                                <field name="tier_name" invisible="category != 'sales'" readonly="1"/>
+                                <field name="tier_commission" invisible="category != 'sales'" readonly="1"/>
+                                <field name="stock_sales_value" invisible="category != 'stock'" readonly="1"/>
+                                <field name="stock_commission_pct" invisible="category != 'stock'" readonly="1"/>
+                                <field name="installation_fixed_amount" invisible="category != 'installation'" readonly="1"/>
+                                <field name="branch_profit_factor" invisible="category != 'branch_manager'" readonly="1"/>
+                                <field name="branch_manager_pct" invisible="category != 'branch_manager'" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="computed_amount" readonly="1"/>
+                                <field name="bonus_amount" readonly="1"/>
+                                <field name="is_excluded" readonly="1"/>
+                                <field name="exclusion_reason" readonly="1"
+                                       invisible="not is_excluded"/>
+                            </group>
+                        </group>
+                        <group string="Manual Override" invisible="not manual_override_reason">
+                            <field name="manual_override_amount" readonly="1"/>
+                            <field name="manual_override_by" readonly="1"/>
+                            <field name="manual_override_on" readonly="1"/>
+                            <field name="manual_override_reason" readonly="1"/>
+                        </group>
+                        <notebook>
+                            <page string="Calculation Breakdown">
+                                <field name="component_ids" readonly="1">
+                                    <list>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="label"/>
+                                        <field name="value"/>
+                                        <field name="note"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sl_bonus_batch_line_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.line.tree</field>
+            <field name="model">sl.bonus.batch.line</field>
+            <field name="arch" type="xml">
+                <list create="0" delete="0" decoration-muted="is_excluded == True">
+                    <field name="batch_id"/>
+                    <field name="period_start"/>
+                    <field name="employee_id"/>
+                    <field name="department_id" optional="show"/>
+                    <field name="category"/>
+                    <field name="evaluation_percent"/>
+                    <field name="computed_amount"/>
+                    <field name="bonus_amount"/>
+                    <field name="is_excluded"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_batch_line" model="ir.actions.act_window">
+            <field name="name">All Bonus Lines</field>
+            <field name="res_model">sl.bonus.batch.line</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

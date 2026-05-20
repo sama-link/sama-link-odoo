@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_sl_monthly_bonus" model="ir.module.category">
+            <field name="name">Samalink Monthly Bonus</field>
+            <field name="description">Access levels for the Monthly Bonus module.</field>
+            <field name="sequence">25</field>
+        </record>
+
+        <record id="group_bonus_employee" model="res.groups">
+            <field name="name">Bonus / Employee</field>
+            <field name="category_id" ref="module_category_sl_monthly_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Sees only their own self-service estimate and bonus history.</field>
+        </record>
+
+        <record id="group_bonus_manager" model="res.groups">
+            <field name="name">Bonus / Team Manager</field>
+            <field name="category_id" ref="module_category_sl_monthly_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('group_bonus_employee'))]"/>
+            <field name="comment">Manager can read bonus lines for their direct reports.</field>
+        </record>
+
+        <record id="group_bonus_finance" model="res.groups">
+            <field name="name">Bonus / Finance</field>
+            <field name="category_id" ref="module_category_sl_monthly_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('group_bonus_employee'))]"/>
+            <field name="comment">Finance enters and approves branch profitability factors.</field>
+        </record>
+
+        <record id="group_bonus_hr_manager" model="res.groups">
+            <field name="name">Bonus / HR Manager</field>
+            <field name="category_id" ref="module_category_sl_monthly_bonus"/>
+            <field name="implied_ids" eval="[
+                (4, ref('group_bonus_employee')),
+                (4, ref('group_bonus_manager')),
+                (4, ref('group_bonus_finance')),
+            ]"/>
+            <field name="comment">Configures bonus parameters, manages batches, computes, adjusts, approves.</field>
+        </record>
+
+        <record id="group_bonus_admin" model="res.groups">
+            <field name="name">Bonus / Administrator</field>
+            <field name="category_id" ref="module_category_sl_monthly_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('group_bonus_hr_manager'))]"/>
+            <field name="comment">Full access including locking approved batches and resetting state.</field>
+        </record>
+    </data>
+</odoo>

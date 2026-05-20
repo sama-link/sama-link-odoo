@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="cron_edara_nightly_sync" model="ir.cron">
+            <field name="name">SL Monthly Bonus: Edara Nightly Sync</field>
+            <field name="model_id" ref="model_sl_bonus_edara_sync"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_nightly()</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="False"/>
+        </record>
+    </data>
+</odoo>

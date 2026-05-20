@@ -1,0 +1,478 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* sl_monthly_bonus
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-20 00:00+0000\n"
+"PO-Revision-Date: 2026-05-20 00:00+0000\n"
+"Last-Translator: Samalink\n"
+"Language-Team: Arabic\n"
+"Language: ar_001\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. module: sl_monthly_bonus
+#: model:ir.module.module,shortdesc:sl_monthly_bonus.module_meta_information
+msgid "Samalink Monthly Bonus"
+msgstr "المكافآت الشهرية - سما لينك"
+
+# ════════════════════════════════════════════════════════════
+# Menus
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_root
+msgid "Monthly Bonus"
+msgstr "المكافآت الشهرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_batches
+msgid "Bonus Batches"
+msgstr "دفعات المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_batch_lines
+msgid "All Bonus Lines"
+msgstr "كل أسطر المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_open_prev_month
+msgid "Open Previous-Month Batch"
+msgstr "افتح دفعة الشهر السابق"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self
+msgid "My Bonus"
+msgstr "مكافآتي"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self_current
+msgid "My Current-Month Estimate"
+msgstr "تقدير مكافأة الشهر الحالي"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self_history
+msgid "My Estimates History"
+msgstr "سجل تقديراتي السابقة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self_lines
+msgid "My Monthly Bonuses"
+msgstr "مكافآتي الشهرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara
+msgid "Edara Data"
+msgstr "بيانات إدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_sync
+msgid "Sync Log"
+msgstr "سجل المزامنة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_sync_now
+msgid "Sync Now"
+msgstr "تحديث الآن"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_import
+msgid "Import Staging Data (CSV)"
+msgstr "استيراد بيانات تمهيدية (CSV)"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_mapping
+msgid "Mapping"
+msgstr "الربط بين الأنظمة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_staging_sales
+msgid "Staging — Sales"
+msgstr "بيانات تمهيدية — المبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_staging_stock
+msgid "Staging — Stock Purchases"
+msgstr "بيانات تمهيدية — مشتريات الاستوك"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_staging_install
+msgid "Staging — Installations"
+msgstr "بيانات تمهيدية — التركيبات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_branch_profit_root
+msgid "Branch Profitability"
+msgstr "ربحية الفروع"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config
+msgid "Configuration"
+msgstr "الإعدادات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_service
+msgid "Service Rates"
+msgstr "نسب الوظائف الخدمية"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_target
+msgid "Sales Targets"
+msgstr "مستهدفات المبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_install
+msgid "Installation Fixed Bonus"
+msgstr "مكافآت التركيبات الثابتة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_stock
+msgid "Stock Commission"
+msgstr "عمولة مشتريات الاستوك"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_branch_tiers
+msgid "Profitability Tiers"
+msgstr "شرائح الربحية"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_branch_mgr_rates
+msgid "Branch Manager Rates"
+msgstr "نسب مديري الفروع"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_audit
+msgid "Audit Log"
+msgstr "سجل المراجعة"
+
+# ════════════════════════════════════════════════════════════
+# Actions (ir.actions.act_window names)
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_batch
+msgid "Monthly Bonus Batches"
+msgstr "دفعات المكافآت الشهرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_batch_line
+msgid "All Bonus Lines"
+msgstr "كل أسطر المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_self_estimate
+msgid "My Bonus Estimate"
+msgstr "تقدير مكافأتي"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_my_lines
+msgid "My Monthly Bonuses"
+msgstr "مكافآتي الشهرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_branch_profit
+msgid "Branch Profitability"
+msgstr "ربحية الفروع"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_service_rate
+msgid "Service Rates"
+msgstr "نسب الوظائف الخدمية"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_installation_rate
+msgid "Installation Fixed Bonus"
+msgstr "مكافآت التركيبات الثابتة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_stock_commission_rate
+msgid "Stock Commission"
+msgstr "عمولة مشتريات الاستوك"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_branch_profit_tier
+msgid "Profitability Tiers"
+msgstr "شرائح الربحية"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_branch_manager_rate
+msgid "Branch Manager Rates"
+msgstr "نسب مديري الفروع"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_target
+msgid "Sales Targets"
+msgstr "مستهدفات المبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_edara_mapping
+msgid "Edara Mapping"
+msgstr "ربط معرّفات إدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_edara_sync
+msgid "Edara Sync Log"
+msgstr "سجل مزامنة إدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_edara_staging_sales
+msgid "Staging — Sales"
+msgstr "بيانات تمهيدية — المبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_edara_staging_stock
+msgid "Staging — Stock Purchases"
+msgstr "بيانات تمهيدية — مشتريات الاستوك"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_edara_staging_install
+msgid "Staging — Installations"
+msgstr "بيانات تمهيدية — التركيبات"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_audit_log
+msgid "Audit Log"
+msgstr "سجل المراجعة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_edara_import_wizard
+msgid "Import Edara Data"
+msgstr "استيراد بيانات إدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.server,name:sl_monthly_bonus.action_sl_bonus_batch_open_prev_month_server
+msgid "Open Bonus Batch for Previous Month"
+msgstr "افتح دفعة مكافآت الشهر السابق"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.server,name:sl_monthly_bonus.action_sl_bonus_edara_sync_now_server
+msgid "Sync Edara Now"
+msgstr "تشغيل مزامنة إدارة الآن"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.server,name:sl_monthly_bonus.action_sl_bonus_self_estimate_open_current
+msgid "Open My Current-Month Estimate"
+msgstr "افتح تقدير مكافأة الشهر الحالي"
+
+# ════════════════════════════════════════════════════════════
+# Selection labels — Bonus Category / Edara Role / Workflow states
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__service
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__service
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__service
+msgid "Service"
+msgstr "خدمية"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__sales
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__sales
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__sales
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_edara_mapping__role__sales
+msgid "Sales"
+msgstr "مبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__stock
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__stock
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__stock
+msgid "Stock Purchasing"
+msgstr "مشتريات الاستوك"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__installation
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__installation
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__installation
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_edara_mapping__role__installation
+msgid "Installation"
+msgstr "تركيبات"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__branch_manager
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__branch_manager
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__branch_manager
+msgid "Branch / Area Manager"
+msgstr "مدير فرع/منطقة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__none
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__none
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__none
+msgid "No Monthly Bonus"
+msgstr "لا يستحق مكافأة شهرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_edara_mapping__role__stock_purchasing
+msgid "Stock Purchasing"
+msgstr "مشتريات الاستوك"
+
+# Batch state
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__draft
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_branch_profit__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__data_ready
+msgid "Data Ready"
+msgstr "البيانات جاهزة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__computed
+msgid "Computed"
+msgstr "تم الاحتساب"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__hr_review
+msgid "HR Review"
+msgstr "مراجعة الموارد البشرية"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__approved
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_branch_profit__state__approved
+msgid "Approved"
+msgstr "معتمد"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch__state__locked
+msgid "Locked"
+msgstr "مغلق"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_edara_mapping__role__sales
+msgid "Role"
+msgstr "الدور"
+
+# ════════════════════════════════════════════════════════════
+# Common field labels
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_hr_job__bonus_category
+msgid "Bonus Category"
+msgstr "فئة المكافأة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_hr_employee__bonus_quarterly_exclusion
+msgid "Quarterly Bonus (excluded from monthly)"
+msgstr "ربع سنوي (مستبعد من المكافأة الشهرية)"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_service_rate__job_id
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_installation_rate__job_id
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_stock_commission_rate__job_id
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_branch_manager_rate__job_id
+msgid "Job Position"
+msgstr "المسمى الوظيفي"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_service_rate__percentage
+msgid "Percentage %"
+msgstr "النسبة %"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_installation_rate__fixed_amount
+msgid "Fixed Monthly Bonus"
+msgstr "المكافأة الشهرية الثابتة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_stock_commission_rate__percentage
+msgid "Commission %"
+msgstr "نسبة العمولة %"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_target__employee_id
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_edara_mapping__employee_id
+msgid "Employee"
+msgstr "الموظف"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_target__period_start
+msgid "Month Start"
+msgstr "بداية الشهر"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_target__target_amount
+msgid "Monthly Target"
+msgstr "التارجت الشهري"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_target_tier__achievement_min
+msgid "Min Achievement %"
+msgstr "الحد الأدنى للتحقيق %"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_target_tier__commission_amount
+msgid "Tier Commission"
+msgstr "عمولة الشريحة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_branch_profit__work_location_id
+msgid "Branch"
+msgstr "الفرع"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_branch_profit__department_id
+msgid "Department"
+msgstr "القسم"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_branch_profit__period_start
+msgid "Month"
+msgstr "الشهر"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_branch_profit__factor
+msgid "Profitability Factor"
+msgstr "معامل الربحية"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_edara_staging_stock__stock_sales_value
+msgid "Stock Sales Value"
+msgstr "قيمة مبيعات الاستوك المرتبطة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_self_estimate__expected_evaluation_percent
+msgid "Expected Evaluation %"
+msgstr "نسبة التقييم المتوقعة %"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_self_estimate__estimated_amount
+msgid "Estimated Bonus"
+msgstr "المكافأة المتوقعة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_self_estimate__breakdown_html
+msgid "Breakdown"
+msgstr "التفاصيل"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__bonus_amount
+msgid "Bonus"
+msgstr "المكافأة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_manual_adjust_wizard__reason
+msgid "Reason"
+msgstr "السبب"
+
+# ════════════════════════════════════════════════════════════
+# View group strings
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_self_estimate_form
+msgid "Calculation Breakdown"
+msgstr "تفاصيل الاحتساب"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_manual_adjust_form
+msgid "Reason (mandatory)"
+msgstr "السبب (إلزامي)"

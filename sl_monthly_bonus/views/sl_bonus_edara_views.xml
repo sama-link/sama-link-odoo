@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════════ Mapping ════════════════════ -->
+        <record id="view_sl_bonus_edara_mapping_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.mapping.tree</field>
+            <field name="model">sl.bonus.edara.mapping</field>
+            <field name="arch" type="xml">
+                <list string="Edara Mapping" editable="bottom">
+                    <field name="employee_id"/>
+                    <field name="role"/>
+                    <field name="edara_external_id"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_sl_bonus_edara_mapping" model="ir.actions.act_window">
+            <field name="name">Edara Mapping</field>
+            <field name="res_model">sl.bonus.edara.mapping</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- ════════════════════ Sync log ════════════════════ -->
+        <record id="view_sl_bonus_edara_sync_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.sync.tree</field>
+            <field name="model">sl.bonus.edara.sync</field>
+            <field name="arch" type="xml">
+                <list string="Edara Sync Log"
+                       decoration-success="state=='success'"
+                       decoration-danger="state=='failure'"
+                       decoration-muted="state=='skipped'">
+                    <field name="started_at"/>
+                    <field name="triggered_by"/>
+                    <field name="state"/>
+                    <field name="period_from"/>
+                    <field name="period_to"/>
+                    <field name="sales_records"/>
+                    <field name="stock_records"/>
+                    <field name="installation_records"/>
+                    <field name="user_id"/>
+                </list>
+            </field>
+        </record>
+        <record id="view_sl_bonus_edara_sync_form" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.sync.form</field>
+            <field name="model">sl.bonus.edara.sync</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="started_at" readonly="1"/>
+                                <field name="finished_at" readonly="1"/>
+                                <field name="triggered_by" readonly="1"/>
+                                <field name="user_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="period_from" readonly="1"/>
+                                <field name="period_to" readonly="1"/>
+                                <field name="sales_records" readonly="1"/>
+                                <field name="stock_records" readonly="1"/>
+                                <field name="installation_records" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Message">
+                            <field name="message" readonly="1" nolabel="1"/>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        <record id="action_sl_bonus_edara_sync" model="ir.actions.act_window">
+            <field name="name">Edara Sync Log</field>
+            <field name="res_model">sl.bonus.edara.sync</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <record id="action_sl_bonus_edara_sync_now_server" model="ir.actions.server">
+            <field name="name">Sync Edara Now</field>
+            <field name="model_id" ref="model_sl_bonus_edara_sync"/>
+            <field name="state">code</field>
+            <field name="code">action = model.sync_now(triggered_by='manual')._return_form_action() if False else {'type':'ir.actions.client','tag':'display_notification','params':{'title':'Edara Sync','message':'Sync triggered. Check the log.','type':'info'}}
+model.sync_now(triggered_by='manual')</field>
+        </record>
+
+        <!-- ════════════════════ Staging Sales ════════════════════ -->
+        <record id="view_edara_staging_sales_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.staging.sales.tree</field>
+            <field name="model">sl.bonus.edara.staging.sales</field>
+            <field name="arch" type="xml">
+                <list editable="bottom">
+                    <field name="date"/>
+                    <field name="period_start" optional="hide"/>
+                    <field name="employee_id"/>
+                    <field name="edara_external_id"/>
+                    <field name="amount"/>
+                    <field name="is_collected"/>
+                    <field name="sync_id" optional="hide"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_edara_staging_sales" model="ir.actions.act_window">
+            <field name="name">Staging — Sales</field>
+            <field name="res_model">sl.bonus.edara.staging.sales</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- ════════════════════ Staging Stock ════════════════════ -->
+        <record id="view_edara_staging_stock_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.staging.stock.tree</field>
+            <field name="model">sl.bonus.edara.staging.stock</field>
+            <field name="arch" type="xml">
+                <list editable="bottom">
+                    <field name="date"/>
+                    <field name="period_start" optional="hide"/>
+                    <field name="employee_id"/>
+                    <field name="edara_external_id"/>
+                    <field name="stock_sales_value"/>
+                    <field name="classification"/>
+                    <field name="sync_id" optional="hide"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_edara_staging_stock" model="ir.actions.act_window">
+            <field name="name">Staging — Stock Purchases</field>
+            <field name="res_model">sl.bonus.edara.staging.stock</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- ════════════════════ Staging Installation ════════════════════ -->
+        <record id="view_edara_staging_install_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.staging.installation.tree</field>
+            <field name="model">sl.bonus.edara.staging.installation</field>
+            <field name="arch" type="xml">
+                <list editable="bottom">
+                    <field name="date"/>
+                    <field name="period_start" optional="hide"/>
+                    <field name="employee_id"/>
+                    <field name="edara_external_id"/>
+                    <field name="completed"/>
+                    <field name="sync_id" optional="hide"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_edara_staging_install" model="ir.actions.act_window">
+            <field name="name">Staging — Installations</field>
+            <field name="res_model">sl.bonus.edara.staging.installation</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

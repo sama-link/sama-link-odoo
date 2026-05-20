@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sl_bonus_self_estimate_form" model="ir.ui.view">
+            <field name="name">sl.bonus.self.estimate.form</field>
+            <field name="model">sl.bonus.self.estimate</field>
+            <field name="arch" type="xml">
+                <form string="My Expected Bonus">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="employee_id" readonly="1"/>
+                            </h1>
+                            <h3>
+                                <field name="period_start"/>
+                            </h3>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="category" readonly="1"/>
+                                <field name="expected_evaluation_percent"/>
+                                <field name="is_excluded" readonly="1"/>
+                                <field name="exclusion_reason" readonly="1"
+                                       invisible="not is_excluded"/>
+                            </group>
+                            <group>
+                                <field name="estimated_amount" readonly="1"/>
+                                <field name="currency_id" readonly="1"/>
+                                <field name="progress_target" readonly="1"
+                                       invisible="category != 'sales'"/>
+                                <field name="progress_achieved" readonly="1"
+                                       invisible="category != 'sales'"/>
+                                <field name="progress_pct" readonly="1"
+                                       invisible="category != 'sales'"/>
+                            </group>
+                        </group>
+                        <group string="Calculation Breakdown">
+                            <field name="breakdown_html" nolabel="1" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="view_sl_bonus_self_estimate_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.self.estimate.tree</field>
+            <field name="model">sl.bonus.self.estimate</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="period_start"/>
+                    <field name="employee_id"/>
+                    <field name="category"/>
+                    <field name="expected_evaluation_percent"/>
+                    <field name="estimated_amount"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_sl_bonus_self_estimate" model="ir.actions.act_window">
+            <field name="name">My Bonus Estimate</field>
+            <field name="res_model">sl.bonus.self.estimate</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_my': 1}</field>
+        </record>
+
+        <record id="action_sl_bonus_self_estimate_open_current" model="ir.actions.server">
+            <field name="name">Open My Current-Month Estimate</field>
+            <field name="model_id" ref="model_sl_bonus_self_estimate"/>
+            <field name="state">code</field>
+            <field name="code">action = model.open_or_create_current()</field>
+        </record>
+
+        <!-- Employee view of own bonus lines (read-only) -->
+        <record id="action_sl_bonus_my_lines" model="ir.actions.act_window">
+            <field name="name">My Monthly Bonuses</field>
+            <field name="res_model">sl.bonus.batch.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+        </record>
+    </data>
+</odoo>

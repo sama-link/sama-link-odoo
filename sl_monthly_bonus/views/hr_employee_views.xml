@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_hr_employee_form_bonus" model="ir.ui.view">
+            <field name="name">hr.employee.form.bonus</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="Monthly Bonus" name="bonus" groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin">
+                        <group>
+                            <field name="bonus_quarterly_exclusion"/>
+                        </group>
+                        <group string="Edara Mappings">
+                            <field name="bonus_edara_mapping_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="role"/>
+                                    <field name="edara_external_id"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </group>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+
+        <record id="view_hr_job_form_bonus" model="ir.ui.view">
+            <field name="name">hr.job.form.bonus</field>
+            <field name="model">hr.job</field>
+            <field name="inherit_id" ref="hr.view_hr_job_form"/>
+            <field name="arch" type="xml">
+                <sheet position="inside">
+                    <group string="Bonus" groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin">
+                        <field name="bonus_category"/>
+                        <div class="alert alert-warning" role="alert" invisible="bonus_category != 'none'">
+                            <strong>No monthly bonus configured.</strong>
+                            Employees in this job will receive 0 monthly bonus with the reason
+                            "Job position has no monthly bonus category assigned." Set a category
+                            and configure the matching rate in Bonus → Configuration.
+                        </div>
+                    </group>
+                </sheet>
+            </field>
+        </record>
+    </data>
+</odoo>
