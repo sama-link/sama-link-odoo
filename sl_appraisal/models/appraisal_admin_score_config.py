@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class AppraisalAdminScoreConfig(models.Model):
@@ -31,7 +32,22 @@ class AppraisalAdminScoreConfig(models.Model):
         default=15.0,
         required=True,
     )
+    manual_score_limit = fields.Float(
+        string='Manual Adjustment Limit (±)',
+        default=15.0,
+        required=True,
+        help="Maximum positive or negative manual adjustment after the base score. "
+             "Set to 0 to disable manual adjustments.",
+    )
     active = fields.Boolean(default=True)
+
+    @api.constrains('manual_score_limit')
+    def _check_manual_score_limit(self):
+        for config in self:
+            if config.manual_score_limit < 0:
+                raise ValidationError(
+                    _("Manual adjustment limit cannot be negative.")
+                )
 
     @api.model
     def get_config(self):

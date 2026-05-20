@@ -9,7 +9,7 @@
                     <group>
                         <field name="name" readonly="1"/>
                     </group>
-                    <group string="Score Rules">
+                    <group string="Administration Score Rules">
                         <group>
                             <field name="absence_points"/>
                             <field name="late_points"/>
@@ -19,6 +19,9 @@
                             <field name="penalty_points"/>
                             <field name="bonus_points"/>
                         </group>
+                    </group>
+                    <group string="Total Score Rules">
+                        <field name="manual_score_limit"/>
                     </group>
                 </sheet>
             </form>

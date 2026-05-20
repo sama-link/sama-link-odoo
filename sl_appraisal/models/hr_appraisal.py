@@ -127,9 +127,17 @@ class HrAppraisal(models.Model):
         help="Average percentage of all skills in this appraisal.")
 
     manual_score = fields.Float(
-        string='Manual Score (%)',
+        string='Manual Adjustment',
         digits=(16, 2),
-        help="Additional score entered by HR (0 to 15).")
+        help="Adjustment applied after the base score, within the limit set in "
+             "Administration Score Configuration.")
+    base_score = fields.Float(
+        string='Base Score (%)',
+        compute='_compute_base_score',
+        store=True,
+        digits=(16, 2),
+        help="(Skills Average × 70%) + (Administration Score × 30%), before manual adjustment.",
+    )
 
     absence_count = fields.Integer(
         string='Unexcused Absence Days',
@@ -187,9 +195,10 @@ class HrAppraisal(models.Model):
         help="Starts from 100 and is adjusted by absence/late/penalty/bonus scoring.",
     )
     weighted_skill_score = fields.Float(
-        string='Weighted Skills + Manual (70%)',
+        string='Weighted Skills (70%)',
         compute='_compute_weighted_score_breakdown',
         digits=(16, 2),
+        help="Skills average at 70% weight (manual adjustment is applied separately).",
     )
     weighted_admin_score = fields.Float(
         string='Weighted Administration (30%)',
@@ -203,7 +212,8 @@ class HrAppraisal(models.Model):
         inverse='_inverse_total_score',
         store=True,
         digits=(16, 2),
-        help="Sum of Skills Average and Manual Score. Editable by Appraisal Administrator only.")
+        help="Base score plus manual adjustment (within configured limit), "
+             "capped between 0 and 100. Editable by Appraisal Administrator only.")
     total_score_manual_override = fields.Boolean(
         string='Total Score Manual Override',
         default=False,
@@ -234,11 +244,26 @@ class HrAppraisal(models.Model):
                 percentages.append(value)
             rec.skill_average_score = sum(percentages) / len(percentages) if percentages else 0.0
 
-    @api.depends('skill_average_score', 'manual_score')
+    @api.depends('skill_average_score', 'admin_score')
     def _compute_weighted_score_breakdown(self):
         for rec in self:
-            rec.weighted_skill_score = ((rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)) * 0.7
+            rec.weighted_skill_score = (rec.skill_average_score or 0.0) * 0.7
             rec.weighted_admin_score = (rec.admin_score or 0.0) * 0.3
+
+    @api.depends('weighted_skill_score', 'weighted_admin_score')
+    def _compute_base_score(self):
+        for rec in self:
+            raw_base = (rec.weighted_skill_score or 0.0) + (rec.weighted_admin_score or 0.0)
+            rec.base_score = min(100.0, max(0.0, raw_base))
+
+    def _get_manual_score_limit(self):
+        return self.env['appraisal.admin.score.config'].sudo().get_config().manual_score_limit
+
+    def _compute_total_score_value(self):
+        """Base (70/30) + manual adjustment, capped 0–100."""
+        self.ensure_one()
+        raw = self.base_score + (self.manual_score or 0.0)
+        return min(100.0, max(0.0, raw))
 
     @api.depends('employee_id', 'date_from', 'date_to')
     def _compute_administration_scores(self):
@@ -320,14 +345,17 @@ class HrAppraisal(models.Model):
             rec.admin_score = min(100.0, max(0.0, raw_admin_score))
 
 
-    @api.depends('skill_average_score', 'manual_score', 'admin_score', 'total_score_manual_override')
+    @api.depends(
+        'base_score', 'manual_score', 'total_score_manual_override',
+    )
     def _compute_total_score(self):
         for rec in self:
             if not rec.total_score_manual_override:
-                rec.total_score = (((rec.skill_average_score or 0.0) + (rec.manual_score or 0.0)) * 0.7) + ((rec.admin_score or 0.0) * 0.3)
+                rec.total_score = rec._compute_total_score_value()
 
     def _inverse_total_score(self):
         for rec in self:
+            rec.total_score = min(100.0, max(0.0, rec.total_score or 0.0))
             rec.total_score_manual_override = True
 
     @api.depends_context('uid')
@@ -430,30 +458,62 @@ class HrAppraisal(models.Model):
                     "Only one person can be selected to access the appraisal form."
                 ))
 
-    @api.constrains('manual_score', 'manual_score_reason')
+    @api.constrains('manual_score', 'manual_score_reason', 'total_score')
     def _check_score_limits(self):
+        limit = self._get_manual_score_limit()
         for rec in self:
-            if rec.manual_score < 0 or rec.manual_score > 15:
-                raise ValidationError(_("Manual score must be between 0 and 15."))
-            if rec.manual_score and not rec.manual_score_reason:
-                raise ValidationError(_("Score reason is mandatory when manual score is set."))
+            if rec.manual_score < -limit or rec.manual_score > limit:
+                raise ValidationError(
+                    _("Manual adjustment must be between -%(limit)g and +%(limit)g.",
+                      limit=limit)
+                )
+            if limit == 0 and rec.manual_score != 0:
+                raise ValidationError(
+                    _("Manual adjustment is disabled (limit is 0 in configuration).")
+                )
+            if rec.manual_score != 0 and not rec.manual_score_reason:
+                raise ValidationError(
+                    _("Score reason is mandatory when a manual adjustment is set.")
+                )
+            if rec.total_score < 0 or rec.total_score > 100:
+                raise ValidationError(
+                    _("Total score must be between 0 and 100.")
+                )
 
     @api.onchange('manual_score')
     def _onchange_manual_score(self):
+        limit = self._get_manual_score_limit()
         for rec in self:
             rec.total_score_manual_override = False
-            if rec.manual_score < 0:
-                rec.manual_score = 0
-            if rec.manual_score > 15:
-                rec.manual_score = 15
-            max_by_total = max(0.0, (100.0 / 0.7) - (rec.skill_average_score or 0.0))
-            if rec.manual_score > max_by_total:
-                rec.manual_score = max_by_total
+            if limit == 0:
+                rec.manual_score = 0.0
+            elif rec.manual_score < -limit:
+                rec.manual_score = -limit
+            elif rec.manual_score > limit:
+                rec.manual_score = limit
+            base = (
+                (rec.skill_average_score or 0.0) * 0.7
+                + (rec.admin_score or 0.0) * 0.3
+            )
+            max_adj = 100.0 - base
+            min_adj = -base
+            if rec.manual_score > max_adj:
+                rec.manual_score = max_adj
                 return {
                     'warning': {
                         'title': _("Score adjusted"),
                         'message': _(
-                            "Manual score was reduced so the weighted total does not exceed 100%%."
+                            "Manual adjustment was reduced so the total score does not exceed 100%%."
+                        ),
+                    }
+                }
+            if rec.manual_score < min_adj:
+                rec.manual_score = min_adj
+                return {
+                    'warning': {
+                        'title': _("Score adjusted"),
+                        'message': _(
+                            "Manual adjustment was increased so the total score is not below 0%%."
                         ),
                     }
                 }
@@ -489,6 +549,7 @@ class HrAppraisal(models.Model):
 
         # Total score is admin-only and editable only in Submitted stage.
         if 'total_score' in vals:
+            vals['total_score'] = min(100.0, max(0.0, vals['total_score'] or 0.0))
             if not is_admin:
                 raise AccessError(_("Only Appraisal Administrators can edit Total Score."))
             for rec in self:
