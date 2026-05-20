@@ -14,7 +14,7 @@
                   name="📊 Dashboard"
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_dashboard"
-                  sequence="5"
+                  sequence="10"
                   groups="sl_monthly_bonus.group_bonus_manager,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <!-- 2. Bonus Batches -->
@@ -22,7 +22,7 @@
                   name="💰 Bonus Batches"
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_batch"
-                  sequence="10"
+                  sequence="20"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_batch_lines"
@@ -32,35 +32,7 @@
                   sequence="20"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
-        <!-- 3. Self-service -->
-        <menuitem id="menu_sl_bonus_self"
-                  name="👤 My Bonus"
-                  parent="menu_sl_bonus_root"
-                  sequence="20"
-                  groups="sl_monthly_bonus.group_bonus_employee"/>
-
-        <menuitem id="menu_sl_bonus_self_current"
-                  name="My Current-Month Estimate"
-                  parent="menu_sl_bonus_self"
-                  action="action_sl_bonus_self_estimate_open_current"
-                  sequence="10"
-                  groups="sl_monthly_bonus.group_bonus_employee"/>
-
-        <menuitem id="menu_sl_bonus_self_history"
-                  name="My Estimates History"
-                  parent="menu_sl_bonus_self"
-                  action="action_sl_bonus_self_estimate"
-                  sequence="20"
-                  groups="sl_monthly_bonus.group_bonus_employee"/>
-
-        <menuitem id="menu_sl_bonus_self_lines"
-                  name="My Monthly Bonuses"
-                  parent="menu_sl_bonus_self"
-                  action="action_sl_bonus_my_lines"
-                  sequence="30"
-                  groups="sl_monthly_bonus.group_bonus_employee"/>
-
-        <!-- 4. Reports -->
+        <!-- 3. Reports -->
         <menuitem id="menu_sl_bonus_reports"
                   name="🧾 Reports"
                   parent="menu_sl_bonus_root"
@@ -74,19 +46,26 @@
                   sequence="10"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
-        <!-- 5. Branch Profitability -->
-        <menuitem id="menu_sl_bonus_branch_profit_root"
-                  name="📈 Branch Profitability"
+        <!-- 4. Monthly Inputs (new parent — groups Branch Profitability + Edara) -->
+        <menuitem id="menu_sl_bonus_inputs"
+                  name="📥 Monthly Inputs"
                   parent="menu_sl_bonus_root"
-                  action="action_sl_bonus_branch_profit"
                   sequence="40"
                   groups="sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
-        <!-- 6. Edara (collapsible, hidden until live integration) -->
+        <!-- 4.A Branch Profitability -->
+        <menuitem id="menu_sl_bonus_branch_profit_root"
+                  name="📈 Branch Profitability"
+                  parent="menu_sl_bonus_inputs"
+                  action="action_sl_bonus_branch_profit"
+                  sequence="10"
+                  groups="sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+
+        <!-- 4.B Edara Data (collapsible, hidden until live integration) -->
         <menuitem id="menu_sl_bonus_edara"
                   name="🔄 Edara Data"
-                  parent="menu_sl_bonus_root"
-                  sequence="50"
+                  parent="menu_sl_bonus_inputs"
+                  sequence="20"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_sync"
@@ -131,11 +110,11 @@
                   action="action_edara_staging_install"
                   sequence="70"/>
 
-        <!-- 7. Configuration -->
+        <!-- 5. Configuration -->
         <menuitem id="menu_sl_bonus_config"
                   name="⚙️ Configuration"
                   parent="menu_sl_bonus_root"
-                  sequence="90"
+                  sequence="50"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_job_categories"
@@ -180,12 +159,40 @@
                   action="action_sl_bonus_branch_manager_rate"
                   sequence="60"/>
 
-        <!-- 8. Audit Log -->
+        <!-- 6. Audit Log -->
         <menuitem id="menu_sl_bonus_audit"
                   name="🛡️ Audit Log"
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_audit_log"
-                  sequence="95"
+                  sequence="60"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+
+        <!-- 7. Self-service (moved to the bottom so it doesn't sit between admin items) -->
+        <menuitem id="menu_sl_bonus_self"
+                  name="👤 My Bonus"
+                  parent="menu_sl_bonus_root"
+                  sequence="70"
+                  groups="sl_monthly_bonus.group_bonus_employee"/>
+
+        <menuitem id="menu_sl_bonus_self_current"
+                  name="My Current-Month Estimate"
+                  parent="menu_sl_bonus_self"
+                  action="action_sl_bonus_self_estimate_open_current"
+                  sequence="10"
+                  groups="sl_monthly_bonus.group_bonus_employee"/>
+
+        <menuitem id="menu_sl_bonus_self_history"
+                  name="My Estimates History"
+                  parent="menu_sl_bonus_self"
+                  action="action_sl_bonus_self_estimate"
+                  sequence="20"
+                  groups="sl_monthly_bonus.group_bonus_employee"/>
+
+        <menuitem id="menu_sl_bonus_self_lines"
+                  name="My Monthly Bonuses"
+                  parent="menu_sl_bonus_self"
+                  action="action_sl_bonus_my_lines"
+                  sequence="30"
+                  groups="sl_monthly_bonus.group_bonus_employee"/>
     </data>
 </odoo>

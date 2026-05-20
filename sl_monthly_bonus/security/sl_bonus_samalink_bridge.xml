@@ -42,6 +42,8 @@
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_batch_lines')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_reports')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_reports_approved_batches')),
+                (4, ref('sl_monthly_bonus.menu_sl_bonus_inputs')),
+                (4, ref('sl_monthly_bonus.menu_sl_bonus_branch_profit_root')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_sync')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_sync_now')),
@@ -50,7 +52,6 @@
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_sales')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_stock')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_install')),
-                (4, ref('sl_monthly_bonus.menu_sl_bonus_branch_profit_root')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config_job_categories')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config_service')),
@@ -68,6 +69,7 @@
             <field name="implied_ids" eval="[(4, ref('sl_monthly_bonus.group_bonus_finance'))]"/>
             <field name="whitelisted_menu_ids" eval="[
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_root')),
+                (4, ref('sl_monthly_bonus.menu_sl_bonus_inputs')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_branch_profit_root')),
             ]"/>
         </record>
@@ -82,6 +84,8 @@
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_batch_lines')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_reports')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_reports_approved_batches')),
+                (4, ref('sl_monthly_bonus.menu_sl_bonus_inputs')),
+                (4, ref('sl_monthly_bonus.menu_sl_bonus_branch_profit_root')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_sync')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_sync_now')),
@@ -90,7 +94,6 @@
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_sales')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_stock')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_edara_staging_install')),
-                (4, ref('sl_monthly_bonus.menu_sl_bonus_branch_profit_root')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config_job_categories')),
                 (4, ref('sl_monthly_bonus.menu_sl_bonus_config_service')),

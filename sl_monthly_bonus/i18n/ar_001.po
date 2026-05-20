@@ -68,7 +68,7 @@ msgstr "مكافآتي الشهرية"
 #. module: sl_monthly_bonus
 #: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara
 msgid "Edara Data"
-msgstr "بيانات إدارة"
+msgstr "بيانات Edara"
 
 #. module: sl_monthly_bonus
 #: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara_sync
@@ -242,7 +242,7 @@ msgstr "سجل المراجعة"
 #. module: sl_monthly_bonus
 #: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_edara_import_wizard
 msgid "Import Edara Data"
-msgstr "استيراد بيانات إدارة"
+msgstr "استيراد بيانات Edara"
 
 #. module: sl_monthly_bonus
 #: model:ir.actions.server,name:sl_monthly_bonus.action_sl_bonus_batch_open_prev_month_server
@@ -519,7 +519,12 @@ msgstr "📈 ربحية الفروع"
 #. module: sl_monthly_bonus
 #: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara
 msgid "🔄 Edara Data"
-msgstr "🔄 بيانات إدارة"
+msgstr "🔄 بيانات Edara"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_inputs
+msgid "📥 Monthly Inputs"
+msgstr "📥 المدخلات الشهرية"
 
 #. module: sl_monthly_bonus
 #: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config
