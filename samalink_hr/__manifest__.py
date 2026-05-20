@@ -10,12 +10,13 @@
     'category': 'Human Resources',
     'depends': [
         'base', 'hr', 'hr_contract', 'hr_payroll_community',
-        'resource', 'hr_work_entry', 'hr_holidays',
+        'resource', 'hr_work_entry', 'hr_holidays', 'hr_skills',
     ],
     'data': [
         'security/ir.model.access.csv',
         'data/ir_cron_data.xml',
         'data/absent_entry_server_actions.xml',
+        'data/hr_employee_server_actions.xml',
         # Wizard action must load before views that reference %(action_generate_entries_wizard)d
         'wizard/generate_entries_wizard_views.xml',
         'views/hr_employee.xml',

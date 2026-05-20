@@ -319,8 +319,27 @@ class HrEmployee(models.Model):
         self.write(vals)
 
     def action_bulk_add_data_from_job_position(self):
+        processed = 0
+        skipped = []
         for employee in self:
+            if not employee.job_id:
+                skipped.append(_('%s (no job position)') % employee.name)
+                continue
             employee.action_add_data_from_job_position()
+            processed += 1
+        message = _('Added job data for %s employee(s).') % processed
+        if skipped:
+            message += '\n' + _('Skipped: %s') % ', '.join(skipped)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Add Data From Job Position'),
+                'type': 'success' if processed else 'warning',
+                'message': message,
+                'sticky': bool(skipped),
+            },
+        }
 
     def write(self, vals):
         if 'active' in vals and not vals['active']:
