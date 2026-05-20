@@ -1,7 +1,5 @@
 from . import hr_appraisal_batch
 from . import hr_appraisal
-from . import hr_job
-from . import hr_skill
 from . import appraisal_skill_line
 from . import appraisal_skill_manager_feedback
 from . import appraisal_skill_history

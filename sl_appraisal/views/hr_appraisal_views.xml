@@ -19,6 +19,13 @@
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'draft' or skills_populated == True"
                             confirm="This will populate skills from the employee's current skill profile. Continue?"/>
+                    <button name="action_refresh_skills_from_job"
+                            string="🔄 Refresh Skills from Job"
+                            type="object"
+                            class="btn-secondary"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="state != 'draft'"
+                            confirm="This will add new skills from the job position and update levels. Existing appraisal skill lines are kept unchanged. Continue?"/>
                     <button name="action_publish"
                             string="📤 Publish"
                             type="object"
@@ -131,8 +138,9 @@
                             <div class="alert alert-info mt-3" role="alert"
                                  invisible="state != 'draft'">
                                 <strong>📋 Draft Mode:</strong>
-                                Click "Populate Skills" to load the employee's current skills.
-                                You can also manually add skills to evaluate.
+                                Click "Populate Skills" to load the employee's current skills,
+                                or "Refresh Skills from Job" to sync new skills from the job position.
+                                Existing skill lines are never removed on refresh.
                             </div>
                             <div class="alert alert-warning mt-3" role="alert"
                                  invisible="state != 'published'">

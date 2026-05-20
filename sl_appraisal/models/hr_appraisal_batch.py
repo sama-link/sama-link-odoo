@@ -129,6 +129,38 @@ class HrAppraisalBatch(models.Model):
         action['context'] = {'default_appraisal_batch_id': self.id}
         return action
 
+    def action_refresh_skills_from_job(self):
+        """Refresh draft appraisals in this batch from each employee's job position."""
+        self._check_hr_or_admin_access("refresh appraisal skills from job position")
+        refreshed = 0
+        skipped = []
+        for batch in self:
+            draft_appraisals = batch.appraisal_ids.filtered(lambda a: a.state == 'draft')
+            for appraisal in draft_appraisals:
+                try:
+                    if not appraisal.employee_id:
+                        skipped.append(_("%s (no employee)") % appraisal.display_name)
+                        continue
+                    appraisal._sync_skill_lines_from_job_position()
+                    refreshed += 1
+                except UserError as exc:
+                    name = appraisal.employee_id.name or appraisal.display_name
+                    skipped.append("%s: %s" % (name, exc.args[0]))
+            message = _("Refreshed skills for %s draft appraisal(s).") % refreshed
+            if skipped:
+                message += "<br/>" + _("Skipped:") + "<br/>- " + "<br/>- ".join(skipped)
+            batch.message_post(body=message)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Refresh Skills from Job'),
+                'type': 'success' if refreshed else 'warning',
+                'message': _("Refreshed %s appraisal(s).") % refreshed,
+                'sticky': bool(skipped),
+            },
+        }
+
     def action_publish_all(self):
         self._run_bulk_state_change('action_publish', 'published', _("Published"))
 
