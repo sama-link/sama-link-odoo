@@ -476,3 +476,287 @@ msgstr "تفاصيل الاحتساب"
 #: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_manual_adjust_form
 msgid "Reason (mandatory)"
 msgstr "السبب (إلزامي)"
+
+# ════════════════════════════════════════════════════════════
+# New menus (P0 reorder)
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_dashboard
+msgid "📊 Dashboard"
+msgstr "📊 لوحة المؤشرات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_batches
+msgid "💰 Bonus Batches"
+msgstr "💰 دفعات المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_batch_lines
+msgid "📋 All Bonus Lines"
+msgstr "📋 كل أسطر المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self
+msgid "👤 My Bonus"
+msgstr "👤 مكافآتي"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_reports
+msgid "🧾 Reports"
+msgstr "🧾 التقارير"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_reports_approved_batches
+msgid "Approved Batches (for Export)"
+msgstr "الدفعات المعتمدة (للتصدير)"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_branch_profit_root
+msgid "📈 Branch Profitability"
+msgstr "📈 ربحية الفروع"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_edara
+msgid "🔄 Edara Data"
+msgstr "🔄 بيانات إدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config
+msgid "⚙️ Configuration"
+msgstr "⚙️ الإعدادات"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_config_job_categories
+msgid "Job Bonus Categories"
+msgstr "فئات المكافآت لكل مسمى وظيفي"
+
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_audit
+msgid "🛡️ Audit Log"
+msgstr "🛡️ سجل المراجعة"
+
+# ════════════════════════════════════════════════════════════
+# New batch fields
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__treat_missing_eval_as_full
+msgid "Treat Missing Evaluation as 100%"
+msgstr "اعتبار التقييم الناقص = 100%"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__appraisal_batch_id
+msgid "Linked Appraisal Batch"
+msgstr "دفعة التقييم المرتبطة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__paid_count
+msgid "Eligible / Paid Count"
+msgstr "عدد المستحقين"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__computed_count
+msgid "Computed Count"
+msgstr "عدد السطور المحسوبة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__eval_treated_as_full
+msgid "Eval Treated As 100%"
+msgstr "اعتُبر التقييم 100%"
+
+# ════════════════════════════════════════════════════════════
+# Buttons (with emojis)
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📋 Mark Data Ready"
+msgstr "📋 جاهز البيانات"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🧮 Compute Bonuses"
+msgstr "🧮 احسب المكافآت"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "👥 Compute Selected…"
+msgstr "👥 احسب موظفين محددين…"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📤 Send to HR Review"
+msgstr "📤 أرسل لمراجعة الموارد البشرية"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "✅ Approve"
+msgstr "✅ اعتماد"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🔒 Lock"
+msgstr "🔒 قفل"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "↩ Reset to Draft"
+msgstr "↩ إعادة إلى المسودة"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🛠 Admin State…"
+msgstr "🛠 تغيير حالة (للمسؤول)…"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📊 Export Payout (XLSX)"
+msgstr "📊 تصدير كشف الصرف (XLSX)"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🧾 Payout PDF"
+msgstr "🧾 كشف الصرف PDF"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🏢 Department Report"
+msgstr "🏢 تقرير الأقسام"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_tree
+msgid "📅 Open / Create Previous-Month Batch"
+msgstr "📅 افتح/أنشئ دفعة الشهر السابق"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_line_form
+msgid "✏ Manual Adjust"
+msgstr "✏ تعديل يدوي"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_line_form
+msgid "🧹 Clear Override"
+msgstr "🧹 إلغاء التعديل اليدوي"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_line_form
+msgid "♻ Recompute"
+msgstr "♻ إعادة احتساب"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_hr_appraisal_batch_form_bonus
+msgid "💰 Compute Bonuses"
+msgstr "💰 احتساب المكافآت"
+
+# ════════════════════════════════════════════════════════════
+# Status banners
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📋 <strong>Draft.</strong>"
+msgstr "📋 <strong>مسودة.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🎯 <strong>Data Ready.</strong>"
+msgstr "🎯 <strong>البيانات جاهزة.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🧮 <strong>Computed.</strong>"
+msgstr "🧮 <strong>تم الاحتساب.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📤 <strong>HR Review.</strong>"
+msgstr "📤 <strong>مراجعة الموارد البشرية.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "✅ <strong>Approved.</strong>"
+msgstr "✅ <strong>معتمد.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "🔒 <strong>Locked.</strong>"
+msgstr "🔒 <strong>مغلق.</strong>"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "⚠ <strong>Treat missing evaluation as 100% is ON.</strong>"
+msgstr "⚠ <strong>تفعيل: اعتبار التقييم الناقص = 100%.</strong>"
+
+# ════════════════════════════════════════════════════════════
+# Wizards
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_compute_wizard_form
+msgid "Compute Bonuses"
+msgstr "احتساب المكافآت"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_compute_wizard_form
+msgid "Selected employees only"
+msgstr "موظفون محددون فقط"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_compute_wizard_form
+msgid "All active employees (full recompute)"
+msgstr "كل الموظفين النشطين (إعادة احتساب كاملة)"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_compute_wizard__scope
+msgid "Scope"
+msgstr "النطاق"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_compute_wizard__employee_ids
+msgid "Employees"
+msgstr "الموظفون"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_state_change_wizard_form
+msgid "Manual State Change (Admin)"
+msgstr "تغيير الحالة يدويًا (مسؤول)"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_state_change_wizard__new_state
+msgid "New State"
+msgstr "الحالة الجديدة"
+
+# ════════════════════════════════════════════════════════════
+# Dashboard action and report names
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_sl_bonus_dashboard
+msgid "📊 Bonus Dashboard"
+msgstr "📊 لوحة مؤشرات المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.act_window,name:sl_monthly_bonus.action_hr_job_bonus_category
+msgid "Job Bonus Categories"
+msgstr "فئات المكافآت لكل مسمى وظيفي"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.report,name:sl_monthly_bonus.action_report_bonus_receipt
+msgid "Bonus Receipt"
+msgstr "إيصال المكافأة"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.report,name:sl_monthly_bonus.action_report_bonus_payout
+msgid "Bonus Payout Sheet"
+msgstr "كشف صرف المكافآت"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.report,name:sl_monthly_bonus.action_report_bonus_department
+msgid "Department Performance"
+msgstr "أداء الأقسام"
+
+#. module: sl_monthly_bonus
+#: model:ir.actions.report,name:sl_monthly_bonus.action_report_bonus_yearly
+msgid "Employee Yearly Bonus History"
+msgstr "السجل السنوي لمكافآت الموظف"
