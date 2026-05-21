@@ -68,6 +68,9 @@
                                    readonly="state != 'draft'"
                                    options="{'no_create': True}"/>
                         </h1>
+                        <h2>
+                            <field name="job_id" readonly="1"/>
+                        </h2>
                     </div>
 
                     <!-- Main info -->
@@ -283,6 +286,7 @@
                   decoration-info="state == 'published'"
                   decoration-bf="state == 'draft'">
                 <field name="employee_id"/>
+                <field name="job_id" optional="show"/>
                 <field name="appraisal_deadline"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'hr_finalization'"
