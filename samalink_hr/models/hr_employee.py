@@ -217,8 +217,8 @@ class HrEmployee(models.Model):
         """Rest/absence split for work-entry adjust, with default Fri/Sat when no rest in week.
 
         If the employee took no rest day in a payroll week:
-        - 1 rest day/week → Friday (if not attended) is marked rest
-        - 2 rest days/week → Friday and Saturday (if not attended) are marked rest
+        - 1 rest day/week → Friday is marked rest (even if attended; work adjust keeps both)
+        - 2 rest days/week → Friday and Saturday are marked rest (same rule)
         """
         self.ensure_one()
         real_abs, rest_taken = self._samalink_flexible_split_absence_and_rest(
@@ -257,8 +257,6 @@ class HrEmployee(models.Model):
                     if day < start_date or day > end_date:
                         continue
                     if day in public_holidays or day in timeoff_dates:
-                        continue
-                    if day in attendance_dates_period:
                         continue
                     rest_set.add(day)
                     real_set.discard(day)

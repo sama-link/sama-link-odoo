@@ -31,7 +31,8 @@ class HrWorkEntry(models.Model):
         For those employees:
         - Days classified as actual rest → REST100
         - If no rest was taken in a payroll week: default Friday (1 rest/week) or
-          Friday + Saturday (2 rest/week) when those days were not attended
+          Friday + Saturday (2 rest/week); if the employee also worked that day,
+          keep the attendance/work entry and add a separate REST100 line
         - Days classified as real absence → left unchanged (e.g. OUT from generator)
         - Other working days → attendance (WORK100)
         - Public holidays / approved leave dates → left unchanged
@@ -70,9 +71,14 @@ class HrWorkEntry(models.Model):
             )
             return
 
+        attendance_wetype = self.env.ref(
+            'hr_work_entry.work_entry_type_attendance', raise_if_not_found=False
+        )
+
         employees = entries.mapped('employee_id')
         rest_by_emp = {}
         real_by_emp = {}
+        attendance_by_emp = {}
         holiday_dates = set()
         timeoff_by_emp = {}
         if employees:
@@ -88,6 +94,46 @@ class HrWorkEntry(models.Model):
             )
             rest_by_emp[emp.id] = set(rest_taken)
             real_by_emp[emp.id] = set(real_abs)
+            attendance_by_emp[emp.id] = set(
+                emp._get_grouped_attendance_dates(date_from, date_to).get(emp.id, [])
+            )
+
+        created_rest = 0
+        for emp in employees:
+            if emp.id not in rest_by_emp:
+                continue
+            emp_entries = entries.filtered(lambda e: e.employee_id == emp)
+            rest_dates = rest_by_emp[emp.id]
+            real_dates = real_by_emp[emp.id]
+            attended_dates = attendance_by_emp.get(emp.id, set())
+
+            for d in sorted(rest_dates):
+                if d in holiday_dates or d in timeoff_by_emp.get(emp.id, set()):
+                    continue
+                day_entries = emp_entries.filtered(
+                    lambda e, day=d: e.date_start and e.date_start.date() == day
+                )
+                if not day_entries:
+                    continue
+
+                work_entries = day_entries.filtered(
+                    lambda e: self._samalink_is_work_attendance_entry(
+                        e, attendance_type, attendance_wetype, rest_type,
+                    )
+                )
+                has_check_in = d in attended_dates
+
+                if has_check_in and work_entries:
+                    if not day_entries.filtered(lambda e: e.work_entry_type_id == rest_type):
+                        self._samalink_create_rest_work_entry(work_entries[0], rest_type)
+                        created_rest += 1
+                    continue
+
+                for entry in day_entries:
+                    if d in real_dates:
+                        continue
+                    if entry.work_entry_type_id != rest_type:
+                        entry.work_entry_type_id = rest_type.id
 
         for entry in entries:
             emp = entry.employee_id
@@ -102,6 +148,14 @@ class HrWorkEntry(models.Model):
             real_dates = real_by_emp[emp.id]
 
             if d in rest_dates:
+                if d in attendance_by_emp.get(emp.id, set()) and self._samalink_is_work_attendance_entry(
+                    entry, attendance_type, attendance_wetype, rest_type,
+                ):
+                    continue
+                if entry.work_entry_type_id == rest_type:
+                    continue
+                if d in real_dates:
+                    continue
                 if entry.work_entry_type_id != rest_type:
                     entry.work_entry_type_id = rest_type.id
             elif d in real_dates:
@@ -111,10 +165,58 @@ class HrWorkEntry(models.Model):
                     entry.work_entry_type_id = attendance_type.id
 
         _logger.info(
-            "Adjusted flexible work entries for %d line(s), %d flexible employee(s).",
+            "Adjusted flexible work entries for %d line(s), %d flexible employee(s), "
+            "created %d extra REST100 line(s) for worked rest days.",
             len(entries),
             len(rest_by_emp),
+            created_rest,
         )
+
+    @api.model
+    def _samalink_is_work_attendance_entry(
+        self, entry, attendance_type, attendance_wetype, rest_type,
+    ):
+        """True for lines that represent worked time (kept when adding REST100 on same day)."""
+        wet = entry.work_entry_type_id
+        if not wet or wet == rest_type:
+            return False
+        if wet == attendance_type:
+            return True
+        if attendance_wetype and wet == attendance_wetype:
+            return True
+        code = (wet.code or '').upper()
+        if code in ('WORK100', 'ATTENDANCE') or code.startswith('WORK'):
+            return True
+        return False
+
+    @api.model
+    def _samalink_create_rest_work_entry(self, template_entry, rest_type):
+        """Add a REST100 line alongside an existing attendance/work entry (same slot)."""
+        emp = template_entry.employee_id
+        day = template_entry.date_start.date()
+        from_dt = datetime.combine(day, time.min)
+        to_dt = datetime.combine(day, time.max)
+        existing = self.search([
+            ('employee_id', '=', emp.id),
+            ('date_start', '>=', from_dt),
+            ('date_stop', '<=', to_dt),
+            ('work_entry_type_id', '=', rest_type.id),
+        ], limit=1)
+        if existing:
+            return existing
+        vals = {
+            'name': rest_type.name or _('Rest Day'),
+            'employee_id': emp.id,
+            'date_start': template_entry.date_start,
+            'date_stop': template_entry.date_stop,
+            'work_entry_type_id': rest_type.id,
+            'company_id': template_entry.company_id.id,
+        }
+        if 'duration' in self._fields and template_entry.duration:
+            vals['duration'] = template_entry.duration
+        if 'contract_id' in self._fields and template_entry.contract_id:
+            vals['contract_id'] = template_entry.contract_id.id
+        return self.create(vals)
 
     @api.model
     def cron_adjust_flexible_rest_days(self):
