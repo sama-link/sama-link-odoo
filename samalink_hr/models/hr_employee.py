@@ -254,16 +254,31 @@ class HrEmployee(models.Model):
                 cursor += timedelta(days=1)
         return holidays
 
+    @staticmethod
+    def _is_rest_work_entry_type(work_entry_type):
+        """True when the calendar line work entry type represents a rest day."""
+        if not work_entry_type:
+            return False
+        code = (work_entry_type.code or '').upper()
+        if code in ('REST100', 'REST'):
+            return True
+        name = (work_entry_type.name or '').lower()
+        return 'rest' in name
+
     def _get_schedule_rest_weekdays(self, calendar):
-        """Get weekday numbers (0=Mon, 6=Sun) that are rest days in the schedule.
-        A weekday is a rest day if it has NO attendance lines in the calendar.
+        """Weekdays (0=Mon … 6=Sun) that are rest days on the working schedule.
+
+        A weekday is rest when it has no calendar line, or only lines whose work
+        entry type is Rest (e.g. REST100 / "Rest Day"). Days with at least one
+        Attendance/WORK line are working days.
         """
         if not calendar:
             return set()
         all_weekdays = {0, 1, 2, 3, 4, 5, 6}
         work_weekdays = set()
-        for line in calendar.attendance_ids:
-            work_weekdays.add(int(line.dayofweek))
+        for line in calendar.attendance_ids.filtered(lambda l: not l.display_type):
+            if not self._is_rest_work_entry_type(line.work_entry_type_id):
+                work_weekdays.add(int(line.dayofweek))
         return all_weekdays - work_weekdays
 
     def _unlink_existing_absent_entry(self, date_from, date_to):

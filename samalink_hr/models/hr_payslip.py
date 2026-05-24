@@ -77,3 +77,10 @@ class HrPayslip(models.Model):
         return self.employee_id._samalink_get_actual_rest_dates_flexible(
             self.date_from, self.date_to,
         )
+
+    def _samalink_count_rest_work_entry_days(self):
+        """Rest days in payslip period from REST100 work entries (after flexible adjust)."""
+        self.ensure_one()
+        return self.env['hr.work.entry'].samalink_count_rest_days(
+            self.employee_id, self.date_from, self.date_to,
+        )

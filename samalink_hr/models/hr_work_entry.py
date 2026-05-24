@@ -8,6 +8,21 @@ _logger = logging.getLogger(__name__)
 class HrWorkEntry(models.Model):
     _inherit = 'hr.work.entry'
 
+    @api.model
+    def samalink_count_rest_days(self, employee, date_from, date_to):
+        """Count distinct calendar days with REST100 work entries in the period."""
+        if not employee or not date_from or not date_to:
+            return 0
+        from_dt = datetime.combine(date_from, time.min)
+        to_dt = datetime.combine(date_to, time.max)
+        entries = self.search([
+            ('employee_id', '=', employee.id),
+            ('date_start', '>=', from_dt),
+            ('date_stop', '<=', to_dt),
+            ('work_entry_type_id.code', '=', 'REST100'),
+        ])
+        return len({entry.date_start.date() for entry in entries})
+
     def action_adjust_flexible_rest_days(self, date_from, date_to, employee_ids=None):
         """Set work entry types from actual attendance vs flexible rest/absence.
 

@@ -6,17 +6,6 @@ from odoo import models, fields, api
 _logger = logging.getLogger(__name__)
 
 
-def _count_weekdays_in_range(date_from, date_to, weekday):
-    """Count occurrences of a specific weekday (0=Mon, 6=Sun) in a date range."""
-    count = 0
-    current = date_from
-    while current <= date_to:
-        if current.weekday() == weekday:
-            count += 1
-        current += timedelta(days=1)
-    return count
-
-
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
 
@@ -162,26 +151,26 @@ class HrPayslip(models.Model):
             payslip.late_permission_hours = sum(late_permissions.mapped('duration'))
 
     def _compute_weekend_days(self):
-        """Calendar rest entitlement in period for flexible (Fri / Fri+Sat); else REST100 count."""
+        """Rest days in period from REST100 work entries (aligned with payroll REST_ALLOW)."""
+        WorkEntry = self.env['hr.work.entry']
         for payslip in self:
-            contract = payslip.contract_id
-            calendar = contract.resource_calendar_id if contract else False
-
-            if calendar and getattr(calendar, 'flexible_rest_day', False):
-                rest_per_week = int(getattr(calendar, 'rest_days_per_week', None) or '1')
-                count = _count_weekdays_in_range(payslip.date_from, payslip.date_to, 4)
-                if rest_per_week == 2:
-                    count += _count_weekdays_in_range(payslip.date_from, payslip.date_to, 5)
-                payslip.weekend_days = count
+            if not payslip.employee_id or not payslip.date_from or not payslip.date_to:
+                payslip.weekend_days = 0
+                continue
+            if hasattr(WorkEntry, 'samalink_count_rest_days'):
+                payslip.weekend_days = WorkEntry.samalink_count_rest_days(
+                    payslip.employee_id, payslip.date_from, payslip.date_to,
+                )
             else:
                 from_date_midnight = datetime.combine(payslip.date_from, time.min)
                 end_of_to_date = datetime.combine(payslip.date_to, time.max)
-                payslip.weekend_days = self.env['hr.work.entry'].search_count([
+                entries = WorkEntry.search([
                     ('employee_id', '=', payslip.employee_id.id),
                     ('date_start', '>=', from_date_midnight),
                     ('date_stop', '<=', end_of_to_date),
-                    ('work_entry_type_id.code', '=', 'REST100')
+                    ('work_entry_type_id.code', '=', 'REST100'),
                 ])
+                payslip.weekend_days = len({e.date_start.date() for e in entries})
 
     def _compute_days_attended(self):
         for payslip in self:
