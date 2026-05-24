@@ -524,6 +524,20 @@ class HrAppraisal(models.Model):
 
     # ─── CRUD restrictions ────────────────────────────────────────────
 
+    _BATCH_SYNC_FIELDS = frozenset({'appraisal_deadline', 'date_from', 'date_to'})
+
+    @api.constrains('appraisal_deadline')
+    def _check_appraisal_deadline(self):
+        """Replace oh_appraisal check: loop records (batch sync writes many at once)."""
+        if self.env.context.get('appraisal_batch_sync'):
+            return
+        today = fields.Date.today()
+        for appraisal in self:
+            if appraisal.appraisal_deadline and appraisal.appraisal_deadline < today:
+                raise ValidationError(
+                    _("Appraisal deadline cannot be in the past.")
+                )
+
     @api.model
     def create(self, vals):
         """Only HR Officers and Administrators can create appraisals."""
@@ -538,6 +552,12 @@ class HrAppraisal(models.Model):
 
     def write(self, vals):
         """Restrict writes by role and appraisal access plan."""
+        if (
+            self.env.context.get('appraisal_batch_sync')
+            and set(vals) <= self._BATCH_SYNC_FIELDS
+        ):
+            return super(HrAppraisal, self).write(vals)
+
         # Keep appraisal company aligned with selected employee company.
         if vals.get('employee_id'):
             employee = self.env['hr.employee'].browse(vals['employee_id'])

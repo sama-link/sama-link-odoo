@@ -73,26 +73,30 @@ class HrAppraisalBatch(models.Model):
                 raise ValidationError(_("Appraisal Deadline must be on or after Period To."))
 
     def write(self, vals):
-        locked_fields = {'name', 'company_id', 'date_deadline', 'date_from', 'date_to'}
+        locked_when_not_draft = {'name', 'company_id'}
         for batch in self:
-            if batch.state != 'draft' and locked_fields & set(vals):
+            if batch.state != 'draft' and locked_when_not_draft & set(vals):
                 raise UserError(_(
-                    "Batch name, company, deadline, and period can only be changed in Draft state."
+                    "Batch name and company can only be changed in Draft state."
                 ))
         res = super().write(vals)
 
-        # Keep child appraisals synchronized with batch date controls.
-        sync_vals = {}
-        if 'date_deadline' in vals:
-            sync_vals['appraisal_deadline'] = vals.get('date_deadline')
-        if 'date_from' in vals:
-            sync_vals['date_from'] = vals.get('date_from')
-        if 'date_to' in vals:
-            sync_vals['date_to'] = vals.get('date_to')
-        if sync_vals:
+        sync_fields = {'date_deadline', 'date_from', 'date_to'}
+        if sync_fields & set(vals):
             for batch in self:
-                if batch.appraisal_ids:
-                    batch.appraisal_ids.sudo().write(sync_vals)
+                if not batch.appraisal_ids:
+                    continue
+                sync_vals = {}
+                if 'date_deadline' in vals:
+                    sync_vals['appraisal_deadline'] = batch.date_deadline
+                if 'date_from' in vals:
+                    sync_vals['date_from'] = batch.date_from
+                if 'date_to' in vals:
+                    sync_vals['date_to'] = batch.date_to
+                if sync_vals:
+                    batch.appraisal_ids.with_context(
+                        appraisal_batch_sync=True,
+                    ).sudo().write(sync_vals)
 
         return res
 
