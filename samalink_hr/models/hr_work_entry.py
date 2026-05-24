@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, time, timedelta
-from odoo import models, fields, api
+from odoo import _, api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -26,20 +26,31 @@ class HrWorkEntry(models.Model):
     def action_adjust_flexible_rest_days(self, date_from, date_to, employee_ids=None):
         """Set work entry types from actual attendance vs flexible rest/absence.
 
-        For employees on flexible schedules:
+        Only employees whose work schedule has Flexible Rest Days enabled are processed.
+
+        For those employees:
         - Days classified as actual rest → REST100
         - Days classified as real absence → left unchanged (e.g. OUT from generator)
         - Other working days → attendance (WORK100)
         - Public holidays / approved leave dates → left unchanged
         """
+        Employee = self.env['hr.employee']
+        if employee_ids is not None:
+            employee_ids = Employee._samalink_get_flexible_rest_employees(employee_ids)
+            if not employee_ids:
+                return
+        else:
+            employee_ids = Employee._samalink_get_flexible_rest_employees()
+            if not employee_ids:
+                return
+
         from_dt = datetime.combine(date_from, time.min)
         to_dt = datetime.combine(date_to, time.max)
         domain = [
             ('date_start', '>=', from_dt),
             ('date_stop', '<=', to_dt),
+            ('employee_id', 'in', employee_ids.ids),
         ]
-        if employee_ids:
-            domain.append(('employee_id', 'in', employee_ids.ids))
 
         entries = self.search(domain)
         if not entries:

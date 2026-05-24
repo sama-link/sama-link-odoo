@@ -11,6 +11,18 @@ _logger = logging.getLogger(__name__)
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
+    @api.model
+    def _samalink_get_flexible_rest_employees(self, employees=None):
+        """Employees whose open contract work schedule has Flexible Rest Days enabled."""
+        domain = [
+            ('contract_id', '!=', False),
+            ('contract_id.state', '=', 'open'),
+            ('contract_id.resource_calendar_id.flexible_rest_day', '=', True),
+        ]
+        if employees:
+            domain = [('id', 'in', employees.ids)] + domain
+        return self.search(domain)
+
     allow_check_from_odoo = fields.Boolean(string="Allow Check From Odoo", default=False, groups="base.group_system,hr.group_hr_user")
     medical_insurance = fields.Selection(related='contract_id.medical_insurance', string="Medical Insurance", readonly=True)
 
