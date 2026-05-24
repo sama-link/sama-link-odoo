@@ -30,7 +30,7 @@ class HrWorkEntry(models.Model):
 
         For those employees:
         - Days classified as actual rest → REST100
-        - If no rest was taken in a payroll week: default Friday (1 rest/week) or
+        - If rest < entitlement in a payroll week: default Friday (1 rest/week) or
           Friday + Saturday (2 rest/week); if the employee also worked that day,
           keep the attendance/work entry and add a separate REST100 line
         - Days classified as real absence → left unchanged (e.g. OUT from generator)
@@ -57,6 +57,10 @@ class HrWorkEntry(models.Model):
 
         entries = self.search(domain)
         if not entries:
+            _logger.info(
+                "Flex adjust: no work entries for %d employee(s) in %s – %s",
+                len(employee_ids), date_from, date_to,
+            )
             return
 
         attendance_type = self.env['hr.work.entry.type'].search(
@@ -71,9 +75,7 @@ class HrWorkEntry(models.Model):
             )
             return
 
-        attendance_wetype = self.env.ref(
-            'hr_work_entry.work_entry_type_attendance', raise_if_not_found=False
-        )
+        has_leave_id = 'leave_id' in self._fields
 
         employees = entries.mapped('employee_id')
         rest_by_emp = {}
@@ -97,8 +99,17 @@ class HrWorkEntry(models.Model):
             attendance_by_emp[emp.id] = set(
                 emp._get_grouped_attendance_dates(date_from, date_to).get(emp.id, [])
             )
+            _logger.info(
+                "Flex adjust emp %s [%s]: rest=%s, abs=%s, attended=%s",
+                emp.id, emp.name,
+                sorted(rest_by_emp[emp.id]),
+                sorted(real_by_emp[emp.id]),
+                sorted(attendance_by_emp[emp.id]),
+            )
 
         created_rest = 0
+        converted_rest = 0
+
         for emp in employees:
             if emp.id not in rest_by_emp:
                 continue
@@ -109,35 +120,65 @@ class HrWorkEntry(models.Model):
 
             for d in sorted(rest_dates):
                 if d in holiday_dates or d in timeoff_by_emp.get(emp.id, set()):
+                    _logger.debug(
+                        "Flex: emp %s day %s → skip (holiday/leave)", emp.id, d,
+                    )
                     continue
+
                 day_entries = emp_entries.filtered(
                     lambda e, day=d: e.date_start and e.date_start.date() == day
                 )
-                if not day_entries:
-                    continue
-
-                work_entries = day_entries.filtered(
-                    lambda e: self._samalink_is_work_attendance_entry(
-                        e, attendance_type, attendance_wetype, rest_type,
-                    )
-                )
                 has_check_in = d in attended_dates
 
-                if has_check_in and work_entries:
-                    if not day_entries.filtered(lambda e: e.work_entry_type_id == rest_type):
-                        self._samalink_create_rest_work_entry(work_entries[0], rest_type)
-                        created_rest += 1
+                if not day_entries:
+                    _logger.warning(
+                        "Flex: emp %s day %s → no work entries (check_in=%s); "
+                        "run 'Regenerate Work Entries' first.",
+                        emp.id, d, has_check_in,
+                    )
                     continue
 
-                for entry in day_entries:
+                non_leave = day_entries.filtered(
+                    lambda e: not (has_leave_id and e.leave_id)
+                )
+                work_entries = non_leave.filtered(
+                    lambda e: e.work_entry_type_id != rest_type
+                )
+
+                if has_check_in and work_entries:
+                    already_rest = day_entries.filtered(
+                        lambda e: e.work_entry_type_id == rest_type
+                    )
+                    if not already_rest:
+                        self._samalink_create_rest_work_entry(
+                            work_entries[0], rest_type,
+                        )
+                        created_rest += 1
+                        _logger.info(
+                            "Flex: emp %s day %s → DUAL created REST100 "
+                            "alongside %s (%s)",
+                            emp.id, d,
+                            work_entries[0].work_entry_type_id.code,
+                            work_entries[0].work_entry_type_id.name,
+                        )
+                    continue
+
+                for entry in non_leave:
                     if d in real_dates:
                         continue
                     if entry.work_entry_type_id != rest_type:
+                        _logger.info(
+                            "Flex: emp %s day %s → convert %s → REST100",
+                            emp.id, d, entry.work_entry_type_id.code,
+                        )
                         entry.work_entry_type_id = rest_type.id
+                        converted_rest += 1
 
         for entry in entries:
             emp = entry.employee_id
             if emp.id not in rest_by_emp:
+                continue
+            if has_leave_id and entry.leave_id:
                 continue
 
             d = entry.date_start.date()
@@ -148,16 +189,14 @@ class HrWorkEntry(models.Model):
             real_dates = real_by_emp[emp.id]
 
             if d in rest_dates:
-                if d in attendance_by_emp.get(emp.id, set()) and self._samalink_is_work_attendance_entry(
-                    entry, attendance_type, attendance_wetype, rest_type,
-                ):
-                    continue
+                if d in attendance_by_emp.get(emp.id, set()):
+                    if entry.work_entry_type_id != rest_type:
+                        continue
                 if entry.work_entry_type_id == rest_type:
                     continue
                 if d in real_dates:
                     continue
-                if entry.work_entry_type_id != rest_type:
-                    entry.work_entry_type_id = rest_type.id
+                entry.work_entry_type_id = rest_type.id
             elif d in real_dates:
                 continue
             else:
@@ -165,27 +204,15 @@ class HrWorkEntry(models.Model):
                     entry.work_entry_type_id = attendance_type.id
 
         _logger.info(
-            "Adjusted flexible work entries for %d line(s), %d flexible employee(s), "
-            "created %d extra REST100 line(s) for worked rest days.",
-            len(entries),
-            len(rest_by_emp),
-            created_rest,
+            "Flex adjust done: %d entries, %d flex employees, "
+            "created %d dual REST100, converted %d to REST100.",
+            len(entries), len(rest_by_emp), created_rest, converted_rest,
         )
 
     @api.model
-    def _samalink_is_work_attendance_entry(
-        self, entry, attendance_type, attendance_wetype, rest_type,
-    ):
-        """True for lines that represent worked time (kept when adding REST100 on same day)."""
-        wet = entry.work_entry_type_id
-        if not wet or wet == rest_type:
-            return False
-        if wet == attendance_type:
-            return True
-        if attendance_wetype and wet == attendance_wetype:
-            return True
-        code = (wet.code or '').upper()
-        if code in ('WORK100', 'ATTENDANCE') or code.startswith('WORK'):
+    def _samalink_is_leave_work_entry(self, entry):
+        """True when the entry was generated from an approved leave."""
+        if 'leave_id' in self._fields and entry.leave_id:
             return True
         return False
 

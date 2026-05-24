@@ -214,11 +214,14 @@ class HrEmployee(models.Model):
         return dates
 
     def _samalink_flexible_rest_dates_for_work_entries(self, start_date, end_date):
-        """Rest/absence split for work-entry adjust, with default Fri/Sat when no rest in week.
+        """Rest/absence split for work-entry adjust, with default top-up per week.
 
-        If the employee took no rest day in a payroll week:
-        - 1 rest day/week → Friday is marked rest (even if attended; work adjust keeps both)
-        - 2 rest days/week → Friday and Saturday are marked rest (same rule)
+        If the employee took fewer rest days than entitled in a payroll week,
+        the shortfall is filled by injecting the default rest days (Friday first,
+        then Saturday for 2-rest schedules).  A default day that falls on a
+        public holiday or approved leave is skipped (it's already covered).
+        Days that are already in rest_set (from the full-period split) are not
+        counted twice.
         """
         self.ensure_one()
         real_abs, rest_taken = self._samalink_flexible_split_absence_and_rest(
@@ -233,9 +236,6 @@ class HrEmployee(models.Model):
         rest_set = set(rest_taken)
         real_set = set(real_abs)
 
-        attendance_dates_period = set(
-            self._get_grouped_attendance_dates(start_date, end_date).get(self.id, [])
-        )
         timeoff_dates = set(
             self._get_grouped_timeoff_dates(start_date, end_date).get(self.id, set())
         )
@@ -250,16 +250,35 @@ class HrEmployee(models.Model):
             _week_real, week_rest = self._samalink_flexible_split_absence_and_rest(
                 week_start, week_end,
             )
-            if not week_rest:
+            already_in_range = [
+                d for d in week_rest
+                if start_date <= d <= end_date
+            ]
+            already_in_rest = [
+                d for d in rest_set
+                if week_start <= d <= week_end
+            ]
+            week_count = len(set(already_in_range) | set(already_in_rest))
+            needed = rest_per_week - week_count
+            if needed > 0:
                 for day in self._samalink_default_rest_dates_for_week(
                     week_key, rest_per_week,
                 ):
+                    if needed <= 0:
+                        break
                     if day < start_date or day > end_date:
                         continue
                     if day in public_holidays or day in timeoff_dates:
                         continue
+                    if day in rest_set:
+                        continue
                     rest_set.add(day)
                     real_set.discard(day)
+                    needed -= 1
+                    _logger.debug(
+                        "Flex rest top-up: emp %s week %s → injected %s (still need %d)",
+                        self.id, week_key, day, needed,
+                    )
             week_key += timedelta(days=7)
 
         return sorted(real_set), sorted(rest_set)
