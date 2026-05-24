@@ -229,24 +229,29 @@ class HrAttendanceMiddleware(models.Model):
             check_out = False
             in_mode = 'technical'
             out_mode = 'technical'
-            punch_datetimes = []
             internal_datetimes = [] # Datetimes coming from HR attendance (systray, manual, etc.)
             internal_in_mode = 'systray'
             internal_out_mode = 'systray'
+            check_in_candidates = []
+            check_out_candidates = []
             if record.employee_id and record.zk_attendance_ids:
-                punch_datetimes.extend(record._get_zk_api_datetimes())
+                zk_check_in, zk_check_out = record._get_zk_api_checkings()
+                if zk_check_in:
+                    check_in_candidates.append(zk_check_in)
+                if zk_check_out:
+                    check_out_candidates.append(zk_check_out)
             if record.hr_attendance_id:
                 if record.hr_attendance_id.check_in and record.hr_attendance_id.in_mode != 'technical':
-                    punch_datetimes.append(record.hr_attendance_id.check_in)
+                    check_in_candidates.append(record.hr_attendance_id.check_in)
                     internal_datetimes.append(record.hr_attendance_id.check_in)
                     internal_in_mode = record.hr_attendance_id.in_mode
                 if record.hr_attendance_id.check_out and record.hr_attendance_id.out_mode != 'technical':
-                    punch_datetimes.append(record.hr_attendance_id.check_out)
+                    check_out_candidates.append(record.hr_attendance_id.check_out)
                     internal_datetimes.append(record.hr_attendance_id.check_out)
                     internal_out_mode = record.hr_attendance_id.out_mode
-            if punch_datetimes:
-                check_in = min(punch_datetimes)
-                check_out = max(punch_datetimes)
+            if check_in_candidates or check_out_candidates:
+                check_in = min(check_in_candidates) if check_in_candidates else False
+                check_out = max(check_out_candidates) if check_out_candidates else False
                 if check_in in internal_datetimes:
                     in_mode = internal_in_mode
                 else:
@@ -259,6 +264,30 @@ class HrAttendanceMiddleware(models.Model):
             record.out_mode = out_mode
             record.check_in_computed = check_in
             record.check_out_computed = check_out
+
+    def _get_zk_api_checkings(self):
+        self.ensure_one()
+        check_in_candidates = []
+        check_out_candidates = []
+        all_punches = []
+        for zk_attendance in self.zk_attendance_ids.sorted(lambda rec: rec.punch_time or ''):
+            if not zk_attendance.punch_time:
+                continue
+            time_obj = datetime.strptime(zk_attendance.punch_time, "%H:%M").time()
+            punch_datetime = self._convert_to_gmt_naive(self.date, time_obj)
+            all_punches.append(punch_datetime)
+            punch_state = (zk_attendance.punch_state or '').lower()
+            if 'in' in punch_state:
+                check_in_candidates.append(punch_datetime)
+            elif 'out' in punch_state:
+                check_out_candidates.append(punch_datetime)
+            else:
+                check_in_candidates.append(punch_datetime)
+                check_out_candidates.append(punch_datetime)
+
+        check_in = min(check_in_candidates) if check_in_candidates else (min(all_punches) if all_punches else False)
+        check_out = max(check_out_candidates) if check_out_candidates else (max(all_punches) if all_punches else False)
+        return check_in, check_out
 
     def _get_zk_api_datetimes(self):
         self.ensure_one()

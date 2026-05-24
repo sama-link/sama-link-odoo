@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 from datetime import datetime, time, timedelta
+import pytz
 from odoo import models, fields, api, _, Command
 from odoo.exceptions import UserError, ValidationError
 
@@ -195,8 +196,12 @@ class HrEmployee(models.Model):
         return day - timedelta(days=offset)
 
     def _get_grouped_attendance_dates(self, date_from, date_to):
-        date_midnight = datetime.combine(date_from, time.min)
-        end_of_date = datetime.combine(date_to, time.max)
+        cairo_tz = pytz.timezone("Africa/Cairo")
+        utc_tz = pytz.timezone("UTC")
+        local_start = datetime.combine(date_from, time.min)
+        local_end = datetime.combine(date_to, time.max)
+        date_midnight = cairo_tz.localize(local_start).astimezone(utc_tz).replace(tzinfo=None)
+        end_of_date = cairo_tz.localize(local_end).astimezone(utc_tz).replace(tzinfo=None)
         domain = [
             ('employee_id', 'in', self.ids),
             ('check_in', '>=', date_midnight),
@@ -206,7 +211,10 @@ class HrEmployee(models.Model):
         grouped_attendance = attendance_records.grouped('employee_id')
         attendance_mapped = defaultdict(list)
         for employee, attendance in grouped_attendance.items():
-            attendance_mapped[employee.id] = [date_time.date() for date_time in attendance.mapped('check_in')]
+            attendance_mapped[employee.id] = [
+                utc_tz.localize(date_time).astimezone(cairo_tz).date()
+                for date_time in attendance.mapped('check_in')
+            ]
         return attendance_mapped
 
     def _get_grouped_timeoff_dates(self, date_from, date_to):
