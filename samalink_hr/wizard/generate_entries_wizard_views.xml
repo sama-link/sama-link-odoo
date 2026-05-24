@@ -43,7 +43,7 @@
                 </group>
                 <group>
                     <field name="employee_ids" widget="many2many_tags"
-                           placeholder="Only employees with Flexible Rest Days on their work schedule"/>
+                           placeholder="Leave empty for all employees with active contracts"/>
                 </group>
                 <footer>
                     <button name="action_adjust" string="Adjust" type="object" class="btn-primary"/>
