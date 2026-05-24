@@ -132,14 +132,21 @@ class HrEmployee(models.Model):
         if vals_list:
             self.env['hr.absent.entry'].create(vals_list)
 
+    def _samalink_flexible_calc_start(self, start_date):
+        """Attendance/credit window start: previous Fri→Thu week before the period."""
+        return self._get_friday_week_key(start_date) - timedelta(days=7)
+
     def _samalink_flexible_split_absence_and_rest(self, start_date, end_date):
         """Split non-attended days into real absences vs actual rest (flexible schedule only).
 
-        Returns (real_absence_dates_sorted, rest_taken_dates_sorted).
+        Returns (real_absence_dates_sorted, rest_taken_dates_sorted) for [start_date, end_date].
 
         Rest taken = default Fri/Sat not worked, or another weekday not worked when covered
-        by a compensation credit from working a default rest day (same Fri→Thu week).
+        by a compensation credit from working a default rest day (same Fri→Thursday week).
         Public holidays and approved time off are excluded from both lists.
+
+        Week credits include the previous payroll week so period-start days are classified
+        correctly (not wrongly marked absent).
         """
         self.ensure_one()
         employee = self
@@ -153,8 +160,12 @@ class HrEmployee(models.Model):
         if rest_per_week == 2:
             default_rest_weekdays.add(5)
 
-        attendance_dates = set(
+        calc_start = self._samalink_flexible_calc_start(start_date)
+        attendance_dates_period = set(
             self._get_grouped_attendance_dates(start_date, end_date).get(employee.id, [])
+        )
+        attendance_dates_credit = set(
+            self._get_grouped_attendance_dates(calc_start, end_date).get(employee.id, [])
         )
         timeoff_dates = set(
             self._get_grouped_timeoff_dates(start_date, end_date).get(employee.id, set())
@@ -164,15 +175,14 @@ class HrEmployee(models.Model):
         non_attended_days = []
         current_date = start_date
         while current_date <= end_date:
-            if current_date not in attendance_dates:
+            if current_date not in attendance_dates_period:
                 non_attended_days.append(current_date)
             current_date += timedelta(days=1)
 
         week_credits = defaultdict(int)
-        anchor_from = self._get_friday_week_key(start_date)
-        cursor = anchor_from
+        cursor = calc_start
         while cursor <= end_date:
-            if cursor.weekday() in default_rest_weekdays and cursor in attendance_dates:
+            if cursor.weekday() in default_rest_weekdays and cursor in attendance_dates_credit:
                 week_key = self._get_friday_week_key(cursor)
                 week_credits[week_key] += 1
             cursor += timedelta(days=1)
