@@ -206,6 +206,66 @@ class HrEmployee(models.Model):
 
         return sorted(real_absences), sorted(rest_taken)
 
+    def _samalink_default_rest_dates_for_week(self, week_key, rest_per_week):
+        """Friday (and Saturday if 2 rest days/week) for a Fri→Thu payroll week."""
+        dates = [week_key]
+        if int(rest_per_week or '1') == 2:
+            dates.append(week_key + timedelta(days=1))
+        return dates
+
+    def _samalink_flexible_rest_dates_for_work_entries(self, start_date, end_date):
+        """Rest/absence split for work-entry adjust, with default Fri/Sat when no rest in week.
+
+        If the employee took no rest day in a payroll week:
+        - 1 rest day/week → Friday (if not attended) is marked rest
+        - 2 rest days/week → Friday and Saturday (if not attended) are marked rest
+        """
+        self.ensure_one()
+        real_abs, rest_taken = self._samalink_flexible_split_absence_and_rest(
+            start_date, end_date,
+        )
+        contract = self.contract_id
+        calendar = contract.resource_calendar_id if contract else False
+        if not calendar or not calendar.flexible_rest_day:
+            return real_abs, rest_taken
+
+        rest_per_week = int(calendar.rest_days_per_week or '1')
+        rest_set = set(rest_taken)
+        real_set = set(real_abs)
+
+        attendance_dates_period = set(
+            self._get_grouped_attendance_dates(start_date, end_date).get(self.id, [])
+        )
+        timeoff_dates = set(
+            self._get_grouped_timeoff_dates(start_date, end_date).get(self.id, set())
+        )
+        public_holidays = self._get_public_holiday_dates(start_date, end_date)
+
+        calc_start = self._samalink_flexible_calc_start(start_date)
+        week_key = self._get_friday_week_key(calc_start)
+        end_week_key = self._get_friday_week_key(end_date)
+        while week_key <= end_week_key:
+            week_start = week_key
+            week_end = week_key + timedelta(days=6)
+            _week_real, week_rest = self._samalink_flexible_split_absence_and_rest(
+                week_start, week_end,
+            )
+            if not week_rest:
+                for day in self._samalink_default_rest_dates_for_week(
+                    week_key, rest_per_week,
+                ):
+                    if day < start_date or day > end_date:
+                        continue
+                    if day in public_holidays or day in timeoff_dates:
+                        continue
+                    if day in attendance_dates_period:
+                        continue
+                    rest_set.add(day)
+                    real_set.discard(day)
+            week_key += timedelta(days=7)
+
+        return sorted(real_set), sorted(rest_set)
+
     def _samalink_get_actual_rest_dates_flexible(self, start_date, end_date):
         """Dates the employee actually rested (flexible rules), excluding holidays and leave."""
         _real, rest_taken = self._samalink_flexible_split_absence_and_rest(start_date, end_date)

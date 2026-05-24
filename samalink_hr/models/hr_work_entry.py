@@ -30,6 +30,8 @@ class HrWorkEntry(models.Model):
 
         For those employees:
         - Days classified as actual rest → REST100
+        - If no rest was taken in a payroll week: default Friday (1 rest/week) or
+          Friday + Saturday (2 rest/week) when those days were not attended
         - Days classified as real absence → left unchanged (e.g. OUT from generator)
         - Other working days → attendance (WORK100)
         - Public holidays / approved leave dates → left unchanged
@@ -81,7 +83,9 @@ class HrWorkEntry(models.Model):
             cal = emp.contract_id.resource_calendar_id if emp.contract_id else False
             if not cal or not cal.flexible_rest_day:
                 continue
-            real_abs, rest_taken = emp._samalink_flexible_split_absence_and_rest(date_from, date_to)
+            real_abs, rest_taken = emp._samalink_flexible_rest_dates_for_work_entries(
+                date_from, date_to,
+            )
             rest_by_emp[emp.id] = set(rest_taken)
             real_by_emp[emp.id] = set(real_abs)
 
