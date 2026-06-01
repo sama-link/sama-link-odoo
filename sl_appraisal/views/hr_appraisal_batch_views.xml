@@ -82,6 +82,14 @@
                             class="oe_highlight"
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
                             invisible="state != 'published'"/>
+                    <button name="action_sync_hr_scores_from_manager"
+                            string="Sync HR Scores from Manager"
+                            type="object"
+                            class="btn-secondary"
+                            groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
+                            invisible="submitted_appraisal_count == 0"
+                            confirm="This will copy Manager Feedback Score to HR Skill Score on all submitted appraisals in this batch. Continue?"/>
+                    <field name="submitted_appraisal_count" invisible="1"/>
                     <button name="action_hr_finalize_all"
                             string="HR Finalize All"
                             type="object"

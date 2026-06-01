@@ -46,6 +46,10 @@ class HrAppraisalBatch(models.Model):
         string='Appraisal Count',
         compute='_compute_appraisal_count',
     )
+    submitted_appraisal_count = fields.Integer(
+        string='Submitted Appraisals',
+        compute='_compute_submitted_appraisal_count',
+    )
     is_appraisal_admin = fields.Boolean(
         compute='_compute_is_appraisal_admin',
     )
@@ -54,6 +58,13 @@ class HrAppraisalBatch(models.Model):
     def _compute_appraisal_count(self):
         for batch in self:
             batch.appraisal_count = len(batch.appraisal_ids)
+
+    @api.depends('appraisal_ids', 'appraisal_ids.state')
+    def _compute_submitted_appraisal_count(self):
+        for batch in self:
+            batch.submitted_appraisal_count = len(
+                batch.appraisal_ids.filtered(lambda a: a.state == 'submitted')
+            )
 
     @api.depends_context('uid')
     def _compute_is_appraisal_admin(self):
@@ -161,6 +172,27 @@ class HrAppraisalBatch(models.Model):
 
     def action_submit_all(self):
         self._run_bulk_state_change('action_submit', 'submitted', _("Submitted"))
+
+    def action_sync_hr_scores_from_manager(self):
+        """Sync HR skill scores from manager feedback for submitted appraisals in the batch."""
+        self._check_hr_or_admin_access("sync HR skill scores from manager feedback")
+        synced_total = 0
+        for batch in self:
+            appraisals = batch.appraisal_ids.filtered(lambda a: a.state == 'submitted')
+            if appraisals:
+                appraisals._sync_skill_lines_hr_from_manager_feedback()
+                synced_total += len(appraisals)
+                batch.message_post(body=_(
+                    "Synced HR skill scores from manager feedback for %(count)s submitted appraisal(s).",
+                    count=len(appraisals),
+                ))
+            else:
+                batch.message_post(body=_(
+                    "No appraisals in Submitted state to sync in this batch."
+                ))
+        if not synced_total:
+            raise UserError(_("No appraisals in Submitted state were found in the selected batch(es)."))
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_hr_finalize_all(self):
         if not self.env.user.has_group('sl_appraisal.group_appraisal_administrator') and not self.env.user.has_group('base.group_system'):

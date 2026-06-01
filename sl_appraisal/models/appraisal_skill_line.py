@@ -72,7 +72,8 @@ class AppraisalSkillLine(models.Model):
         'hr.skill.level',
         string='HR Skill Score',
         domain="[('skill_type_id', '=', skill_type_id)]",
-        help="HR selected score copied initially from manager feedback score.")
+        help="Copied from Manager Feedback Score when the appraisal is submitted. "
+             "Use Sync HR Scores from Manager on submitted appraisals to fix existing records.")
 
     hr_skill_score_level_progress = fields.Integer(
         related='hr_skill_score_level_id.level_progress',
@@ -110,6 +111,13 @@ class AppraisalSkillLine(models.Model):
         ('declined', '↓ Declined'),
         ('new', '★ New'),
     ], string='Change', compute='_compute_level_change', store=True)
+
+    def _sync_hr_score_from_manager(self):
+        """Set HR skill score to match manager feedback score (always overwrite)."""
+        for line in self:
+            line.write({
+                'hr_skill_score_level_id': line.manager_feedback_skill_level_id.id,
+            })
 
     @api.depends(
         'state',

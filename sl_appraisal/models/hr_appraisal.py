@@ -785,20 +785,16 @@ class HrAppraisal(models.Model):
 
     def action_submit(self):
         """Move appraisal from Published -> Submitted.
-        Allowed for selected manager/user only."""
+        Allowed for selected manager/employee or Appraisal Administrator."""
         self.ensure_one()
         if self.state != 'published':
             raise UserError(_("Only published appraisals can be submitted."))
 
         force_batch_submit = self.env.context.get('batch_force_submit') and self._is_hr_or_admin()
-        is_selected_user = self.env.user in self._get_selected_access_employees().mapped('user_id')
-        if not is_selected_user and not force_batch_submit:
+        if not self._can_submit_appraisal() and not force_batch_submit:
             raise AccessError(_("Only selected manager/employee can submit."))
 
-        # On submit, initialize HR score from manager feedback score once.
-        for line in self.sudo().appraisal_skill_line_ids:
-            if not line.hr_skill_score_level_id and line.manager_feedback_skill_level_id:
-                line.hr_skill_score_level_id = line.manager_feedback_skill_level_id
+        self._sync_skill_lines_hr_from_manager_feedback()
 
         if force_batch_submit:
             self.sudo().write({'state': 'submitted'})
@@ -862,6 +858,52 @@ class HrAppraisal(models.Model):
             'sl_appraisal.group_appraisal_hr')
             or self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
             or self.env.user.has_group('base.group_system'))
+
+    def _is_appraisal_administrator_user(self):
+        return (
+            self.env.user.has_group('sl_appraisal.group_appraisal_administrator')
+            or self.env.user.has_group('base.group_system')
+        )
+
+    def _can_submit_appraisal(self):
+        """Selected evaluator, or Appraisal Administrator / system admin."""
+        self.ensure_one()
+        if self.env.user in self._get_selected_access_employees().mapped('user_id'):
+            return True
+        return self._is_appraisal_administrator_user()
+
+    def _sync_skill_lines_hr_from_manager_feedback(self):
+        """Copy manager feedback skill level to HR skill score on all skill lines."""
+        for appraisal in self:
+            appraisal.sudo().appraisal_skill_line_ids._sync_hr_score_from_manager()
+
+    def action_sync_hr_scores_from_manager(self):
+        """Fix submitted appraisals: overwrite HR skill score from manager feedback."""
+        self._check_hr_or_admin_access("sync HR skill scores from manager feedback")
+        to_sync = self.filtered(lambda a: a.state == 'submitted')
+        skipped = self - to_sync
+        if not to_sync:
+            raise UserError(_("No appraisals in Submitted state were selected."))
+        to_sync._sync_skill_lines_hr_from_manager_feedback()
+        message = _(
+            "Synced HR skill scores from manager feedback for %(count)s appraisal(s).",
+            count=len(to_sync),
+        )
+        if skipped:
+            message += " " + _(
+                "Skipped %(count)s record(s) not in Submitted state.",
+                count=len(skipped),
+            )
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _("HR Scores Synced"),
+                'message': message,
+                'type': 'success',
+                'sticky': bool(skipped),
+            },
+        }
 
     def _check_hr_or_admin_access(self, action_name):
         if not self._is_hr_or_admin():
