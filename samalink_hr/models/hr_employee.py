@@ -409,10 +409,39 @@ class HrEmployee(models.Model):
         action['context'] = {'default_employee_id': self.id}
         return action
 
+    def _get_skill_level_for_job_skill(self, skill):
+        """Default level for a job skill, or the first configured level."""
+        skill_levels = skill.skill_type_id.skill_level_ids
+        if not skill_levels:
+            return self.env['hr.skill.level']
+        return skill_levels.filtered('default_level')[:1] or skill_levels.sorted('level_progress')[:1]
+
+    def _add_job_skills_to_employee(self, skills):
+        """Add job skills to the employee card without removing existing ones."""
+        self.ensure_one()
+        existing_skill_ids = set(self.employee_skill_ids.mapped('skill_id').ids)
+        commands = []
+        skipped = []
+        for skill in skills:
+            if skill.id in existing_skill_ids:
+                continue
+            level = self._get_skill_level_for_job_skill(skill)
+            if not level:
+                skipped.append(skill.display_name)
+                continue
+            commands.append(Command.create({
+                'skill_id': skill.id,
+                'skill_level_id': level.id,
+                'skill_type_id': skill.skill_type_id.id,
+            }))
+        if commands:
+            self.write({'employee_skill_ids': commands})
+        return skipped
+
     def action_add_data_from_job_position(self):
         self.ensure_one()
         if not self.job_id:
-            raise UserError(f"This employee {self.name} does not have a job position assigned.")
+            raise UserError(_("This employee %s does not have a job position assigned.") % self.name)
         job = self.job_id
         existing_resume_lines = self.resume_line_ids.filtered(lambda line: line.name == job.name)
         vals = {}
@@ -434,18 +463,13 @@ class HrEmployee(models.Model):
         if skills_to_remove:
             skills_to_remove.unlink()
 
-        existing_employee_skills = self.employee_skill_ids.mapped('skill_id')
-        job_skills_to_add = job.skill_ids.filtered(lambda skill: skill not in existing_employee_skills)
-        for skill in job_skills_to_add:
-            skill_type_id = skill.skill_type_id
-            default_skill_level = skill_type_id.skill_level_ids.filtered(lambda level: level.default_level)
-            if default_skill_level:
-                vals.setdefault('employee_skill_ids', []).append(Command.create({
-                    'skill_id': skill.id,
-                    'skill_level_id': default_skill_level.id,
-                    'skill_type_id': skill_type_id.id,
-                }))
-        self.write(vals)
+        skipped = self._add_job_skills_to_employee(job.skill_ids)
+        if vals:
+            self.write(vals)
+        if skipped:
+            raise UserError(_(
+                "Some job skills could not be added because their skill type has no levels configured:\n%s"
+            ) % '\n'.join(f"- {name}" for name in skipped))
 
     def action_bulk_add_data_from_job_position(self):
         processed = 0
@@ -454,8 +478,11 @@ class HrEmployee(models.Model):
             if not employee.job_id:
                 skipped.append(_('%s (no job position)') % employee.name)
                 continue
-            employee.action_add_data_from_job_position()
-            processed += 1
+            try:
+                employee.action_add_data_from_job_position()
+                processed += 1
+            except UserError as exc:
+                skipped.append('%s: %s' % (employee.name, exc.args[0]))
         message = _('Added job data for %s employee(s).') % processed
         if skipped:
             message += '\n' + _('Skipped: %s') % ', '.join(skipped)
