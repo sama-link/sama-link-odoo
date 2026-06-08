@@ -57,3 +57,12 @@ access_manual_adjust_wizard_hr,bonus.manual.adjust.wiz.hr,model_sl_bonus_manual_
 access_manual_adjust_wizard_admin,bonus.manual.adjust.wiz.admin,model_sl_bonus_manual_adjust_wizard,group_bonus_admin,1,1,1,1
 access_edara_import_wizard_hr,bonus.edara.import.wiz.hr,model_sl_bonus_edara_import_wizard,group_bonus_hr_manager,1,1,1,1
 access_edara_import_wizard_admin,bonus.edara.import.wiz.admin,model_sl_bonus_edara_import_wizard,group_bonus_admin,1,1,1,1
+access_edara_staging_target_hr,bonus.edara.staging.target.hr,model_sl_bonus_edara_staging_target,group_bonus_hr_manager,1,1,1,1
+access_edara_staging_target_admin,bonus.edara.staging.target.admin,model_sl_bonus_edara_staging_target,group_bonus_admin,1,1,1,1
+access_edara_staging_branch_profit_finance,bonus.edara.staging.bp.finance,model_sl_bonus_edara_staging_branch_profit,group_bonus_finance,1,1,1,1
+access_edara_staging_branch_profit_hr,bonus.edara.staging.bp.hr,model_sl_bonus_edara_staging_branch_profit,group_bonus_hr_manager,1,1,1,1
+access_edara_staging_branch_profit_admin,bonus.edara.staging.bp.admin,model_sl_bonus_edara_staging_branch_profit,group_bonus_admin,1,1,1,1
+access_edara_sync_wizard_hr,bonus.edara.sync.wiz.hr,model_sl_bonus_edara_sync_wizard,group_bonus_hr_manager,1,1,1,1
+access_edara_sync_wizard_admin,bonus.edara.sync.wiz.admin,model_sl_bonus_edara_sync_wizard,group_bonus_admin,1,1,1,1
+access_edara_settings_hr,bonus.edara.settings.hr,model_sl_bonus_edara_settings,group_bonus_hr_manager,1,1,1,1
+access_edara_settings_admin,bonus.edara.settings.admin,model_sl_bonus_edara_settings,group_bonus_admin,1,1,1,1

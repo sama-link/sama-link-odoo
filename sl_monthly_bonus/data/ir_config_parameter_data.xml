@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Safe defaults for the Edara proxy. noupdate=1 so operator changes are
+         never clobbered on upgrade. Base URL and token are intentionally NOT
+         seeded here (token is secret; base URL is environment-specific). -->
+    <!-- NOTE: sl_monthly_bonus.edara_enabled and .edara_endpoint are already
+         seeded in data/sl_bonus_data.xml. Only the NEW P1 tuning params are
+         added here (duplicating a key would violate the unique constraint). -->
+    <data noupdate="1">
+        <record id="param_edara_timeout" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_timeout</field>
+            <field name="value">30</field>
+        </record>
+        <record id="param_edara_retry_count" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_retry_count</field>
+            <field name="value">2</field>
+        </record>
+        <record id="param_edara_retry_backoff" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_retry_backoff</field>
+            <field name="value">1.5</field>
+        </record>
+        <record id="param_edara_page_size" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.edara_page_size</field>
+            <field name="value">500</field>
+        </record>
+    </data>
+</odoo>

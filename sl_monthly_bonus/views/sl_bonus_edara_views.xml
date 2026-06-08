@@ -31,13 +31,19 @@
                        decoration-danger="state=='failure'"
                        decoration-muted="state=='skipped'">
                     <field name="started_at"/>
+                    <field name="run_uid" optional="hide"/>
+                    <field name="data_type" optional="show"/>
                     <field name="triggered_by"/>
                     <field name="state"/>
+                    <field name="dry_run" optional="show"/>
                     <field name="period_from"/>
                     <field name="period_to"/>
-                    <field name="sales_records"/>
-                    <field name="stock_records"/>
-                    <field name="installation_records"/>
+                    <field name="rows_received" optional="show"/>
+                    <field name="rows_created" optional="show"/>
+                    <field name="rows_updated" optional="show"/>
+                    <field name="sales_records" optional="hide"/>
+                    <field name="stock_records" optional="hide"/>
+                    <field name="installation_records" optional="hide"/>
                     <field name="user_id"/>
                 </list>
             </field>
@@ -66,8 +72,28 @@
                                 <field name="installation_records" readonly="1"/>
                             </group>
                         </group>
+                        <group string="Proxy Metadata">
+                            <group>
+                                <field name="run_uid" readonly="1"/>
+                                <field name="data_type" readonly="1"/>
+                                <field name="endpoint" readonly="1"/>
+                                <field name="request_id" readonly="1"/>
+                                <field name="http_status" readonly="1"/>
+                                <field name="dry_run" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="rows_received" readonly="1"/>
+                                <field name="rows_created" readonly="1"/>
+                                <field name="rows_updated" readonly="1"/>
+                                <field name="rows_skipped" readonly="1"/>
+                                <field name="duration_ms" readonly="1"/>
+                                <field name="params_summary" readonly="1"/>
+                            </group>
+                        </group>
                         <group string="Message">
                             <field name="message" readonly="1" nolabel="1"/>
+                            <field name="warnings_summary" readonly="1"/>
+                            <field name="errors_summary" readonly="1"/>
                         </group>
                     </sheet>
                     <chatter/>
@@ -100,6 +126,8 @@ model.sync_now(triggered_by='manual')</field>
                     <field name="edara_external_id"/>
                     <field name="amount"/>
                     <field name="is_collected"/>
+                    <field name="mapping_status" optional="show"/>
+                    <field name="edara_row_uid" optional="hide"/>
                     <field name="sync_id" optional="hide"/>
                     <field name="currency_id" column_invisible="True"/>
                 </list>
@@ -123,6 +151,8 @@ model.sync_now(triggered_by='manual')</field>
                     <field name="edara_external_id"/>
                     <field name="stock_sales_value"/>
                     <field name="classification"/>
+                    <field name="mapping_status" optional="show"/>
+                    <field name="edara_row_uid" optional="hide"/>
                     <field name="sync_id" optional="hide"/>
                     <field name="currency_id" column_invisible="True"/>
                 </list>
@@ -145,6 +175,9 @@ model.sync_now(triggered_by='manual')</field>
                     <field name="employee_id"/>
                     <field name="edara_external_id"/>
                     <field name="completed"/>
+                    <field name="installation_count" optional="show"/>
+                    <field name="mapping_status" optional="show"/>
+                    <field name="edara_row_uid" optional="hide"/>
                     <field name="sync_id" optional="hide"/>
                 </list>
             </field>
@@ -152,6 +185,72 @@ model.sync_now(triggered_by='manual')</field>
         <record id="action_edara_staging_install" model="ir.actions.act_window">
             <field name="name">Staging — Installations</field>
             <field name="res_model">sl.bonus.edara.staging.installation</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- ════════════════════ Staging Sales Targets (raw) ════════════════════ -->
+        <record id="view_edara_staging_target_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.staging.target.tree</field>
+            <field name="model">sl.bonus.edara.staging.target</field>
+            <field name="arch" type="xml">
+                <list decoration-muted="promoted==True" decoration-warning="mapping_status=='unmapped'">
+                    <header>
+                        <button name="action_promote_to_target" type="object"
+                                string="Promote to Authoritative Targets"
+                                class="btn-primary"/>
+                    </header>
+                    <field name="period_start"/>
+                    <field name="employee_id"/>
+                    <field name="employee_code"/>
+                    <field name="edara_employee_id" optional="hide"/>
+                    <field name="target_amount"/>
+                    <field name="target_type" optional="hide"/>
+                    <field name="branch_code" optional="hide"/>
+                    <field name="mapping_status"/>
+                    <field name="promoted"/>
+                    <field name="promoted_target_id" optional="hide"/>
+                    <field name="edara_row_uid" optional="hide"/>
+                    <field name="sync_id" optional="hide"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_edara_staging_target" model="ir.actions.act_window">
+            <field name="name">Staging — Sales Targets (raw)</field>
+            <field name="res_model">sl.bonus.edara.staging.target</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- ════════════════════ Staging Branch Profitability (raw) ════════════════════ -->
+        <record id="view_edara_staging_branch_profit_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.staging.branch.profit.tree</field>
+            <field name="model">sl.bonus.edara.staging.branch.profit</field>
+            <field name="arch" type="xml">
+                <list decoration-muted="promoted==True">
+                    <header>
+                        <button name="action_promote_to_branch_profit" type="object"
+                                string="Promote to Draft Branch Profitability"
+                                class="btn-primary"/>
+                    </header>
+                    <field name="period_start"/>
+                    <field name="work_location_id"/>
+                    <field name="branch_name"/>
+                    <field name="branch_code" optional="hide"/>
+                    <field name="revenue" optional="hide"/>
+                    <field name="cost" optional="hide"/>
+                    <field name="profit" optional="hide"/>
+                    <field name="profitability_factor"/>
+                    <field name="promoted"/>
+                    <field name="promoted_profit_id" optional="hide"/>
+                    <field name="edara_row_uid" optional="hide"/>
+                    <field name="sync_id" optional="hide"/>
+                    <field name="currency_id" column_invisible="True"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_edara_staging_branch_profit" model="ir.actions.act_window">
+            <field name="name">Staging — Branch Profitability (raw)</field>
+            <field name="res_model">sl.bonus.edara.staging.branch.profit</field>
             <field name="view_mode">list,form</field>
         </record>
     </data>

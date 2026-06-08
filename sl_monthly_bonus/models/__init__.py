@@ -8,6 +8,8 @@ from . import sl_bonus_target
 from . import sl_bonus_branch_profit
 from . import sl_bonus_edara_mapping
 from . import sl_bonus_edara_staging
+from . import sl_bonus_edara_staging_target
+from . import sl_bonus_edara_staging_branch_profit
 from . import sl_bonus_edara_sync
 from . import sl_bonus_batch
 from . import sl_bonus_batch_line

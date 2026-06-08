@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════════ Edara Settings ════════════════════ -->
+        <record id="view_sl_bonus_edara_settings_form" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.settings.form</field>
+            <field name="model">sl.bonus.edara.settings</field>
+            <field name="arch" type="xml">
+                <form string="Edara Settings">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Edara Proxy Settings</h1>
+                        </div>
+                        <group>
+                            <group string="Connection">
+                                <field name="edara_enabled"/>
+                                <field name="edara_base_url" placeholder="https://proxy.example.com"/>
+                                <field name="token_is_set" readonly="1"/>
+                                <field name="edara_token"
+                                       password="True"
+                                       placeholder="•••••••• (leave blank to keep current)"/>
+                            </group>
+                            <group string="Tuning">
+                                <field name="edara_timeout"/>
+                                <field name="edara_retry_count"/>
+                                <field name="edara_retry_backoff"/>
+                                <field name="edara_page_size"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button name="action_save" type="object"
+                                    string="Save" class="btn-primary"/>
+                            <button name="action_test_connection" type="object"
+                                    string="Test Connection" class="btn-secondary"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_edara_settings" model="ir.actions.act_window">
+            <field name="name">Edara Settings</field>
+            <field name="res_model">sl.bonus.edara.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- ════════════════════ Sync Wizard ════════════════════ -->
+        <record id="view_sl_bonus_edara_sync_wizard_form" model="ir.ui.view">
+            <field name="name">sl.bonus.edara.sync.wizard.form</field>
+            <field name="model">sl.bonus.edara.sync.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Sync Edara">
+                    <sheet>
+                        <group>
+                            <group string="Period">
+                                <field name="month"/>
+                                <field name="use_custom_range"/>
+                                <field name="date_from" invisible="not use_custom_range"
+                                       required="use_custom_range"/>
+                                <field name="date_to" invisible="not use_custom_range"
+                                       required="use_custom_range"/>
+                            </group>
+                            <group string="Options">
+                                <field name="dry_run"/>
+                                <field name="strict_schema"/>
+                                <field name="page_size"/>
+                                <field name="employee_code"/>
+                                <field name="branch_code"/>
+                            </group>
+                        </group>
+                        <group string="Scopes">
+                            <field name="sync_all"/>
+                            <field name="scope_employees" invisible="sync_all"/>
+                            <field name="scope_sales" invisible="sync_all"/>
+                            <field name="scope_sales_targets" invisible="sync_all"/>
+                            <field name="scope_stock" invisible="sync_all"/>
+                            <field name="scope_installations" invisible="sync_all"/>
+                            <field name="scope_branch_profit" invisible="sync_all"/>
+                        </group>
+                        <footer>
+                            <button name="action_run" type="object"
+                                    string="Run Sync" class="btn-primary"/>
+                            <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_edara_sync_wizard" model="ir.actions.act_window">
+            <field name="name">Sync Edara</field>
+            <field name="res_model">sl.bonus.edara.sync.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</odoo>

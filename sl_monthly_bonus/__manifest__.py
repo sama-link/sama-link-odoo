@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
@@ -33,10 +33,12 @@
         'security/sl_bonus_security.xml',
         'data/sl_bonus_data.xml',
         'data/ir_cron_data.xml',
+        'data/ir_config_parameter_data.xml',
         'views/sl_bonus_config_views.xml',
         'views/sl_bonus_target_views.xml',
         'views/sl_bonus_branch_profit_views.xml',
         'views/sl_bonus_edara_views.xml',
+        'views/sl_bonus_settings_views.xml',
         'views/sl_bonus_batch_views.xml',
         'views/sl_bonus_self_service_views.xml',
         'views/sl_bonus_audit_views.xml',
@@ -47,6 +49,9 @@
         # Loaded LAST: needs both group_bonus_* records and menu xmlids to exist.
         'security/sl_bonus_samalink_bridge.xml',
     ],
+    'external_dependencies': {
+        'python': ['requests'],
+    },
     'installable': True,
     'application': True,
     'auto_install': False,

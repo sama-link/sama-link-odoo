@@ -65,11 +65,23 @@
                   sequence="40"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
+        <menuitem id="menu_sl_bonus_edara_settings"
+                  name="Edara Settings"
+                  parent="menu_sl_bonus_edara"
+                  action="action_sl_bonus_edara_settings"
+                  sequence="5"/>
+
         <menuitem id="menu_sl_bonus_edara_sync"
                   name="Sync Log"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_sync"
                   sequence="10"/>
+
+        <menuitem id="menu_sl_bonus_edara_sync_wizard"
+                  name="Sync Edara (Proxy)"
+                  parent="menu_sl_bonus_edara"
+                  action="action_sl_bonus_edara_sync_wizard"
+                  sequence="15"/>
 
         <menuitem id="menu_sl_bonus_edara_sync_now"
                   name="Sync Now"
@@ -106,6 +118,18 @@
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_install"
                   sequence="70"/>
+
+        <menuitem id="menu_sl_bonus_edara_staging_target"
+                  name="Staging — Sales Targets (raw)"
+                  parent="menu_sl_bonus_edara"
+                  action="action_edara_staging_target"
+                  sequence="55"/>
+
+        <menuitem id="menu_sl_bonus_edara_staging_branch_profit"
+                  name="Staging — Branch Profitability (raw)"
+                  parent="menu_sl_bonus_edara"
+                  action="action_edara_staging_branch_profit"
+                  sequence="75"/>
 
         <!-- ════════════════════ Branch Profitability ════════════════════ -->
         <menuitem id="menu_sl_bonus_branch_profit_root"
