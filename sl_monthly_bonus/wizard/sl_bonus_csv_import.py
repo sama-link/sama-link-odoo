@@ -309,7 +309,17 @@ class SlBonusCsvImportWizard(models.TransientModel):
         headers = [(h or '').strip() for h in (reader.fieldnames or [])]
         missing = [c for c in REQUIRED_COLUMNS[self.import_type] if c not in headers]
         if missing:
-            raise UserError(_("CSV is missing required column(s): %s") % ', '.join(missing))
+            # Help the user spot a type/file mismatch: if the file's columns match
+            # a DIFFERENT import type, point that out explicitly.
+            hint = ''
+            for other, cols in REQUIRED_COLUMNS.items():
+                if other != self.import_type and all(c in headers for c in cols):
+                    hint = _(" The uploaded file's columns match import type '%s' — "
+                             "select that type (set Import Type before importing).") % other
+                    break
+            raise UserError(_(
+                "CSV is missing required column(s) for import type '%(type)s': %(cols)s.%(hint)s"
+            ) % {'type': self.import_type, 'cols': ', '.join(missing), 'hint': hint})
 
         read = created = updated = skipped = failed = 0
         warnings, errors = [], []
