@@ -147,6 +147,22 @@ class SlBonusBatch(models.Model):
             'context': {'default_batch_id': self.id},
         }
 
+    def action_open_generate_wizard(self):
+        """Open the payslip-style 'Select Employees' wizard for this batch."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Select Employees'),
+            'res_model': 'sl.bonus.batch.generate.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'active_model': self._name,
+                'default_batch_id': self.id,
+            },
+        }
+
     def action_add_all_employees(self):
         """Convenience: load all active company employees into the selection."""
         self._ensure_hr()

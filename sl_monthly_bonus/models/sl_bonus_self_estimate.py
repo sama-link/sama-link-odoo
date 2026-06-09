@@ -28,6 +28,10 @@ class SlBonusSelfEstimate(models.Model):
     period_end = fields.Date(
         string='Period End', compute='_compute_period_end', store=True,
     )
+    period_label = fields.Char(
+        string='Month', compute='_compute_period_label', store=True,
+        help='Month/Year of this estimate (no day).',
+    )
     expected_evaluation_percent = fields.Float(
         string='Expected Evaluation %', default=85.0,
         help='Your expected total evaluation score (0–100). Used only to estimate this page.',
@@ -68,6 +72,11 @@ class SlBonusSelfEstimate(models.Model):
         for rec in self:
             period = rec.period_start and rec.period_start.strftime('%Y-%m') or ''
             rec.name = f"{rec.employee_id.name or ''} — {period}"
+
+    @api.depends('period_start')
+    def _compute_period_label(self):
+        for rec in self:
+            rec.period_label = rec.period_start.strftime('%m/%Y') if rec.period_start else ''
 
     @api.depends('period_start')
     def _compute_period_end(self):

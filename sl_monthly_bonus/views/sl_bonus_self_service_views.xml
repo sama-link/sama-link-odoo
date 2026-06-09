@@ -12,7 +12,7 @@
                                 <field name="employee_id" readonly="1"/>
                             </h1>
                             <h3>
-                                <field name="period_start"/>
+                                <field name="period_label" readonly="1"/>
                             </h3>
                         </div>
                         <group>

@@ -35,8 +35,9 @@
                         <button name="action_reset_to_draft" type="object" string="Reset to Draft"
                                 groups="sl_monthly_bonus.group_bonus_admin"
                                 confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
-                        <button name="action_add_all_employees" type="object" string="Add All Employees"
-                                invisible="state not in ('draft','data_ready')"/>
+                        <button name="action_open_generate_wizard" type="object" string="Select Employees"
+                                invisible="state not in ('draft','data_ready','computed','hr_review')"
+                                class="oe_highlight"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,data_ready,computed,approved"/>
                     </header>
@@ -63,15 +64,6 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="Employees">
-                                <div class="text-muted oe_edit_only">
-                                    Add specific employees to compute bonuses only for them
-                                    (use <b>Add All Employees</b> for the whole company).
-                                    Leave empty to compute for all active employees.
-                                </div>
-                                <field name="employee_ids" readonly="state in ('approved','locked')"
-                                       widget="many2many_tags" options="{'no_create': True}"/>
-                            </page>
                             <page string="Bonus Lines">
                                 <field name="line_ids" readonly="state in ('approved','locked')">
                                     <list>
