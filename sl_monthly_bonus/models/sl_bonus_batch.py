@@ -34,6 +34,13 @@ class SlBonusBatch(models.Model):
         'sl.bonus.batch.line', 'batch_id',
         string='Bonus Lines', copy=False,
     )
+    employee_ids = fields.Many2many(
+        'hr.employee', 'sl_bonus_batch_employee_rel', 'batch_id', 'employee_id',
+        string='Employees',
+        help='Optional. If set, Compute generates lines ONLY for these employees '
+             '(like appraisal batches). Leave empty to compute for all active '
+             'employees in the company.',
+    )
     line_count = fields.Integer(compute='_compute_counts', store=True)
     total_amount = fields.Monetary(
         string='Total', compute='_compute_counts', store=True,
@@ -128,6 +135,29 @@ class SlBonusBatch(models.Model):
             'target': 'current',
         }
 
+    def action_view_lines(self):
+        """Smart-button: open this batch's bonus lines (replaces the global menu)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Bonus Lines'),
+            'res_model': 'sl.bonus.batch.line',
+            'view_mode': 'list,form',
+            'domain': [('batch_id', '=', self.id)],
+            'context': {'default_batch_id': self.id},
+        }
+
+    def action_add_all_employees(self):
+        """Convenience: load all active company employees into the selection."""
+        self._ensure_hr()
+        for rec in self:
+            emps = self.env['hr.employee'].sudo().search([
+                ('company_id', 'in', [rec.company_id.id, False]),
+                ('active', '=', True),
+            ])
+            rec.employee_ids = [(6, 0, emps.ids)]
+        return True
+
     def action_mark_data_ready(self):
         self._ensure_hr()
         for rec in self:
@@ -206,14 +236,19 @@ class SlBonusBatch(models.Model):
         Calc = self.env['sl.bonus.calculator'].sudo()
         Line = self.env['sl.bonus.batch.line'].sudo()
         Component = self.env['sl.bonus.batch.line.component'].sudo()
-        employees = self.env['hr.employee'].sudo().search([
-            ('company_id', 'in', [self.company_id.id, False]),
-            ('active', '=', True),
-        ])
+        if self.employee_ids:
+            # Selected-employees mode (like appraisal batches): only these.
+            employees = self.employee_ids.sudo().filtered(lambda e: e.active)
+        else:
+            # Default: all active employees in the company.
+            employees = self.env['hr.employee'].sudo().search([
+                ('company_id', 'in', [self.company_id.id, False]),
+                ('active', '=', True),
+            ])
         if not employees:
             raise UserError(_(
-                "No active employees found for company '%s'. "
-                "Make sure at least one employee exists before computing bonuses."
+                "No employees to compute. Add employees to the batch, or — if you "
+                "left the selection empty — ensure active employees exist for '%s'."
             ) % self.company_id.name)
         existing_lines = {l.employee_id.id: l for l in self.sudo().line_ids}
         seen_emp_ids = set()

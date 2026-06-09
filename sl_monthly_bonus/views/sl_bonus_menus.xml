@@ -208,5 +208,42 @@
                   action="action_sl_bonus_audit_log"
                   sequence="80"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+
+        <!-- ════════════════════ Phase 1: temporarily hidden menus ════════════════════
+             Kept as records (active=False) instead of deleted, so their xmlids stay
+             valid for security/sl_bonus_samalink_bridge.xml whitelist refs. To restore
+             a menu later, set active back to True (or remove its record below).
+             - "All Bonus Lines" is replaced by a smart button on the batch form.
+             - Hiding the Edara Data parent hides its whole sub-tree. -->
+        <record id="menu_sl_bonus_batch_lines" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_open_prev_month" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_self_lines" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_edara" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_branch_profit_root" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_audit" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_config_install" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_config_stock" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_config_branch_tiers" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sl_bonus_config_branch_mgr_rates" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
     </data>
 </odoo>

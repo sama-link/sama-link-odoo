@@ -43,10 +43,18 @@
                         <button name="action_reset_to_draft" type="object" string="Reset to Draft"
                                 groups="sl_monthly_bonus.group_bonus_admin"
                                 confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
+                        <button name="action_add_all_employees" type="object" string="Add All Employees"
+                                invisible="state not in ('draft','data_ready')"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,data_ready,computed,hr_review,approved,locked"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_lines" type="object"
+                                    class="oe_stat_button" icon="fa-list-ul">
+                                <field name="line_count" widget="statinfo" string="Bonus Lines"/>
+                            </button>
+                        </div>
                         <div class="oe_title">
                             <h1><field name="name" readonly="state != 'draft'"/></h1>
                         </div>
@@ -72,6 +80,15 @@
                             </group>
                         </group>
                         <notebook>
+                            <page string="Employees">
+                                <div class="text-muted oe_edit_only">
+                                    Add specific employees to compute bonuses only for them
+                                    (use <b>Add All Employees</b> for the whole company).
+                                    Leave empty to compute for all active employees.
+                                </div>
+                                <field name="employee_ids" readonly="state in ('approved','locked')"
+                                       widget="many2many_tags" options="{'no_create': True}"/>
+                            </page>
                             <page string="Bonus Lines">
                                 <field name="line_ids" readonly="state in ('approved','locked')">
                                     <list decoration-muted="is_excluded == True">
