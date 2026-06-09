@@ -27,7 +27,7 @@ _logger = logging.getLogger(__name__)
 
 # Per-type required columns (header validation).
 REQUIRED_COLUMNS = {
-    'sales': ['month', 'employee_code', 'commission_amount'],
+    'sales': ['month', 'employee_code', 'sales_amount'],
     'stock_purchasing': ['month', 'employee_code', 'related_stock_sales_value'],
     'installations': ['month', 'employee_code', 'installation_count'],
     'sales_targets': ['month', 'employee_code', 'target_amount'],
@@ -37,8 +37,8 @@ REQUIRED_COLUMNS = {
 # Per-type CSV template: header line + one sample row.
 TEMPLATES = {
     'sales': (
-        'month,employee_code,employee_name,commission_amount,sales_amount,target_amount,external_ref,note',
-        '2026-06,E001,Ahmed Ali,5000,100000,80000,SAL-001,Manual June sales',
+        'month,employee_code,employee_name,sales_amount',
+        '2026-06,E001,Ahmed Ali,100000',
     ),
     'stock_purchasing': (
         'month,employee_code,employee_name,related_stock_sales_value,external_ref,note',
@@ -166,7 +166,8 @@ class SlBonusCsvImportWizard(models.TransientModel):
         if not code:
             return self.env['hr.employee'].browse()
         Emp = self.env['hr.employee'].sudo()
-        for field_name in ('barcode', 'identification_id', 'registration_number'):
+        # Match on the employee PIN first (per HR), then a couple of safe fallbacks.
+        for field_name in ('pin', 'barcode', 'registration_number'):
             if field_name in Emp._fields:
                 rec = Emp.search([(field_name, '=', code)], limit=1)
                 if rec:
@@ -201,13 +202,7 @@ class SlBonusCsvImportWizard(models.TransientModel):
                     'sales_person_name': (row.get('employee_name') or '').strip() or False,
                     'date': month, 'is_collected': True,
                     'amount': self._to_float(row.get('sales_amount'), 'sales_amount'),
-                    'proxy_target_amount': self._to_float(row.get('target_amount'), 'target_amount'),
                     'source_report': SOURCE_TAG,
-                    'note': self._compose_note([
-                        ('commission_amount', (row.get('commission_amount') or '').strip()),
-                        ('external_ref', ref),
-                        ('note', (row.get('note') or '').strip()),
-                    ]),
                 }
             elif t == 'stock_purchasing':
                 model = 'sl.bonus.edara.staging.stock'

@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.1.6.1',
+    'version': '18.0.1.7.0',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
@@ -46,7 +46,6 @@
         'wizard/sl_bonus_manual_adjust_views.xml',
         'wizard/sl_bonus_edara_import_views.xml',
         'wizard/sl_bonus_csv_import_views.xml',
-        'wizard/sl_bonus_batch_generate_views.xml',
         'views/sl_bonus_menus.xml',
         # Loaded LAST: needs both group_bonus_* records and menu xmlids to exist.
         'security/sl_bonus_samalink_bridge.xml',

@@ -213,7 +213,7 @@ class SlBonusEdaraSyncWizard(models.TransientModel):
         if not code:
             return self.env['hr.employee'].browse()
         Emp = self.env['hr.employee'].sudo()
-        for field_name in ('barcode', 'identification_id', 'registration_number'):
+        for field_name in ('pin', 'barcode', 'registration_number'):
             if field_name in Emp._fields:
                 rec = Emp.search([(field_name, '=', code)], limit=1)
                 if rec:

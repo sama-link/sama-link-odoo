@@ -35,9 +35,6 @@
                         <button name="action_reset_to_draft" type="object" string="Reset to Draft"
                                 groups="sl_monthly_bonus.group_bonus_admin"
                                 confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
-                        <button name="action_open_generate_wizard" type="object" string="Select Employees"
-                                invisible="state not in ('draft','data_ready','computed','hr_review')"
-                                class="oe_highlight"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,data_ready,computed,approved"/>
                     </header>
@@ -64,6 +61,21 @@
                             </group>
                         </group>
                         <notebook>
+                            <page string="Employees">
+                                <div class="text-muted">
+                                    Use <b>Add a line</b> to pick the employees this batch should
+                                    cover, then <b>Compute Bonuses</b>. Leave empty to compute for
+                                    all active employees.
+                                </div>
+                                <field name="employee_ids" readonly="state in ('approved','locked')"
+                                       options="{'no_create': True, 'no_create_edit': True}">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="department_id"/>
+                                        <field name="job_id"/>
+                                    </list>
+                                </field>
+                            </page>
                             <page string="Bonus Lines">
                                 <field name="line_ids" readonly="state in ('approved','locked')">
                                     <list>
