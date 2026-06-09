@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_sl_bonus_csv_import_wizard_form" model="ir.ui.view">
+            <field name="name">sl.bonus.csv.import.wizard.form</field>
+            <field name="model">sl.bonus.csv.import.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Manual CSV Import">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Manual CSV Import</h1>
+                        </div>
+                        <group>
+                            <group string="What to import">
+                                <field name="import_type"/>
+                                <field name="month"/>
+                            </group>
+                            <group string="Options">
+                                <field name="dry_run"/>
+                                <field name="overwrite"/>
+                            </group>
+                        </group>
+                        <group string="File">
+                            <field name="file_data" filename="file_name"/>
+                            <field name="file_name" invisible="1"/>
+                        </group>
+                        <div class="text-muted">
+                            Use <b>Download CSV Template</b> to get the exact headers and a sample row
+                            for the selected import type. Files must be UTF-8, comma-separated.
+                        </div>
+
+                        <group string="Result" invisible="not executed">
+                            <group>
+                                <field name="rows_read"/>
+                                <field name="rows_created"/>
+                                <field name="rows_updated"/>
+                            </group>
+                            <group>
+                                <field name="rows_skipped"/>
+                                <field name="rows_failed"/>
+                            </group>
+                        </group>
+                        <group string="Warnings" invisible="not warnings_text">
+                            <field name="warnings_text" nolabel="1" readonly="1"/>
+                        </group>
+                        <group string="Errors" invisible="not errors_text">
+                            <field name="errors_text" nolabel="1" readonly="1"/>
+                        </group>
+                        <field name="error_line_ids" invisible="not error_line_ids" readonly="1">
+                            <list string="Row Errors">
+                                <field name="row_number"/>
+                                <field name="message"/>
+                                <field name="raw_identifier"/>
+                                <field name="mapping_status"/>
+                            </list>
+                        </field>
+
+                        <field name="executed" invisible="1"/>
+                        <footer>
+                            <button name="action_import" type="object"
+                                    string="Import" class="btn-primary"/>
+                            <button name="action_download_template" type="object"
+                                    string="Download CSV Template" class="btn-secondary"/>
+                            <button string="Close" class="btn-secondary" special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_csv_import_wizard" model="ir.actions.act_window">
+            <field name="name">Manual CSV Import</field>
+            <field name="res_model">sl.bonus.csv.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Import log -->
+        <record id="view_sl_bonus_csv_import_log_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.csv.import.log.tree</field>
+            <field name="model">sl.bonus.csv.import.log</field>
+            <field name="arch" type="xml">
+                <list string="CSV Import Log"
+                      decoration-danger="state=='failed'"
+                      decoration-muted="dry_run==True">
+                    <field name="create_date"/>
+                    <field name="import_type"/>
+                    <field name="period"/>
+                    <field name="dry_run"/>
+                    <field name="state"/>
+                    <field name="rows_read"/>
+                    <field name="rows_created"/>
+                    <field name="rows_updated"/>
+                    <field name="rows_skipped"/>
+                    <field name="rows_failed"/>
+                    <field name="user_id"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_sl_bonus_csv_import_log" model="ir.actions.act_window">
+            <field name="name">CSV Import Log</field>
+            <field name="res_model">sl.bonus.csv.import.log</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+    </data>
+</odoo>

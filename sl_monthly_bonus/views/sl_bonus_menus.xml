@@ -131,6 +131,25 @@
                   action="action_edara_staging_branch_profit"
                   sequence="75"/>
 
+        <!-- ════════════════════ Data Import (manual CSV) ════════════════════ -->
+        <menuitem id="menu_sl_bonus_data_import"
+                  name="Data Import"
+                  parent="menu_sl_bonus_root"
+                  sequence="45"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_admin"/>
+
+        <menuitem id="menu_sl_bonus_csv_import"
+                  name="Manual CSV Import"
+                  parent="menu_sl_bonus_data_import"
+                  action="action_sl_bonus_csv_import_wizard"
+                  sequence="10"/>
+
+        <menuitem id="menu_sl_bonus_csv_import_log"
+                  name="CSV Import Log"
+                  parent="menu_sl_bonus_data_import"
+                  action="action_sl_bonus_csv_import_log"
+                  sequence="20"/>
+
         <!-- ════════════════════ Branch Profitability ════════════════════ -->
         <menuitem id="menu_sl_bonus_branch_profit_root"
                   name="Branch Profitability"

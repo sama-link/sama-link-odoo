@@ -31,6 +31,26 @@ class TestQAFixes(TransactionCase):
             'period_end': self.period_end,
         })
 
+    def _previous_month_period(self):
+        today = odoo_fields.Date.today()
+        prev_year = today.year if today.month > 1 else today.year - 1
+        prev_month = today.month - 1 if today.month > 1 else 12
+        from calendar import monthrange
+        start = date(prev_year, prev_month, 1)
+        end = date(prev_year, prev_month, monthrange(prev_year, prev_month)[1])
+        return start, end
+
+    def _clear_batches_for_period(self, start, end):
+        """test_db may hold real batches; reset approved/locked before unlink."""
+        Batch = self.env['sl.bonus.batch'].sudo()
+        for batch in Batch.search([
+            ('period_start', '=', start),
+            ('period_end', '=', end),
+        ]):
+            if batch.state != 'draft':
+                batch.action_reset_to_draft()
+            batch.unlink()
+
     # ── #1 — repeated compute ─────────────────────────────────────────
     def test_action_compute_is_repeatable(self):
         batch = self._new_batch('QA Recompute')
@@ -119,13 +139,8 @@ class TestQAFixes(TransactionCase):
     # ── #3 — previous-month batch opener ──────────────────────────────
     def test_open_previous_month_returns_existing(self):
         Batch = self.env['sl.bonus.batch']
-        # Pre-create the previous-month batch for the calling user's company.
-        today = odoo_fields.Date.today()
-        prev_year = today.year if today.month > 1 else today.year - 1
-        prev_month = today.month - 1 if today.month > 1 else 12
-        from calendar import monthrange
-        start = date(prev_year, prev_month, 1)
-        end = date(prev_year, prev_month, monthrange(prev_year, prev_month)[1])
+        start, end = self._previous_month_period()
+        self._clear_batches_for_period(start, end)
         pre = Batch.create({
             'name': 'Pre-existing Previous Month',
             'period_start': start, 'period_end': end,
@@ -136,14 +151,8 @@ class TestQAFixes(TransactionCase):
 
     def test_open_previous_month_creates_when_missing(self):
         Batch = self.env['sl.bonus.batch']
-        today = odoo_fields.Date.today()
-        prev_year = today.year if today.month > 1 else today.year - 1
-        prev_month = today.month - 1 if today.month > 1 else 12
-        from calendar import monthrange
-        start = date(prev_year, prev_month, 1)
-        end = date(prev_year, prev_month, monthrange(prev_year, prev_month)[1])
-        # Make sure no batch exists for this period in our test scope.
-        Batch.search([('period_start', '=', start), ('period_end', '=', end)]).unlink()
+        start, end = self._previous_month_period()
+        self._clear_batches_for_period(start, end)
         action = Batch.action_open_for_previous_month()
         self.assertEqual(action.get('type'), 'ir.actions.act_window')
         # The returned res_id must point to an existing batch.
