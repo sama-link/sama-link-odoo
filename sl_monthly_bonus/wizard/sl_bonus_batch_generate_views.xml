@@ -8,13 +8,10 @@
                 <form string="Select Employees">
                     <sheet>
                         <field name="batch_id" invisible="1"/>
-                        <group>
-                            <field name="department_ids" widget="many2many_tags"
-                                   options="{'no_create': True}"
-                                   placeholder="Leave empty for all departments"/>
-                            <button name="action_apply_filter" type="object"
-                                    string="Apply Department Filter" class="btn-link"/>
-                        </group>
+                        <div class="o_row">
+                            <field name="employee_filter" placeholder="Search employees by name or code…"/>
+                            <button name="action_search" type="object" string="Search" class="btn-secondary"/>
+                        </div>
                         <field name="employee_ids">
                             <list>
                                 <field name="name"/>
@@ -25,7 +22,7 @@
                     </sheet>
                     <footer>
                         <button name="action_generate" type="object"
-                                string="Generate Bonus Lines" class="btn-primary"/>
+                                string="Select Employees" class="btn-primary"/>
                         <button string="Cancel" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>
