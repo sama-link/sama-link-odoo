@@ -188,8 +188,10 @@ class SlBonusBatch(models.Model):
     def action_approve(self):
         self._ensure_hr()
         for rec in self:
-            if rec.state != 'hr_review':
-                raise UserError(_("Only HR Review batches can be Approved."))
+            # Phase-1 flow approves directly from 'computed'; 'hr_review' is still
+            # accepted for backward compatibility with any existing records.
+            if rec.state not in ('computed', 'hr_review'):
+                raise UserError(_("Only Computed batches can be Approved."))
             rec.write({
                 'state': 'approved',
                 'approved_by': self.env.user.id,

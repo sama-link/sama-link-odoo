@@ -28,13 +28,6 @@
                                 <field name="percentage"/>
                                 <field name="active"/>
                             </group>
-                            <group>
-                                <field name="date_from"/>
-                                <field name="date_to"/>
-                            </group>
-                        </group>
-                        <group string="Note">
-                            <field name="note" nolabel="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -71,16 +64,13 @@
                             <group>
                                 <field name="job_id"/>
                                 <field name="fixed_amount"/>
-                                <field name="currency_id"/>
+                                <field name="currency_id" invisible="1"/>
                                 <field name="active"/>
                             </group>
                             <group>
                                 <field name="date_from"/>
                                 <field name="date_to"/>
                             </group>
-                        </group>
-                        <group string="Note">
-                            <field name="note" nolabel="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -122,9 +112,6 @@
                                 <field name="date_from"/>
                                 <field name="date_to"/>
                             </group>
-                        </group>
-                        <group string="Note">
-                            <field name="note" nolabel="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -193,9 +180,6 @@
                             <field name="pct_low"/>
                             <field name="pct_base"/>
                             <field name="pct_high"/>
-                        </group>
-                        <group string="Note">
-                            <field name="note" nolabel="1"/>
                         </group>
                     </sheet>
                 </form>

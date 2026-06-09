@@ -19,13 +19,10 @@
                             <group>
                                 <field name="category" readonly="1"/>
                                 <field name="expected_evaluation_percent"/>
-                                <field name="is_excluded" readonly="1"/>
-                                <field name="exclusion_reason" readonly="1"
-                                       invisible="not is_excluded"/>
                             </group>
                             <group>
                                 <field name="estimated_amount" readonly="1"/>
-                                <field name="currency_id" readonly="1"/>
+                                <field name="currency_id" invisible="1"/>
                                 <field name="progress_target" readonly="1"
                                        invisible="category != 'sales'"/>
                                 <field name="progress_achieved" readonly="1"

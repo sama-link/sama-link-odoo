@@ -29,7 +29,7 @@
                             <group>
                                 <field name="period_start"/>
                                 <field name="target_amount"/>
-                                <field name="currency_id"/>
+                                <field name="currency_id" invisible="1"/>
                                 <field name="active"/>
                             </group>
                         </group>
@@ -44,9 +44,6 @@
                                         <field name="currency_id" column_invisible="True"/>
                                     </list>
                                 </field>
-                            </page>
-                            <page string="Note">
-                                <field name="note" nolabel="1"/>
                             </page>
                         </notebook>
                     </sheet>

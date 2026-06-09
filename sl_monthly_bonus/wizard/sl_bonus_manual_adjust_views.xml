@@ -7,8 +7,6 @@
             <field name="arch" type="xml">
                 <form string="Manual Bonus Adjustment">
                     <group>
-                        <field name="employee_id" readonly="1"/>
-                        <field name="current_amount" readonly="1"/>
                         <field name="new_amount"/>
                         <field name="currency_id" invisible="1"/>
                     </group>

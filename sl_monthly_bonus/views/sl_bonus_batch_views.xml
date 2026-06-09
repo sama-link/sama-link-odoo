@@ -8,14 +8,11 @@
             <field name="model">sl.bonus.batch</field>
             <field name="arch" type="xml">
                 <list decoration-info="state=='draft'"
-                      decoration-warning="state in ('data_ready','computed','hr_review')"
-                      decoration-success="state=='approved'"
-                      decoration-muted="state=='locked'">
+                      decoration-warning="state in ('data_ready','computed')"
+                      decoration-success="state=='approved'">
                     <field name="name"/>
                     <field name="period_label"/>
                     <field name="state"/>
-                    <field name="line_count"/>
-                    <field name="excluded_count"/>
                     <field name="total_amount"/>
                     <field name="currency_id" column_invisible="True"/>
                 </list>
@@ -33,20 +30,15 @@
                         <button name="action_compute" type="object" string="Compute Bonuses"
                                 invisible="state not in ('data_ready','computed','hr_review')"
                                 class="oe_highlight"/>
-                        <button name="action_send_to_review" type="object" string="Send to HR Review"
-                                invisible="state != 'computed'"/>
                         <button name="action_approve" type="object" string="Approve"
-                                invisible="state != 'hr_review'" class="oe_highlight"/>
-                        <button name="action_lock" type="object" string="Lock"
-                                invisible="state != 'approved'"
-                                groups="sl_monthly_bonus.group_bonus_admin"/>
+                                invisible="state not in ('computed','hr_review')" class="oe_highlight"/>
                         <button name="action_reset_to_draft" type="object" string="Reset to Draft"
                                 groups="sl_monthly_bonus.group_bonus_admin"
                                 confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
                         <button name="action_add_all_employees" type="object" string="Add All Employees"
                                 invisible="state not in ('draft','data_ready')"/>
                         <field name="state" widget="statusbar"
-                               statusbar_visible="draft,data_ready,computed,hr_review,approved,locked"/>
+                               statusbar_visible="draft,data_ready,computed,approved"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -66,17 +58,8 @@
                                 <field name="period_label" readonly="1"/>
                             </group>
                             <group>
-                                <field name="line_count"/>
-                                <field name="excluded_count"/>
                                 <field name="total_amount"/>
-                                <field name="currency_id"/>
-                                <field name="created_by" readonly="1"/>
-                                <field name="last_computed_on" readonly="1"/>
-                                <field name="last_computed_by" readonly="1"/>
-                                <field name="approved_by" readonly="1"/>
-                                <field name="approved_on" readonly="1"/>
-                                <field name="locked_by" readonly="1"/>
-                                <field name="locked_on" readonly="1"/>
+                                <field name="currency_id" invisible="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -91,9 +74,8 @@
                             </page>
                             <page string="Bonus Lines">
                                 <field name="line_ids" readonly="state in ('approved','locked')">
-                                    <list decoration-muted="is_excluded == True">
+                                    <list>
                                         <field name="employee_id"/>
-                                        <field name="department_id" optional="show"/>
                                         <field name="job_id"/>
                                         <field name="category"/>
                                         <field name="basic_salary" optional="hide"/>
@@ -101,14 +83,9 @@
                                         <field name="computed_amount"/>
                                         <field name="bonus_amount"/>
                                         <field name="manual_override_reason" optional="hide"/>
-                                        <field name="is_excluded"/>
-                                        <field name="exclusion_reason" optional="hide"/>
                                         <field name="currency_id" column_invisible="True"/>
                                     </list>
                                 </field>
-                            </page>
-                            <page string="Note">
-                                <field name="note" nolabel="1"/>
                             </page>
                         </notebook>
                     </sheet>
@@ -126,9 +103,7 @@
                     <field name="period_start"/>
                     <filter string="Draft" name="f_draft" domain="[('state','=','draft')]"/>
                     <filter string="Computed" name="f_computed" domain="[('state','=','computed')]"/>
-                    <filter string="HR Review" name="f_hr_review" domain="[('state','=','hr_review')]"/>
                     <filter string="Approved" name="f_approved" domain="[('state','=','approved')]"/>
-                    <filter string="Locked" name="f_locked" domain="[('state','=','locked')]"/>
                 </search>
             </field>
         </record>
@@ -165,7 +140,6 @@
                         <group>
                             <group>
                                 <field name="employee_id" readonly="1"/>
-                                <field name="department_id" readonly="1"/>
                                 <field name="job_id" readonly="1"/>
                                 <field name="work_location_id" readonly="1"/>
                                 <field name="category" readonly="1"/>
@@ -195,9 +169,6 @@
                             <group>
                                 <field name="computed_amount" readonly="1"/>
                                 <field name="bonus_amount" readonly="1"/>
-                                <field name="is_excluded" readonly="1"/>
-                                <field name="exclusion_reason" readonly="1"
-                                       invisible="not is_excluded"/>
                             </group>
                         </group>
                         <group string="Manual Override" invisible="not manual_override_reason">
@@ -213,7 +184,6 @@
                                         <field name="sequence" widget="handle"/>
                                         <field name="label"/>
                                         <field name="value"/>
-                                        <field name="note"/>
                                     </list>
                                 </field>
                             </page>
@@ -228,16 +198,14 @@
             <field name="name">sl.bonus.batch.line.tree</field>
             <field name="model">sl.bonus.batch.line</field>
             <field name="arch" type="xml">
-                <list create="0" delete="0" decoration-muted="is_excluded == True">
+                <list create="0" delete="0">
                     <field name="batch_id"/>
                     <field name="period_start"/>
                     <field name="employee_id"/>
-                    <field name="department_id" optional="show"/>
                     <field name="category"/>
                     <field name="evaluation_percent"/>
                     <field name="computed_amount"/>
                     <field name="bonus_amount"/>
-                    <field name="is_excluded"/>
                     <field name="currency_id" column_invisible="True"/>
                 </list>
             </field>
