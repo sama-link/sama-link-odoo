@@ -111,7 +111,10 @@ class SlBonusCsvImportWizard(models.TransientModel):
         'sl.bonus.csv.import.error.line', 'wizard_id', string='Row Errors', readonly=True)
 
     # ── access ──────────────────────────────────────────────────────────
-    def _check_access(self):
+    # NOTE: do NOT name this `_check_access` — that is a core BaseModel method
+    # (check_access -> _check_access(operation)) and overriding it breaks every
+    # ACL check (e.g. get_view) with a signature mismatch.
+    def _check_import_access(self):
         self.ensure_one()
         is_admin = self.env.user.has_group('base.group_system')
         is_hr = self.env.user.has_group('sl_monthly_bonus.group_bonus_hr_manager')
@@ -294,7 +297,7 @@ class SlBonusCsvImportWizard(models.TransientModel):
     # ── main actions ────────────────────────────────────────────────────
     def action_import(self):
         self.ensure_one()
-        self._check_access()
+        self._check_import_access()
         if not self.file_data:
             raise UserError(_("Please attach a CSV file."))
         try:
