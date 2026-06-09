@@ -30,11 +30,11 @@
                   sequence="20"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
-        <!-- ════════════════════ Self-Service ════════════════════ -->
+        <!-- ════════════════════ Self-Service (standalone top-level app) ════════════════════ -->
         <menuitem id="menu_sl_bonus_self"
                   name="My Bonus"
-                  parent="menu_sl_bonus_root"
-                  sequence="30"
+                  sequence="56"
+                  web_icon="sl_monthly_bonus,static/description/icon.png"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
 
         <menuitem id="menu_sl_bonus_self_current"
