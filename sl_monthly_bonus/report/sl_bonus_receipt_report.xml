@@ -212,8 +212,29 @@
                     <t t-set="td_lbl"     t-value="'font-weight:600; color:#475569; padding:4px 8px; vertical-align:top; white-space:nowrap;'"/>
                     <t t-set="td_val"     t-value="'padding:4px 8px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word;'"/>
 
-                    <!-- ═════ PAGE ═════ -->
-                    <div class="page"
+                    <!-- ═════ PAGE ═════
+
+                         The ``article`` class is REQUIRED — Odoo's
+                         IrActionsReport._prepare_html() xpath-matches divs with
+                         class="article" to identify the report body and wrap
+                         them in web.minimal_layout (which ships
+                         <meta charset="utf-8"/>). Without the class, the
+                         fallback dumps the raw body children with no document
+                         wrapper, wkhtmltopdf has no charset hint, and decodes
+                         the UTF-8 Arabic bytes as Latin-1 — yielding the
+                         classic "Ø§Ù„Ù…" mojibake in the final PDF. The
+                         data-oe-model / data-oe-id attributes let Odoo split a
+                         multi-record print into per-record attachments and let
+                         _prepare_html collect the right res_id per body.
+
+                         DO NOT REMOVE the ``article`` class without
+                         re-introducing web.external_layout (which provides
+                         its own article wrapper, but also the company-header
+                         duplication we explicitly removed earlier).
+                    -->
+                    <div class="page article"
+                         t-att-data-oe-model="o and o._name"
+                         t-att-data-oe-id="o and o.id"
                          t-att-style="'direction:rtl; text-align:right; font-family:' + font_stack + '; color:#1f2937; line-height:1.5; font-size:12px;'">
 
                         <!-- ═════ HEADER ═════
