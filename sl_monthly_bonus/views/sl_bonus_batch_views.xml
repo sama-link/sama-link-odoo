@@ -26,6 +26,17 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <!-- Setup actions (visible only while the batch can still accept
+                             employees: draft / data_ready). Refinement: moved here from
+                             above the line list so they're immediately reachable. -->
+                        <button name="action_open_add_employees_wizard" type="object"
+                                string="➕ Add Employees"
+                                invisible="state not in ('draft','data_ready')"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                        <button name="action_open_add_from_appraisal_wizard" type="object"
+                                string="📋 Add From Appraisal Batch"
+                                invisible="state not in ('draft','data_ready')"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
                         <button name="action_mark_data_ready" type="object" string="📥 Mark Data Ready"
                                 invisible="state != 'draft'" class="oe_highlight"/>
                         <button name="action_compute" type="object" string="🧮 Compute Bonuses"
@@ -81,6 +92,12 @@
                                 <field name="period_label" readonly="1" invisible="1"/>
                             </group>
                             <group>
+                                <!-- Evaluation reference: editable while the batch can still
+                                     accept employees (draft / data_ready). Once Compute has run
+                                     downstream rows depend on this binding, so it's locked. -->
+                                <field name="appraisal_batch_id"
+                                       readonly="state not in ('draft','data_ready')"
+                                       options="{'no_create': True, 'no_create_edit': True}"/>
                                 <field name="total_amount"/>
                                 <field name="currency_id" invisible="1"/>
                             </group>
@@ -88,16 +105,7 @@
                         <notebook>
                             <page string="Employees &amp; Bonuses" name="page_employees_bonuses">
                                 <div class="text-muted mb-2">
-                                    Add the employees this batch should cover and (after Compute) review the calculated bonuses. Leave empty before Compute to include all active employees automatically.
-                                </div>
-                                <div class="mb-2"
-                                     invisible="state not in ('draft','data_ready')">
-                                    <button name="action_open_add_employees_wizard" type="object"
-                                            string="➕ Add Employees" class="btn btn-secondary"
-                                            groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
-                                    <button name="action_open_add_from_appraisal_wizard" type="object"
-                                            string="📋 Add From Appraisal Batch" class="btn btn-secondary ms-2"
-                                            groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                                    Use the <em>Add Employees</em> or <em>Add From Appraisal Batch</em> button in the top header to populate this list, then review the calculated bonuses below.
                                 </div>
                                 <field name="line_ids"
                                        readonly="state in ('approved','locked')"

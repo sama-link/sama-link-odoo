@@ -18,7 +18,24 @@ class SlBonusCalculator(models.AbstractModel):
 
     # ── Public API ────────────────────────────────────────────────────
     @api.model
-    def calculate_for_employee(self, employee, period_start, period_end):
+    def calculate_for_employee(self, employee, period_start, period_end,
+                               appraisal_batch=None):
+        """Compute one bonus line.
+
+        ``appraisal_batch`` (optional, ``hr.appraisal.batch`` record) binds the
+        evaluation lookup to a specific appraisal batch. When set:
+          * If the employee has no appraisal inside that batch → the line is
+            EXCLUDED with a clear Arabic reason (we don't fall back to a
+            different batch — the brief is explicit about this).
+          * Otherwise the appraisal's ``total_score`` is used (or 0 with a
+            "not finalized yet" note if the appraisal exists but isn't in
+            ``hr_finalization`` state).
+
+        When ``appraisal_batch`` is None (independent lines, self-estimates,
+        legacy batches) the original behavior is preserved: pick the most
+        recent finalized appraisal that overlaps the period, then fall back
+        to the latest one before ``period_end``.
+        """
         result = self._init_result(employee, period_start, period_end)
         excluded, reason = self._compute_exclusion(employee, period_end)
         if excluded:
@@ -35,19 +52,48 @@ class SlBonusCalculator(models.AbstractModel):
             })
             return result
 
+        # Eligibility gate: when the batch is bound to a specific appraisal
+        # batch, every employee must have an appraisal in it.
+        if appraisal_batch:
+            missing_reason = self._check_appraisal_batch_eligibility(employee, appraisal_batch)
+            if missing_reason:
+                result['line_vals'].update({
+                    'category': employee.job_id.bonus_category or 'none',
+                    'is_excluded': True,
+                    'exclusion_reason': missing_reason,
+                    'computed_amount': 0.0,
+                    'bonus_amount': 0.0,
+                })
+                result['components'].append({
+                    'sequence': 10, 'label': _('Excluded'),
+                    'value': missing_reason,
+                })
+                return result
+
         category = self._resolve_category(employee)
         result['line_vals']['category'] = category
-        evaluation_pct, eval_source = self._get_evaluation_percent(employee, period_start, period_end)
+        evaluation_pct, eval_source = self._get_evaluation_percent(
+            employee, period_start, period_end,
+            appraisal_batch=appraisal_batch,
+        )
         result['line_vals']['evaluation_percent'] = evaluation_pct
         result['line_vals']['evaluation_source'] = eval_source
         # Surface the most common operational issue (no finalized appraisal yet) as a
         # readable, HR-friendly hint on the line. This is set BEFORE the category formula
         # runs so the formula may override with a more specific config issue.
         if evaluation_pct == 0 and category != 'none':
-            result['line_vals']['exclusion_reason'] = _(
-                "No finalized monthly evaluation (state = 'HR Finalization') was found for this "
-                "employee covering %s. Bonus = 0 until the evaluation is approved."
-            ) % period_start.strftime('%Y-%m')
+            if appraisal_batch:
+                # We already know the appraisal exists in this batch (eligibility
+                # gate passed) — it just isn't finalized yet.
+                result['line_vals']['exclusion_reason'] = _(
+                    "تقييم الموظف ضمن دفعة التقييم المرجعية '%s' لم يكتمل بعد. "
+                    "المكافأة = 0 حتى اعتماد التقييم."
+                ) % appraisal_batch.name
+            else:
+                result['line_vals']['exclusion_reason'] = _(
+                    "No finalized monthly evaluation (state = 'HR Finalization') was found for this "
+                    "employee covering %s. Bonus = 0 until the evaluation is approved."
+                ) % period_start.strftime('%Y-%m')
 
         # Dispatch
         method = getattr(self, f'_calc_{category}', None)
@@ -93,16 +139,65 @@ class SlBonusCalculator(models.AbstractModel):
             return True, _("Employee in probation period.")
         return False, ''
 
-    def _get_evaluation_percent(self, employee, period_start, period_end):
+    def _check_appraisal_batch_eligibility(self, employee, appraisal_batch):
+        """Return an Arabic exclusion message when ``employee`` has no
+        appraisal record at all inside ``appraisal_batch``. Returns an
+        empty string when the employee IS in the batch (regardless of the
+        appraisal's individual state — that's handled separately by
+        ``_get_evaluation_percent`` which uses 0% + a note when the
+        appraisal exists but isn't finalized).
+
+        This implements the brief's explicit guarantee: "If an employee in
+        bonus batch has no appraisal inside the selected appraisal batch,
+        show a clear Arabic-friendly warning/exclusion reason for that
+        employee."
+        """
+        appraisal = self.env['hr.appraisal'].sudo().search([
+            ('appraisal_batch_id', '=', appraisal_batch.id),
+            ('employee_id', '=', employee.id),
+        ], limit=1)
+        if appraisal:
+            return ''
+        return _(
+            "لا يوجد تقييم لهذا الموظف ضمن دفعة التقييم المرجعية '%s'. "
+            "يجب إضافة الموظف إلى دفعة التقييم أو إلغاء الربط بها قبل احتساب المكافأة."
+        ) % appraisal_batch.name
+
+    def _get_evaluation_percent(self, employee, period_start, period_end,
+                                appraisal_batch=None):
         """Adapter to existing evaluation module — read-only.
 
-        Strategy:
+        With ``appraisal_batch`` (an ``hr.appraisal.batch`` record): lookup is
+        constrained to appraisals inside that batch for this employee. If a
+        finalized appraisal exists in the batch → its score is used; if the
+        appraisal exists but isn't finalized → 0% with a note (the caller
+        already gated missing-from-batch via _check_appraisal_batch_eligibility).
+
+        Without ``appraisal_batch`` (the legacy path — used by independent
+        lines, self-estimates, and batches without a bound appraisal_batch):
         1. Look for an hr.appraisal record overlapping the period with state
            'hr_finalization' (final). If found, use its total_score.
         2. Else, look for the latest hr_finalization appraisal up to period_end.
         3. Else, return 0% and an explanatory source.
         """
         Appraisal = self.env['hr.appraisal'].sudo()
+
+        if appraisal_batch:
+            # Constrained source: only appraisals in this specific batch.
+            in_batch_final = Appraisal.search([
+                ('appraisal_batch_id', '=', appraisal_batch.id),
+                ('employee_id', '=', employee.id),
+                ('state', '=', 'hr_finalization'),
+            ], limit=1)
+            if in_batch_final:
+                return (
+                    float(in_batch_final.total_score or 0.0),
+                    f"hr.appraisal#{in_batch_final.id} (batch {appraisal_batch.id})",
+                )
+            # Appraisal exists in the batch but isn't finalized — return 0
+            # with a note; the caller will surface it as an exclusion_reason.
+            return 0.0, _("Appraisal in reference batch not finalized yet")
+
         domain = [
             ('employee_id', '=', employee.id),
             ('state', '=', 'hr_finalization'),

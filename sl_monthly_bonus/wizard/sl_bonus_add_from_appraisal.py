@@ -63,12 +63,41 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
             raise UserError(_("No bonus batch selected."))
         if not self.appraisal_batch_id:
             raise UserError(_("Select an appraisal batch first."))
+        # The eligibility / state gating for whether the batch can still
+        # accept employees lives in ``sl.bonus.batch._add_employees_to_lines``;
+        # we call that path so both wizards share the same rules.
         employees = self._candidate_employees()
         if not employees:
             raise UserError(_(
                 "Appraisal batch '%s' has no appraisals — nothing to add."
             ) % self.appraisal_batch_id.name)
         created = self.batch_id._add_employees_to_lines(employees)
+        # Bind the selected appraisal batch as the bonus batch's official
+        # evaluation reference. Subsequent compute runs will use only the
+        # appraisals inside this batch (see sl.bonus.calculator). We do this
+        # via .sudo() because HR users may not have direct write on every
+        # bonus batch field, but they DID just successfully run the wizard
+        # which already enforces HR/Admin via action_open_add_from_appraisal_wizard.
+        if not self.batch_id.appraisal_batch_id:
+            self.batch_id.sudo().write({
+                'appraisal_batch_id': self.appraisal_batch_id.id,
+            })
+            self.batch_id.message_post(body=_(
+                "تم ربط دفعة المكافآت بدفعة التقييم: <b>%s</b>"
+            ) % self.appraisal_batch_id.name)
+        elif self.batch_id.appraisal_batch_id != self.appraisal_batch_id:
+            # If a different appraisal batch was already bound, refuse to
+            # silently overwrite — surface a clear error so HR explicitly
+            # clears the existing binding first (in draft/data_ready) or
+            # opens the right one.
+            raise UserError(_(
+                "This bonus batch is already linked to a different appraisal "
+                "batch ('%(old)s'). Clear that link first if you want to "
+                "rebind it to '%(new)s'."
+            ) % {
+                'old': self.batch_id.appraisal_batch_id.name,
+                'new': self.appraisal_batch_id.name,
+            })
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -76,7 +105,8 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
                 'title': _('Employees added'),
                 'message': _(
                     "Added %(new)s new bonus line(s) from appraisal batch '%(name)s'; "
-                    "%(skipped)s employee(s) were already present."
+                    "%(skipped)s employee(s) were already present. This appraisal "
+                    "batch is now the evaluation reference for the bonus batch."
                 ) % {
                     'new': len(created),
                     'name': self.appraisal_batch_id.name,

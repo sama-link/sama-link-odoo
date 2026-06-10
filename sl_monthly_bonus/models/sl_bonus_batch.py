@@ -68,6 +68,21 @@ class SlBonusBatch(models.Model):
              '(like appraisal batches). Leave empty to compute for all active '
              'employees in the company.',
     )
+    # Reference appraisal batch — when set, ALL evaluation lookups during
+    # compute are constrained to this batch's appraisals. Set automatically
+    # by ``sl.bonus.add.from.appraisal.wizard``. Editable in draft/data_ready
+    # only (the view enforces that with `readonly`).
+    appraisal_batch_id = fields.Many2one(
+        'hr.appraisal.batch',
+        string='Evaluation Batch Reference',
+        copy=False, tracking=True,
+        help='When set, every employee in this bonus batch must have an '
+             'appraisal inside this appraisal batch — the calculator uses '
+             'only those appraisals for evaluation %. Employees with no '
+             'matching appraisal are excluded with a clear reason. Leave '
+             'empty to fall back to the default behavior of using the most '
+             'recent finalized appraisal that overlaps the period.',
+    )
     line_count = fields.Integer(compute='_compute_counts', store=True)
     total_amount = fields.Monetary(
         string='Total', compute='_compute_counts', store=True,
@@ -397,11 +412,17 @@ class SlBonusBatch(models.Model):
             ) % self.company_id.name)
 
         # 2) Compute / refresh per-employee, preserving manual overrides.
+        #    The appraisal batch reference (if any) is passed down so the
+        #    calculator constrains evaluation lookups to that batch only.
+        appraisal_batch = self.appraisal_batch_id or False
         existing_lines = {l.employee_id.id: l for l in self.sudo().line_ids}
         seen_emp_ids = set()
         for emp in employees:
             seen_emp_ids.add(emp.id)
-            result = Calc.calculate_for_employee(emp, self.period_start, self.period_end)
+            result = Calc.calculate_for_employee(
+                emp, self.period_start, self.period_end,
+                appraisal_batch=appraisal_batch,
+            )
             line_vals = result['line_vals']
             line_vals['batch_id'] = self.id
             line_vals['employee_id'] = emp.id

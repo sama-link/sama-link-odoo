@@ -762,3 +762,35 @@ msgstr "الشهر"
 #: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__period_label
 msgid "Month (YYYY-MM)"
 msgstr "الشهر (YYYY-MM)"
+
+# ════════════════════════════════════════════════════════════
+# Refinement — Appraisal batch reference (18.0.2.1.x)
+# ════════════════════════════════════════════════════════════
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__appraisal_batch_id
+msgid "Evaluation Batch Reference"
+msgstr "دفعة التقييم المرجعية"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,help:sl_monthly_bonus.field_sl_bonus_batch__appraisal_batch_id
+msgid ""
+"When set, every employee in this bonus batch must have an appraisal "
+"inside this appraisal batch — the calculator uses only those "
+"appraisals for evaluation %. Employees with no matching appraisal "
+"are excluded with a clear reason. Leave empty to fall back to the "
+"default behavior of using the most recent finalized appraisal that "
+"overlaps the period."
+msgstr ""
+"عند ضبطه، يجب أن يكون لكل موظف في دفعة المكافآت تقييم داخل دفعة "
+"التقييم المختارة — يستخدم نظام الاحتساب تقييمات هذه الدفعة فقط "
+"لتحديد نسبة التقييم. الموظفون بلا تقييم في الدفعة يُستثنَون مع بيان "
+"السبب. اترك الحقل فارغًا للعودة إلى السلوك الافتراضي الذي يستخدم أحدث "
+"تقييم معتمد يغطي الفترة."
+
+#. module: sl_monthly_bonus
+#: code:addons/sl_monthly_bonus/models/sl_bonus_calculator.py:0
+#, python-format
+msgid "Appraisal in reference batch not finalized yet"
+msgstr "تقييم الموظف في دفعة التقييم المرجعية لم يكتمل بعد"
+
