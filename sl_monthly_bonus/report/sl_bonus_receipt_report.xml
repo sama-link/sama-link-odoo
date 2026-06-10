@@ -2,7 +2,9 @@
 <odoo>
     <data>
 
-        <!-- ════════════════════ Paper format (A4 portrait) ════════════════════ -->
+        <!-- ════════════════════ Paper format (A4 portrait) ════════════════════
+             Tighter top margin since we no longer call web.external_layout
+             (which used to inject its own padding block). -->
         <record id="paperformat_bonus_receipt" model="report.paperformat">
             <field name="name">Bonus Receipt A4</field>
             <field name="default" eval="False"/>
@@ -10,13 +12,13 @@
             <field name="page_height">0</field>
             <field name="page_width">0</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">12</field>
-            <field name="margin_bottom">12</field>
-            <field name="margin_left">10</field>
-            <field name="margin_right">10</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">12</field>
+            <field name="margin_right">12</field>
             <field name="header_line" eval="False"/>
-            <field name="header_spacing">8</field>
-            <field name="dpi">90</field>
+            <field name="header_spacing">0</field>
+            <field name="dpi">96</field>
         </record>
 
         <!-- ════════════════════ Report action ════════════════════ -->
@@ -33,262 +35,460 @@
         </record>
 
         <!-- ════════════════════ QWeb template ════════════════════
-             NOTE: Styling is INLINE (no <style> block) because QWeb's
-             rendering pipeline applies Python %-format to text nodes
-             of <style>, and literal "%" in CSS values like
-             "linear-gradient(... 0%, ... 100%)" or "width:100%;" then
-             explodes with "ValueError: incomplete format". Inline style
-             attributes on individual elements are safe — they're
-             attribute values, not text content. -->
+
+             Design notes (production-ready Arabic RTL receipt):
+
+             1. We deliberately DO NOT t-call="web.external_layout". The default
+                Odoo layout injects a full-width company logo, address block
+                and website URL — all of which dominated the page and
+                duplicated content we render ourselves. We use only
+                web.html_container, supply our own header/footer, and rely
+                on the paperformat above for page margins.
+
+             2. Styles are INLINE on each element (no <style> block). QWeb's
+                rendering pipeline runs Python %-format over text nodes; a
+                <style> block containing literal "%" in CSS values can
+                explode with "ValueError: incomplete format". Inline style
+                attributes are processed as attribute values and stay safe.
+
+             3. Cairo is listed first in the font stack for environments that
+                ship it (the Odoo web client + browsers can fall back to web
+                fonts), but the offline wkhtmltopdf renderer used for PDF
+                output has no internet — so DejaVu Sans is the actual
+                rendering font, the only Arabic-capable face installed in
+                the standard Odoo container. Arial / Tahoma are listed for
+                Windows preview environments.
+
+             4. Calculator-stored component labels (e.g. "Formula",
+                "Basic Salary") are mapped to clean Arabic at render time
+                via `comp_label_map`. This keeps the calculator unchanged
+                (business logic untouched) while making the printed receipt
+                fully Arabic regardless of the compute-time user language.
+                The same map carries a `__skip__` sentinel that filters out
+                internal "Warning" components so HR-only configuration
+                hints are never shown to the employee.
+
+             5. Technical identifiers like `hr.appraisal#164` are never
+                surfaced — the `evaluation_source` field is intentionally
+                omitted from the receipt body. Same for `exclusion_reason`
+                which carries HR-only configuration text.
+
+             6. Numbers/percentages are wrapped in <span dir="ltr"> so the
+                RTL outer context doesn't reorder them as "% 85.00".
+
+             7. Tables are used for layout (most reliable in wkhtmltopdf).
+                No gradients, no flexbox, no transforms, no shadows.
+                `word-wrap: break-word` on each value cell guarantees long
+                Arabic names / department names don't overflow.
+
+             8. The evaluation quality indicator is a colored Unicode badge
+                (★ / ◆ / ▲ / —) that renders with DejaVu Sans, not an
+                emoji that depends on color-emoji fonts not present in the
+                container.
+        -->
         <template id="report_sl_bonus_receipt">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
-                    <t t-call="web.external_layout">
-                        <!-- Polished, Cairo-friendly Arabic RTL design.
-                             Emojis are allowed ONLY as the small evaluation
-                             indicator next to the evaluation percentage (per
-                             the brief). No emojis in headers/labels/amounts. -->
-                        <t t-set="eval_pct" t-value="o.evaluation_percent or 0.0"/>
-                        <t t-set="eval_indicator">
-                            <t t-if="eval_pct &gt;= 85">🌟</t>
-                            <t t-elif="eval_pct &gt;= 65">👍</t>
-                            <t t-elif="eval_pct &gt;= 1">⚠️</t>
-                        </t>
-                        <t t-set="category_label">
-                            <t t-if="o.category == 'service'">خدمات</t>
-                            <t t-elif="o.category == 'sales'">مبيعات</t>
-                            <t t-elif="o.category == 'stock'">مشتريات / مخزون</t>
-                            <t t-elif="o.category == 'installation'">تركيبات</t>
-                            <t t-elif="o.category == 'branch_manager'">مدير فرع / منطقة</t>
-                            <t t-else="">—</t>
-                        </t>
 
-                        <!-- Standard section style (reused via t-att-style). -->
-                        <t t-set="sec_style" t-value="'background:#ffffff; border:1px solid #e3e8ef; border-radius:8px; padding:14px 18px; margin-bottom:12px;'"/>
-                        <t t-set="h4_style" t-value="'font-size:14px; color:#1e3a5f; font-weight:700; border-bottom:2px solid #1e3a5f; padding-bottom:6px; margin-bottom:10px; letter-spacing:0.3px;'"/>
-                        <t t-set="tbl_style" t-value="'width:100%; border-collapse:collapse; margin:0; font-size:12.5px;'"/>
-                        <t t-set="td_lbl_style" t-value="'font-weight:600; color:#4a5568; padding:6px 9px; vertical-align:top;'"/>
-                        <t t-set="td_val_style" t-value="'padding:6px 9px; vertical-align:top;'"/>
+                    <!-- Pre-computed presentation values -->
+                    <t t-set="eval_pct" t-value="o.evaluation_percent or 0.0"/>
+                    <t t-set="eval_pct_str" t-value="'%.2f' % eval_pct"/>
 
-                        <div class="page"
-                             style="direction:rtl; text-align:right; font-family:'Cairo','Tajawal','Arial',sans-serif; color:#2c2c2c; line-height:1.55;">
-
-                            <!-- ── Header ─────────────────────────────────── -->
-                            <div style="background:#1e3a5f; color:#ffffff; padding:20px 24px; border-radius:10px; margin-bottom:18px;">
-                                <table style="width:100%; color:#ffffff;">
-                                    <tr>
-                                        <td style="vertical-align:middle;">
-                                            <h1 style="font-size:26px; font-weight:700; margin:0 0 4px 0;">إيصال مكافأة شهرية</h1>
-                                            <div style="font-size:15px; opacity:0.92;">
-                                                <span t-out="o.company_id.name"/> — <span t-out="o.period_display or o.period_label"/>
-                                            </div>
-                                        </td>
-                                        <td style="text-align:left; vertical-align:middle; width:90px;">
-                                            <img t-if="o.company_id.logo"
-                                                 t-att-src="image_data_uri(o.company_id.logo)"
-                                                 style="max-height:60px; max-width:90px; background:#ffffff; padding:4px; border-radius:6px;"/>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- ── Employee section ───────────────────────── -->
-                            <div t-att-style="sec_style">
-                                <h4 t-att-style="h4_style">بيانات الموظف</h4>
-                                <table t-att-style="tbl_style">
-                                    <tr>
-                                        <td t-att-style="td_lbl_style" style="width:18%;">الاسم</td>
-                                        <td t-att-style="td_val_style"><strong t-out="o.employee_id.name"/></td>
-                                        <td t-att-style="td_lbl_style" style="width:18%;">الفرع / مقر العمل</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.work_location_id.name or '—'"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td t-att-style="td_lbl_style">الإدارة</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.department_id.name or '—'"/></td>
-                                        <td t-att-style="td_lbl_style">الوظيفة</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.job_id.name or '—'"/></td>
-                                    </tr>
-                                    <tr t-if="o.employee_id.barcode">
-                                        <td t-att-style="td_lbl_style">رقم البطاقة</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.employee_id.barcode"/></td>
-                                        <td t-att-style="td_lbl_style">فئة المكافأة</td>
-                                        <td t-att-style="td_val_style">
-                                            <span style="display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:600; background:#e3e8ef; color:#1e3a5f;" t-out="category_label"/>
-                                        </td>
-                                    </tr>
-                                    <tr t-if="not o.employee_id.barcode">
-                                        <td t-att-style="td_lbl_style">فئة المكافأة</td>
-                                        <td t-att-style="td_val_style" colspan="3">
-                                            <span style="display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:600; background:#e3e8ef; color:#1e3a5f;" t-out="category_label"/>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- ── Evaluation strip (with indicator emoji) ── -->
-                            <div t-att-style="sec_style">
-                                <h4 t-att-style="h4_style">تقييم الأداء</h4>
-                                <table t-att-style="tbl_style">
-                                    <tr>
-                                        <td t-att-style="td_lbl_style" style="width:25%;">نسبة التقييم</td>
-                                        <td t-att-style="td_val_style">
-                                            <strong style="font-size:16px;"><t t-out="'%.2f' % eval_pct"/>%</strong>
-                                            <span style="font-size:18px; margin:0 4px; vertical-align:middle;" t-out="eval_indicator"/>
-                                        </td>
-                                        <td t-att-style="td_lbl_style" style="width:25%;">مصدر التقييم</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.evaluation_source or '—'"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- ── Calculation breakdown ──────────────────── -->
-                            <div t-att-style="sec_style" t-if="o.component_ids">
-                                <h4 t-att-style="h4_style">تفاصيل الاحتساب</h4>
-                                <table t-att-style="tbl_style">
-                                    <thead>
-                                        <tr>
-                                            <th style="background:#f4f7fb; color:#1e3a5f; font-weight:700; padding:7px 9px; border-bottom:2px solid #c8d4e3; text-align:right;">البيان</th>
-                                            <th style="background:#f4f7fb; color:#1e3a5f; font-weight:700; padding:7px 9px; border-bottom:2px solid #c8d4e3; text-align:right;">القيمة</th>
-                                            <th style="background:#f4f7fb; color:#1e3a5f; font-weight:700; padding:7px 9px; border-bottom:2px solid #c8d4e3; text-align:right;">ملاحظات</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="o.component_ids.sorted(key=lambda c: c.sequence)" t-as="c">
-                                            <tr>
-                                                <td style="padding:6px 9px; border-bottom:1px solid #eef2f7;"><span t-out="c.label"/></td>
-                                                <td style="padding:6px 9px; border-bottom:1px solid #eef2f7;"><span t-out="c.value"/></td>
-                                                <td style="padding:6px 9px; border-bottom:1px solid #eef2f7;"><span t-out="c.note or ''"/></td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- ── Category-specific details ──────────────── -->
-                            <div t-att-style="sec_style"
-                                 t-if="o.category in ('sales', 'stock', 'installation', 'branch_manager', 'service')">
-                                <h4 t-att-style="h4_style">تفاصيل خاصة بفئة المكافأة</h4>
-                                <table t-att-style="tbl_style">
-                                    <t t-if="o.category == 'sales'">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">المستهدف</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.target_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">المحقق (المحصل)</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.achieved_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                        </tr>
-                                        <tr>
-                                            <td t-att-style="td_lbl_style">نسبة الإنجاز</td>
-                                            <td t-att-style="td_val_style"><strong><t t-out="'%.2f' % (o.achievement_percent or 0.0)"/>%</strong></td>
-                                            <td t-att-style="td_lbl_style">الشريحة</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.tier_name or '—'"/></td>
-                                        </tr>
-                                    </t>
-                                    <t t-if="o.category == 'stock'">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">قيمة مبيعات المخزون</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.stock_sales_value" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">نسبة العمولة</td>
-                                            <td t-att-style="td_val_style"><span><t t-out="'%.4f' % (o.stock_commission_pct or 0.0)"/>%</span></td>
-                                        </tr>
-                                    </t>
-                                    <t t-if="o.category == 'installation'">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">المبلغ الثابت</td>
-                                            <td t-att-style="td_val_style" colspan="3"><span t-out="o.installation_fixed_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                        </tr>
-                                    </t>
-                                    <t t-if="o.category == 'branch_manager'">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">معامل ربحية الفرع</td>
-                                            <td t-att-style="td_val_style"><span t-out="'%.3f' % (o.branch_profit_factor or 0.0)"/></td>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">نسبة المدير</td>
-                                            <td t-att-style="td_val_style"><span><t t-out="'%.2f' % (o.branch_manager_pct or 0.0)"/>%</span></td>
-                                        </tr>
-                                    </t>
-                                    <t t-if="o.category == 'service'">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style" style="width:25%;">نسبة الخدمة</td>
-                                            <td t-att-style="td_val_style" colspan="3"><span><t t-out="'%.2f' % (o.service_pct or 0.0)"/>%</span></td>
-                                        </tr>
-                                    </t>
-                                </table>
-                            </div>
-
-                            <!-- ── Amounts (computed + override) ──────────── -->
-                            <div t-att-style="sec_style">
-                                <h4 t-att-style="h4_style">المبالغ</h4>
-                                <table t-att-style="tbl_style">
-                                    <tr>
-                                        <td t-att-style="td_lbl_style" style="width:38%;">المكافأة المحتسبة</td>
-                                        <td t-att-style="td_val_style"><span t-out="o.computed_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                    </tr>
-                                    <t t-if="o.manual_override_reason">
-                                        <tr>
-                                            <td t-att-style="td_lbl_style">مبلغ التعديل اليدوي</td>
-                                            <td t-att-style="td_val_style"><strong t-out="o.manual_override_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></td>
-                                        </tr>
-                                        <tr>
-                                            <td t-att-style="td_lbl_style">سبب التعديل</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.manual_override_reason"/></td>
-                                        </tr>
-                                        <tr t-if="o.manual_override_by">
-                                            <td t-att-style="td_lbl_style">طُبِّق بواسطة</td>
-                                            <td t-att-style="td_val_style"><span t-out="o.manual_override_by.name"/></td>
-                                        </tr>
-                                    </t>
-                                </table>
-                            </div>
-
-                            <!-- ── Final amount: prominent box ────────────── -->
-                            <div class="sl-final"
-                                 style="background:#1f7a3f; color:#ffffff; padding:20px 24px; border-radius:10px; margin:14px 0;">
-                                <table style="width:100%; color:#ffffff;">
-                                    <tr>
-                                        <td style="font-size:16px; font-weight:600; opacity:0.95;">إجمالي المكافأة النهائية</td>
-                                        <td style="text-align:left; font-size:30px; font-weight:700; letter-spacing:0.5px;">
-                                            <span t-out="o.bonus_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- ── Motivational line ──────────────────────── -->
-                            <div style="text-align:center; font-size:13px; color:#4a5568; font-style:italic; margin-top:14px; padding:8px; background:#f9fafc; border-radius:6px;"
-                                 t-if="not o.is_excluded and o.bonus_amount &gt; 0">
-                                <t t-if="eval_pct &gt;= 85">شكرًا لأدائك المتميز هذا الشهر — استمر في التألق!</t>
-                                <t t-elif="eval_pct &gt;= 65">عمل جيد هذا الشهر — نتطلع لمزيد من التميز.</t>
-                                <t t-else="">نشكرك على جهدك هذا الشهر.</t>
-                            </div>
-
-                            <!-- ── Footer ─────────────────────────────────── -->
-                            <t t-set="approved_on" t-value="o.approved_on or (o.batch_id and o.batch_id.approved_on)"/>
-                            <t t-set="approved_by" t-value="o.approved_by or (o.batch_id and o.batch_id.approved_by) or False"/>
-                            <div style="margin-top:18px; padding-top:12px; border-top:1px dashed #c8d4e3; font-size:11px; color:#6b7280; text-align:center;">
-                                <table style="width:100%; font-size:11px;">
-                                    <tr>
-                                        <td style="text-align:right;">
-                                            الحالة:
-                                            <span style="display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; background:#d4edda; color:#155724;">
-                                                <t t-if="o.state == 'approved'">معتمد</t>
-                                                <t t-elif="o.state == 'locked'">مقفل</t>
-                                                <t t-elif="o.state == 'computed'">محتسب</t>
-                                                <t t-else="">مسودة</t>
-                                            </span>
-                                        </td>
-                                        <td style="text-align:center;" t-if="approved_on">
-                                            تاريخ الاعتماد: <span t-out="approved_on"/>
-                                        </td>
-                                        <td style="text-align:left;" t-if="approved_by">
-                                            المعتمِد: <span t-out="approved_by.name"/>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <p style="margin-top:10px;">
-                                    هذا الإيصال صادر آليًا من نظام المكافآت ولا يحتاج توقيعًا
-                                </p>
-                            </div>
-                        </div>
+                    <!-- Quality tier: drives label + color. Local Unicode chars,
+                         not emoji, so wkhtmltopdf can render them. -->
+                    <t t-if="eval_pct &gt;= 85">
+                        <t t-set="eval_glyph" t-value="'★'"/>
+                        <t t-set="eval_label" t-value="'ممتاز'"/>
+                        <t t-set="eval_color" t-value="'#1f7a3f'"/>
+                        <t t-set="eval_bg"    t-value="'#e6f4ec'"/>
                     </t>
+                    <t t-elif="eval_pct &gt;= 65">
+                        <t t-set="eval_glyph" t-value="'◆'"/>
+                        <t t-set="eval_label" t-value="'جيد'"/>
+                        <t t-set="eval_color" t-value="'#1e6091'"/>
+                        <t t-set="eval_bg"    t-value="'#e6f0f8'"/>
+                    </t>
+                    <t t-elif="eval_pct &gt;= 1">
+                        <t t-set="eval_glyph" t-value="'▲'"/>
+                        <t t-set="eval_label" t-value="'يحتاج تحسينًا'"/>
+                        <t t-set="eval_color" t-value="'#9a5b00'"/>
+                        <t t-set="eval_bg"    t-value="'#fdf3e2'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-set="eval_glyph" t-value="'—'"/>
+                        <t t-set="eval_label" t-value="'لا يوجد تقييم'"/>
+                        <t t-set="eval_color" t-value="'#6b7280'"/>
+                        <t t-set="eval_bg"    t-value="'#f1f3f5'"/>
+                    </t>
+
+                    <!-- Category labels (English source → Arabic for receipt) -->
+                    <t t-set="category_label_map" t-value="{
+                        'service': 'خدمات',
+                        'sales': 'مبيعات',
+                        'stock': 'مشتريات / مخزون',
+                        'installation': 'تركيبات',
+                        'branch_manager': 'مدير فرع / منطقة',
+                        'none': '—',
+                    }"/>
+                    <t t-set="category_label" t-value="category_label_map.get(o.category or 'none', '—')"/>
+
+                    <!-- Calculator-stored formula values (the deterministic
+                         English strings from sl.bonus.calculator) mapped to
+                         clean Arabic. Any value NOT in this map is rendered
+                         as-is, so numeric values like "30.00%" pass through
+                         untouched. -->
+                    <t t-set="comp_value_map" t-value="{
+                        'basic &#215; service% &#215; evaluation%': 'الراتب الأساسي × نسبة الخدمة × نسبة التقييم',
+                        '(tier &#215; 50%) + (tier &#215; 50% &#215; evaluation%)': '(الشريحة × 50%) + (الشريحة × 50% × نسبة التقييم)',
+                        'stock_sales &#215; commission% &#215; evaluation%': 'المبيعات × نسبة العمولة × نسبة التقييم',
+                        'fixed &#215; evaluation%': 'المبلغ الثابت × نسبة التقييم',
+                        'basic &#215; branch_tier_% &#215; evaluation%': 'الراتب الأساسي × نسبة الشريحة × نسبة التقييم',
+                        'No tier reached': 'لم يتم الوصول لأي شريحة',
+                        'No target configured': 'لا يوجد مستهدف معتمد',
+                    }"/>
+
+                    <!-- Calculator component label translation. Anything mapped
+                         to '__skip__' is hidden from the receipt entirely
+                         (used for the internal 'Warning' component). -->
+                    <t t-set="comp_label_map" t-value="{
+                        'Formula': 'الصيغة',
+                        'Basic Salary': 'الراتب الأساسي',
+                        'Service %': 'نسبة الخدمة',
+                        'Stock Sales Value': 'قيمة مبيعات المخزون',
+                        'Commission %': 'نسبة العمولة',
+                        'Fixed Amount': 'المبلغ الثابت',
+                        'Target': 'المستهدف',
+                        'Achieved (collected)': 'المحقق (المحصل)',
+                        'Achievement %': 'نسبة الإنجاز',
+                        'Tier': 'الشريحة',
+                        'Tier Commission': 'عمولة الشريحة',
+                        'Fixed half (50%)': 'النصف الثابت (50%)',
+                        'Eval-scaled half (50% &#215; eval%)': 'النصف حسب التقييم',
+                        'Branch Profit Factor': 'معامل ربحية الفرع',
+                        'Tier %': 'نسبة الشريحة',
+                        'Evaluation %': 'نسبة التقييم',
+                        'Result': 'الناتج',
+                        'Excluded': 'مستثنى',
+                        'No bonus': 'بدون مكافأة',
+                        'Warning': '__skip__',
+                    }"/>
+
+                    <!-- Approval metadata, falling back to the parent batch
+                         when the line itself is batch-owned. Format the
+                         datetime to a date-only Arabic-friendly string. -->
+                    <t t-set="approved_dt" t-value="o.approved_on or (o.batch_id and o.batch_id.approved_on) or False"/>
+                    <t t-set="approved_by_user" t-value="o.approved_by or (o.batch_id and o.batch_id.approved_by) or False"/>
+                    <t t-set="approved_str" t-value="approved_dt and approved_dt.strftime('%Y-%m-%d') or ''"/>
+
+                    <!-- Status badge styling table-driven so we never collide
+                         with bidi mid-text. -->
+                    <t t-if="o.state == 'approved'">
+                        <t t-set="state_label" t-value="'معتمد'"/>
+                        <t t-set="state_color" t-value="'#155724'"/>
+                        <t t-set="state_bg"    t-value="'#d4edda'"/>
+                    </t>
+                    <t t-elif="o.state == 'locked'">
+                        <t t-set="state_label" t-value="'مقفل'"/>
+                        <t t-set="state_color" t-value="'#383d41'"/>
+                        <t t-set="state_bg"    t-value="'#e2e3e5'"/>
+                    </t>
+                    <t t-elif="o.state == 'computed'">
+                        <t t-set="state_label" t-value="'محتسب'"/>
+                        <t t-set="state_color" t-value="'#856404'"/>
+                        <t t-set="state_bg"    t-value="'#fff3cd'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-set="state_label" t-value="'مسودة'"/>
+                        <t t-set="state_color" t-value="'#383d41'"/>
+                        <t t-set="state_bg"    t-value="'#e2e3e5'"/>
+                    </t>
+
+                    <!-- Style fragments (re-used via t-att-style). Inline only —
+                         no <style> block (see header comment). -->
+                    <t t-set="font_stack" t-value="&quot;'Cairo','DejaVu Sans','Arial','Tahoma',sans-serif&quot;"/>
+                    <t t-set="sec_style"  t-value="'border:1px solid #dde3ea; border-radius:6px; padding:10px 14px; margin-bottom:10px; background:#ffffff;'"/>
+                    <t t-set="h4_style"   t-value="'margin:0 0 8px 0; font-size:13px; font-weight:700; color:#1e3a5f; border-bottom:1px solid #1e3a5f; padding-bottom:4px;'"/>
+                    <t t-set="tbl_style"  t-value="'width:100%; border-collapse:collapse; margin:0; font-size:11.5px;'"/>
+                    <t t-set="td_lbl"     t-value="'font-weight:600; color:#475569; padding:4px 8px; vertical-align:top; white-space:nowrap;'"/>
+                    <t t-set="td_val"     t-value="'padding:4px 8px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word;'"/>
+
+                    <!-- ═════ PAGE ═════ -->
+                    <div class="page"
+                         t-att-style="'direction:rtl; text-align:right; font-family:' + font_stack + '; color:#1f2937; line-height:1.5; font-size:12px;'">
+
+                        <!-- ═════ HEADER ═════
+                             Left: optional company logo, capped at 90×55px.
+                             Right: title + company name + month.
+                             3px solid bottom border ties the band together
+                             without using a background fill (cleaner in PDF). -->
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <tr>
+                                <td style="vertical-align:middle; padding:4px 0 10px 0; width:140px;">
+                                    <img t-if="o.company_id.logo"
+                                         t-att-src="image_data_uri(o.company_id.logo)"
+                                         style="max-height:55px; max-width:140px; display:block;"/>
+                                </td>
+                                <td style="vertical-align:middle; padding:4px 12px 10px 12px; border-right:3px solid #1e3a5f;">
+                                    <div style="font-size:20px; font-weight:700; color:#1e3a5f; margin:0; line-height:1.2;">
+                                        إيصال مكافأة شهرية
+                                    </div>
+                                    <div style="font-size:12px; color:#475569; margin-top:4px;">
+                                        <span t-out="o.company_id.name"/>
+                                        <span style="margin:0 6px; color:#cbd5e1;">|</span>
+                                        <span t-out="o.period_display or o.period_label or ''"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ═════ EMPLOYEE ═════ -->
+                        <div t-att-style="sec_style">
+                            <h4 t-att-style="h4_style">بيانات الموظف</h4>
+                            <table t-att-style="tbl_style">
+                                <colgroup>
+                                    <col style="width:18%;"/>
+                                    <col style="width:32%;"/>
+                                    <col style="width:18%;"/>
+                                    <col style="width:32%;"/>
+                                </colgroup>
+                                <tr>
+                                    <td t-att-style="td_lbl">الاسم</td>
+                                    <td t-att-style="td_val"><strong t-out="o.employee_id.name or ''"/></td>
+                                    <td t-att-style="td_lbl">الإدارة</td>
+                                    <td t-att-style="td_val"><span t-out="o.department_id.name or '—'"/></td>
+                                </tr>
+                                <tr>
+                                    <td t-att-style="td_lbl">الوظيفة</td>
+                                    <td t-att-style="td_val"><span t-out="o.job_id.name or '—'"/></td>
+                                    <td t-att-style="td_lbl">مقر العمل</td>
+                                    <td t-att-style="td_val"><span t-out="o.work_location_id.name or '—'"/></td>
+                                </tr>
+                                <tr>
+                                    <td t-att-style="td_lbl">فئة المكافأة</td>
+                                    <td t-att-style="td_val">
+                                        <span style="display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; background:#e3e8ef; color:#1e3a5f;"
+                                              t-out="category_label"/>
+                                    </td>
+                                    <td t-att-style="td_lbl">الشهر</td>
+                                    <td t-att-style="td_val"><span t-out="o.period_display or o.period_label or ''"/></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- ═════ EVALUATION (no technical source) ═════
+                             Source line was removed; it exposed
+                             "hr.appraisal#NNN" and similar HR-internal
+                             references. The replacement is a clean badge. -->
+                        <div t-att-style="sec_style">
+                            <h4 t-att-style="h4_style">تقييم الأداء</h4>
+                            <table t-att-style="tbl_style">
+                                <tr>
+                                    <td t-att-style="td_lbl" style="width:25%;">نسبة التقييم</td>
+                                    <td t-att-style="td_val" style="width:25%;">
+                                        <strong style="font-size:14px;">
+                                            <span dir="ltr"><t t-out="eval_pct_str"/>%</span>
+                                        </strong>
+                                    </td>
+                                    <td t-att-style="td_lbl" style="width:20%;">التقدير</td>
+                                    <td t-att-style="td_val" style="width:30%;">
+                                        <span t-att-style="'display:inline-block; padding:3px 12px; border-radius:12px; font-size:11px; font-weight:700; background:' + eval_bg + '; color:' + eval_color + ';'">
+                                            <span style="margin-left:4px;" t-out="eval_glyph"/>
+                                            <span t-out="eval_label"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- ═════ CALCULATION BREAKDOWN ═════
+                             Components are filtered against comp_label_map.
+                             Anything mapped to '__skip__' is silently dropped
+                             from the receipt (e.g. the internal "Warning"
+                             component the calculator adds when a service rate
+                             is misconfigured — HR-only signal). -->
+                        <div t-att-style="sec_style" t-if="o.component_ids">
+                            <h4 t-att-style="h4_style">تفاصيل الاحتساب</h4>
+                            <table t-att-style="tbl_style">
+                                <thead>
+                                    <tr>
+                                        <th style="background:#f4f7fb; color:#1e3a5f; font-weight:700; padding:6px 9px; border-bottom:2px solid #c8d4e3; text-align:right; width:35%;">البيان</th>
+                                        <th style="background:#f4f7fb; color:#1e3a5f; font-weight:700; padding:6px 9px; border-bottom:2px solid #c8d4e3; text-align:right;">القيمة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.component_ids.sorted(key=lambda c: c.sequence)" t-as="c">
+                                        <t t-set="ar_label" t-value="comp_label_map.get(c.label, c.label)"/>
+                                        <t t-set="raw_value" t-value="c.value or ''"/>
+                                        <t t-set="ar_value" t-value="comp_value_map.get(raw_value, raw_value)"/>
+                                        <!-- If the value got translated, it's Arabic text (no dir wrapper).
+                                             Otherwise it's likely a number/percentage and we wrap in
+                                             dir="ltr" so bidi doesn't move the percent sign. -->
+                                        <t t-set="value_is_translated" t-value="ar_value != raw_value"/>
+                                        <tr t-if="ar_label != '__skip__'">
+                                            <td style="padding:5px 9px; border-bottom:1px solid #eef2f7; color:#475569;">
+                                                <span t-out="ar_label"/>
+                                            </td>
+                                            <td style="padding:5px 9px; border-bottom:1px solid #eef2f7; word-wrap:break-word;">
+                                                <t t-if="value_is_translated">
+                                                    <span t-out="ar_value"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span dir="ltr" t-out="ar_value"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ═════ CATEGORY-SPECIFIC PANEL ═════ -->
+                        <div t-att-style="sec_style"
+                             t-if="o.category in ('sales', 'stock', 'installation', 'branch_manager', 'service') and not o.is_excluded">
+                            <h4 t-att-style="h4_style">تفاصيل الفئة</h4>
+                            <table t-att-style="tbl_style">
+                                <t t-if="o.category == 'sales'">
+                                    <tr>
+                                        <td t-att-style="td_lbl" style="width:25%;">المستهدف</td>
+                                        <td t-att-style="td_val">
+                                            <span dir="ltr" t-out="o.target_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                        </td>
+                                        <td t-att-style="td_lbl" style="width:25%;">المحقق (المحصل)</td>
+                                        <td t-att-style="td_val">
+                                            <span dir="ltr" t-out="o.achieved_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td t-att-style="td_lbl">نسبة الإنجاز</td>
+                                        <td t-att-style="td_val"><strong><span dir="ltr"><t t-out="'%.2f' % (o.achievement_percent or 0.0)"/>%</span></strong></td>
+                                        <td t-att-style="td_lbl">الشريحة</td>
+                                        <td t-att-style="td_val"><span t-out="o.tier_name or '—'"/></td>
+                                    </tr>
+                                </t>
+                                <t t-if="o.category == 'stock'">
+                                    <tr>
+                                        <td t-att-style="td_lbl" style="width:25%;">قيمة مبيعات المخزون</td>
+                                        <td t-att-style="td_val">
+                                            <span dir="ltr" t-out="o.stock_sales_value" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                        </td>
+                                        <td t-att-style="td_lbl" style="width:25%;">نسبة العمولة</td>
+                                        <td t-att-style="td_val"><span dir="ltr"><t t-out="'%.4f' % (o.stock_commission_pct or 0.0)"/>%</span></td>
+                                    </tr>
+                                </t>
+                                <t t-if="o.category == 'installation'">
+                                    <tr>
+                                        <td t-att-style="td_lbl" style="width:25%;">المبلغ الثابت</td>
+                                        <td t-att-style="td_val" colspan="3">
+                                            <span dir="ltr" t-out="o.installation_fixed_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-if="o.category == 'branch_manager'">
+                                    <tr>
+                                        <td t-att-style="td_lbl" style="width:25%;">معامل ربحية الفرع</td>
+                                        <td t-att-style="td_val"><span dir="ltr"><t t-out="'%.3f' % (o.branch_profit_factor or 0.0)"/></span></td>
+                                        <td t-att-style="td_lbl" style="width:25%;">نسبة المدير</td>
+                                        <td t-att-style="td_val"><span dir="ltr"><t t-out="'%.2f' % (o.branch_manager_pct or 0.0)"/>%</span></td>
+                                    </tr>
+                                </t>
+                                <t t-if="o.category == 'service'">
+                                    <tr>
+                                        <td t-att-style="td_lbl" style="width:25%;">نسبة الخدمة</td>
+                                        <td t-att-style="td_val" colspan="3"><span dir="ltr"><t t-out="'%.2f' % (o.service_pct or 0.0)"/>%</span></td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+
+                        <!-- ═════ AMOUNTS (computed + manual override) ═════ -->
+                        <div t-att-style="sec_style">
+                            <h4 t-att-style="h4_style">المبالغ</h4>
+                            <table t-att-style="tbl_style">
+                                <tr>
+                                    <td t-att-style="td_lbl" style="width:38%;">المكافأة المحتسبة</td>
+                                    <td t-att-style="td_val">
+                                        <span dir="ltr" t-out="o.computed_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <t t-if="o.manual_override_reason">
+                                    <tr>
+                                        <td t-att-style="td_lbl">مبلغ التعديل اليدوي</td>
+                                        <td t-att-style="td_val">
+                                            <strong><span dir="ltr" t-out="o.manual_override_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/></strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td t-att-style="td_lbl">سبب التعديل</td>
+                                        <td t-att-style="td_val"><span t-out="o.manual_override_reason"/></td>
+                                    </tr>
+                                    <tr t-if="o.manual_override_by">
+                                        <td t-att-style="td_lbl">طُبِّق بواسطة</td>
+                                        <td t-att-style="td_val"><span t-out="o.manual_override_by.name"/></td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+
+                        <!-- ═════ FINAL AMOUNT (prominent box) ═════
+                             Solid green only (no gradient — gradients render
+                             unpredictably in wkhtmltopdf). -->
+                        <table class="sl-final" style="width:100%; border-collapse:collapse; margin:12px 0;">
+                            <tr>
+                                <td style="background:#1f7a3f; color:#ffffff; padding:14px 18px; border-radius:8px;">
+                                    <table style="width:100%; color:#ffffff;">
+                                        <tr>
+                                            <td style="font-size:14px; font-weight:600;">إجمالي المكافأة النهائية</td>
+                                            <td style="text-align:left; font-size:24px; font-weight:700; letter-spacing:0.5px;">
+                                                <span dir="ltr" t-out="o.bonus_amount" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ═════ MOTIVATIONAL LINE (only when there's a bonus to celebrate) ═════ -->
+                        <div t-if="not o.is_excluded and o.bonus_amount &gt; 0"
+                             style="text-align:center; font-size:11.5px; color:#475569; font-style:italic; margin-top:6px; padding:6px 8px; background:#f9fafc; border-radius:5px;">
+                            <t t-if="eval_pct &gt;= 85">شكرًا لأدائك المتميز هذا الشهر — استمر في التألق</t>
+                            <t t-elif="eval_pct &gt;= 65">عمل جيد هذا الشهر — نتطلع لمزيد من التميز</t>
+                            <t t-else="">نشكرك على جهدك هذا الشهر</t>
+                        </div>
+
+                        <!-- ═════ FOOTER ═════
+                             Three balanced columns + disclaimer. Date is
+                             formatted to YYYY-MM-DD (no time). Status badge
+                             color comes from the t-set above. -->
+                        <table style="width:100%; border-collapse:collapse; margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px;">
+                            <colgroup>
+                                <col style="width:33%;"/>
+                                <col style="width:34%;"/>
+                                <col style="width:33%;"/>
+                            </colgroup>
+                            <tr>
+                                <td style="font-size:11px; color:#475569; padding:6px 4px; vertical-align:middle;">
+                                    <span style="color:#475569;">الحالة:</span>
+                                    <span t-att-style="'display:inline-block; padding:2px 10px; border-radius:10px; font-size:10.5px; font-weight:700; background:' + state_bg + '; color:' + state_color + '; margin-right:4px;'"
+                                          t-out="state_label"/>
+                                </td>
+                                <td style="font-size:11px; color:#475569; padding:6px 4px; text-align:center; vertical-align:middle;">
+                                    <t t-if="approved_str">
+                                        <span>تاريخ الاعتماد:</span>
+                                        <span dir="ltr" style="margin-right:4px;" t-out="approved_str"/>
+                                    </t>
+                                </td>
+                                <td style="font-size:11px; color:#475569; padding:6px 4px; text-align:left; vertical-align:middle;">
+                                    <t t-if="approved_by_user">
+                                        <span>المعتمِد:</span>
+                                        <span style="margin-right:4px; font-weight:600;" t-out="approved_by_user.name"/>
+                                    </t>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="text-align:center; font-size:10px; color:#94a3b8; font-style:italic; margin-top:4px;">
+                            هذا الإيصال صادر آليًا من نظام المكافآت ولا يحتاج توقيعًا
+                        </div>
+                    </div>
                 </t>
             </t>
         </template>
