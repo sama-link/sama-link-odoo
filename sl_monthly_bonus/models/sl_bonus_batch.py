@@ -1,10 +1,32 @@
 import logging
 from datetime import date
 from calendar import monthrange
+from babel.dates import format_date
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
 _logger = logging.getLogger(__name__)
+
+
+def _format_month_localized(value, lang):
+    """Return a human-readable month-year string in the user's UI language.
+
+    Used by both ``sl.bonus.batch`` and ``sl.bonus.batch.line`` to surface
+    e.g. "أبريل 2026" in an Arabic session and "April 2026" in English.
+    Falls back to ``%B %Y`` if babel doesn't recognize the locale.
+    """
+    if not value:
+        return ''
+    # Odoo Arabic ships as ar_001; babel knows ar / ar_SA / ar_EG. Strip
+    # the geographical refinement and try the base language first.
+    locale = (lang or 'en_US').replace('@', '_')
+    candidates = [locale, locale.split('_')[0], 'en']
+    for loc in candidates:
+        try:
+            return format_date(value, format='LLLL y', locale=loc)
+        except Exception:
+            continue
+    return value.strftime('%B %Y')
 
 
 class SlBonusBatch(models.Model):
@@ -21,7 +43,12 @@ class SlBonusBatch(models.Model):
     )
     period_start = fields.Date(string='Period Start', required=True)
     period_end = fields.Date(string='Period End', required=True)
-    period_label = fields.Char(string='Month', compute='_compute_period_label', store=True)
+    period_label = fields.Char(string='Month (YYYY-MM)', compute='_compute_period_label', store=True,
+                               help='Technical identifier (YYYY-MM). For display, prefer period_display.')
+    # Human-readable month name in the user's UI language. Not stored — the
+    # locale comes from request context, so a stored value would be wrong for
+    # other users.
+    period_display = fields.Char(string='Month', compute='_compute_period_display')
     state = fields.Selection([
         ('draft', 'Draft'),
         ('data_ready', 'Data Ready'),
@@ -73,6 +100,13 @@ class SlBonusBatch(models.Model):
     def _compute_period_label(self):
         for rec in self:
             rec.period_label = rec.period_start and rec.period_start.strftime('%Y-%m') or ''
+
+    @api.depends('period_start')
+    @api.depends_context('lang')
+    def _compute_period_display(self):
+        lang = self.env.context.get('lang') or self.env.user.lang or 'en_US'
+        for rec in self:
+            rec.period_display = _format_month_localized(rec.period_start, lang)
 
     @api.depends('line_ids', 'line_ids.bonus_amount', 'line_ids.is_excluded')
     def _compute_counts(self):
@@ -169,33 +203,81 @@ class SlBonusBatch(models.Model):
             'context': {'default_batch_id': self.id},
         }
 
+    def _add_employees_to_lines(self, employees):
+        """Core helper — create draft lines for the given employees that are
+        not yet in ``line_ids``. Returns the newly-created line records.
+
+        Used by the legacy ``action_add_all_employees`` entry point AND by
+        the two new wizards (``sl.bonus.add.employees.wizard`` and
+        ``sl.bonus.add.from.appraisal.wizard``). Active-flag filtering is
+        applied; duplicates against existing ``line_ids`` are silently
+        skipped (the per-line @api.constrains also guards against this).
+        """
+        self.ensure_one()
+        if self.state not in ('draft', 'data_ready'):
+            raise UserError(_(
+                "Employees can only be added while the batch is in Draft "
+                "or Data Ready."
+            ))
+        Line = self.env['sl.bonus.batch.line'].sudo()
+        existing_ids = set(self.line_ids.mapped('employee_id.id'))
+        new_employees = employees.sudo().filtered(
+            lambda e: e.active and e.id not in existing_ids
+        )
+        if not new_employees:
+            return Line.browse()
+        return Line.create([{
+            'batch_id': self.id,
+            'employee_id': emp.id,
+            'state': 'draft',
+        } for emp in new_employees])
+
     def action_add_all_employees(self):
-        """Create a draft line for every active company employee not yet in
-        ``line_ids``. Lines are the single source of truth for batch
-        membership (employee_ids is legacy).
+        """Legacy entry point — create a draft line for every active company
+        employee not yet in ``line_ids``. The UI now routes this through the
+        ``sl.bonus.add.employees.wizard``; this method is kept for
+        programmatic callers (tests, scripts, server actions).
         """
         self._ensure_hr()
-        Line = self.env['sl.bonus.batch.line'].sudo()
         for rec in self:
-            if rec.state not in ('draft', 'data_ready'):
-                raise UserError(_(
-                    "Employees can only be added while the batch is in Draft "
-                    "or Data Ready."
-                ))
-            existing_ids = set(rec.line_ids.mapped('employee_id.id'))
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [rec.company_id.id, False]),
                 ('active', '=', True),
             ])
-            new_employees = employees.filtered(lambda e: e.id not in existing_ids)
-            if not new_employees:
-                continue
-            Line.create([{
-                'batch_id': rec.id,
-                'employee_id': emp.id,
-                'state': 'draft',
-            } for emp in new_employees])
+            rec._add_employees_to_lines(employees)
         return True
+
+    def action_open_add_employees_wizard(self):
+        """Open the Add Employees wizard (UI entry point — replaces the
+        direct Add-All-Active-Employees button)."""
+        self.ensure_one()
+        self._ensure_hr()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add Employees'),
+            'res_model': 'sl.bonus.add.employees.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_batch_id': self.id,
+            },
+        }
+
+    def action_open_add_from_appraisal_wizard(self):
+        """Open the Add From Appraisal Batch wizard — adds every employee
+        referenced by an appraisal in the selected appraisal batch."""
+        self.ensure_one()
+        self._ensure_hr()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add From Appraisal Batch'),
+            'res_model': 'sl.bonus.add.from.appraisal.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_batch_id': self.id,
+            },
+        }
 
     def action_mark_data_ready(self):
         self._ensure_hr()

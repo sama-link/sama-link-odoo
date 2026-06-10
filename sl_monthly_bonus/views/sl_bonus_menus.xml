@@ -39,8 +39,11 @@
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <!-- ════════════════════ Self-Service (standalone top-level app) ════════════════════ -->
+        <!-- Refinement R5: emoji removed from label (kept the existing icon
+             asset). The label is the user-facing string; the app icon comes
+             from web_icon. -->
         <menuitem id="menu_sl_bonus_self"
-                  name="👤 My Bonus"
+                  name="My Bonus"
                   sequence="56"
                   web_icon="sl_monthly_bonus,static/description/icon.png"
                   groups="sl_monthly_bonus.group_bonus_employee"/>

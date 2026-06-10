@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sl_bonus_add_employees_wizard_form" model="ir.ui.view">
+            <field name="name">sl.bonus.add.employees.wizard.form</field>
+            <field name="model">sl.bonus.add.employees.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Add Employees">
+                    <sheet>
+                        <div class="oe_title">
+                            <h2>Add Employees to <field name="batch_id" readonly="1" class="oe_inline"/></h2>
+                        </div>
+                        <group>
+                            <field name="mode" widget="radio"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group string="Employees" invisible="mode != 'specific'">
+                            <field name="employee_ids" nolabel="1" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </group>
+                        <group string="Departments" invisible="mode != 'by_department'">
+                            <field name="department_ids" nolabel="1" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </group>
+                        <group invisible="mode != 'all'">
+                            <div class="text-muted">
+                                All active employees in <field name="company_id" readonly="1" class="oe_inline"/> will be added (excluding any already in the batch).
+                            </div>
+                        </group>
+                        <div class="alert alert-info" role="alert" invisible="preview_count &lt;= 0">
+                            <field name="preview_count" readonly="1" class="oe_inline"/> new bonus line(s) will be created. Existing employees in the batch are skipped automatically.
+                        </div>
+                        <div class="alert alert-warning" role="alert" invisible="preview_count != 0">
+                            No new lines will be created with the current selection (either nothing is selected, or every candidate is already in the batch).
+                        </div>
+                    </sheet>
+                    <footer>
+                        <button name="action_confirm" type="object" string="Add to Batch"
+                                class="oe_highlight" invisible="preview_count &lt;= 0"/>
+                        <button special="cancel" string="Cancel" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

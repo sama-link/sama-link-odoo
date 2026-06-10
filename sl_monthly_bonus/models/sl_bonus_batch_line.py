@@ -3,6 +3,8 @@ from calendar import monthrange
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
+from .sl_bonus_batch import _format_month_localized
+
 
 # Mapping from batch state (6 values) → line state (4 values).
 # - draft / data_ready  → draft  : nothing computed yet for the line.
@@ -66,9 +68,12 @@ class SlBonusBatchLine(models.Model):
         compute='_compute_period_fields', store=True, readonly=False,
     )
     period_label = fields.Char(
-        string='Month', compute='_compute_period_label', store=True,
-        help='Month/Year in YYYY-MM format. Used by duplicate-prevention and UI.',
+        string='Month (YYYY-MM)', compute='_compute_period_label', store=True,
+        help='Technical identifier (YYYY-MM). For display, prefer period_display.',
     )
+    # Human-readable month name in the user's UI language. Not stored — the
+    # locale comes from request context.
+    period_display = fields.Char(string='Month', compute='_compute_period_display')
     company_id = fields.Many2one(
         'res.company', string='Company',
         compute='_compute_company_currency', store=True, readonly=False,
@@ -198,6 +203,13 @@ class SlBonusBatchLine(models.Model):
     def _compute_period_label(self):
         for rec in self:
             rec.period_label = rec.period_start.strftime('%Y-%m') if rec.period_start else ''
+
+    @api.depends('period_start')
+    @api.depends_context('lang')
+    def _compute_period_display(self):
+        lang = self.env.context.get('lang') or self.env.user.lang or 'en_US'
+        for rec in self:
+            rec.period_display = _format_month_localized(rec.period_start, lang)
 
     @api.onchange('period_start')
     def _onchange_period_start_normalize(self):

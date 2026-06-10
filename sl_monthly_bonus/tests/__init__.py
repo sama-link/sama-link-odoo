@@ -9,3 +9,4 @@ from . import test_independent_line
 from . import test_batch_merge
 from . import test_receipt_report
 from . import test_employee_self_service
+from . import test_refinements

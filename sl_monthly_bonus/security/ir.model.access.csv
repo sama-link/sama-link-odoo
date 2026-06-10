@@ -75,3 +75,7 @@ access_csv_import_error_admin,bonus.csv.import.err.admin,model_sl_bonus_csv_impo
 access_csv_import_log_hr,bonus.csv.import.log.hr,model_sl_bonus_csv_import_log,group_bonus_hr_manager,1,1,1,0
 access_csv_import_log_finance,bonus.csv.import.log.finance,model_sl_bonus_csv_import_log,group_bonus_finance,1,1,1,0
 access_csv_import_log_admin,bonus.csv.import.log.admin,model_sl_bonus_csv_import_log,group_bonus_admin,1,1,1,1
+access_add_employees_wiz_hr,bonus.add.emp.wiz.hr,model_sl_bonus_add_employees_wizard,group_bonus_hr_manager,1,1,1,1
+access_add_employees_wiz_admin,bonus.add.emp.wiz.admin,model_sl_bonus_add_employees_wizard,group_bonus_admin,1,1,1,1
+access_add_from_appraisal_wiz_hr,bonus.add.appraisal.wiz.hr,model_sl_bonus_add_from_appraisal_wizard,group_bonus_hr_manager,1,1,1,1
+access_add_from_appraisal_wiz_admin,bonus.add.appraisal.wiz.admin,model_sl_bonus_add_from_appraisal_wizard,group_bonus_admin,1,1,1,1

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sl_bonus_add_from_appraisal_wizard_form" model="ir.ui.view">
+            <field name="name">sl.bonus.add.from.appraisal.wizard.form</field>
+            <field name="model">sl.bonus.add.from.appraisal.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Add From Appraisal Batch">
+                    <sheet>
+                        <div class="oe_title">
+                            <h2>Add From Appraisal Batch → <field name="batch_id" readonly="1" class="oe_inline"/></h2>
+                        </div>
+                        <group>
+                            <field name="company_id" invisible="1"/>
+                            <field name="appraisal_batch_id"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </group>
+                        <group invisible="not appraisal_batch_id">
+                            <field name="candidate_count" readonly="1"/>
+                            <field name="preview_count" readonly="1"/>
+                        </group>
+                        <div class="alert alert-info" role="alert" invisible="not appraisal_batch_id or preview_count &lt;= 0">
+                            <field name="preview_count" readonly="1" class="oe_inline"/> new bonus line(s) will be created. Employees already in the bonus batch are skipped automatically. Appraisal records are not modified.
+                        </div>
+                        <div class="alert alert-warning" role="alert" invisible="not appraisal_batch_id or preview_count != 0">
+                            Nothing to add — every employee from the selected appraisal batch is already in this bonus batch (or the appraisal batch has no appraisals).
+                        </div>
+                    </sheet>
+                    <footer>
+                        <button name="action_confirm" type="object" string="Add to Batch"
+                                class="oe_highlight" invisible="preview_count &lt;= 0"/>
+                        <button special="cancel" string="Cancel" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

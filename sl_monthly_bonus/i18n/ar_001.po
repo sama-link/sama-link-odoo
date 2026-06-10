@@ -660,3 +660,105 @@ msgstr "تم تعديلها يدويًا"
 #: model:ir.cron,name:sl_monthly_bonus.cron_self_estimate_cleanup
 msgid "SL Monthly Bonus: Cleanup Old Self-Estimates"
 msgstr "تنظيف توقعات المكافآت القديمة"
+
+# ════════════════════════════════════════════════════════════
+# Refinement batch 18.0.2.1.0 — wizards, label, receipt
+# ════════════════════════════════════════════════════════════
+
+# ── Menu label clean-up ──
+#. module: sl_monthly_bonus
+#: model:ir.ui.menu,name:sl_monthly_bonus.menu_sl_bonus_self
+msgid "My Bonus"
+msgstr "مكافأتي"
+
+# ── Batch buttons / wizard openers ──
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "➕ Add Employees"
+msgstr "➕ إضافة موظفين"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_form
+msgid "📋 Add From Appraisal Batch"
+msgstr "📋 إضافة من دفعة تقييم"
+
+# ── Add Employees wizard ──
+#. module: sl_monthly_bonus
+#: model:ir.model,name:sl_monthly_bonus.model_sl_bonus_add_employees_wizard
+msgid "Add Employees to Bonus Batch"
+msgstr "إضافة موظفين إلى دفعة المكافآت"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_add_employees_wizard_form
+msgid "Add Employees"
+msgstr "إضافة موظفين"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_add_employees_wizard_form
+msgid "Add to Batch"
+msgstr "إضافة إلى الدفعة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_employees_wizard__mode
+msgid "Selection"
+msgstr "طريقة الاختيار"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_add_employees_wizard__mode__specific
+msgid "Specific employees"
+msgstr "موظفون محددون"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_add_employees_wizard__mode__all
+msgid "All active employees"
+msgstr "كل الموظفين النشطين"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_add_employees_wizard__mode__by_department
+msgid "By department(s)"
+msgstr "حسب الإدارة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_employees_wizard__department_ids
+msgid "Departments"
+msgstr "الإدارات"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_employees_wizard__preview_count
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_from_appraisal_wizard__preview_count
+msgid "Will Add"
+msgstr "سيتم الإضافة"
+
+# ── Add From Appraisal Batch wizard ──
+#. module: sl_monthly_bonus
+#: model:ir.model,name:sl_monthly_bonus.model_sl_bonus_add_from_appraisal_wizard
+msgid "Add Employees From an Appraisal Batch"
+msgstr "إضافة موظفين من دفعة تقييم"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_add_from_appraisal_wizard_form
+msgid "Add From Appraisal Batch"
+msgstr "إضافة من دفعة تقييم"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_from_appraisal_wizard__appraisal_batch_id
+msgid "Appraisal Batch"
+msgstr "دفعة التقييم"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_add_from_appraisal_wizard__candidate_count
+msgid "Employees in Appraisal Batch"
+msgstr "عدد موظفي دفعة التقييم"
+
+# ── Localized month display ──
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__period_display
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__period_display
+msgid "Month"
+msgstr "الشهر"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch__period_label
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__period_label
+msgid "Month (YYYY-MM)"
+msgstr "الشهر (YYYY-MM)"
