@@ -87,6 +87,28 @@ class SlBonusBatch(models.Model):
             if rec.period_end < rec.period_start:
                 raise ValidationError(_("Period End must be after Period Start."))
 
+    @api.constrains('line_ids')
+    def _check_no_duplicate_employee_in_lines(self):
+        """Block adding the same employee twice into a single batch.
+
+        This is the in-batch sibling of sl.bonus.batch.line._check_unique_employee_period
+        (which guards across batch-owned and independent lines). Catches the
+        case where two lines for the same employee are introduced in the same
+        write (e.g. via the wizard or the Add-all-employees button).
+        """
+        for rec in self:
+            seen = set()
+            for ln in rec.line_ids:
+                emp_id = ln.employee_id.id
+                if not emp_id:
+                    continue
+                if emp_id in seen:
+                    raise ValidationError(_(
+                        "Employee %s appears more than once in batch '%s'. "
+                        "Each employee may have only one line per batch."
+                    ) % (ln.employee_id.name, rec.name))
+                seen.add(emp_id)
+
     # ── Permission helpers ────────────────────────────────────────────
     def _is_admin(self):
         return self.env.user.has_group('sl_monthly_bonus.group_bonus_admin') \
@@ -148,14 +170,31 @@ class SlBonusBatch(models.Model):
         }
 
     def action_add_all_employees(self):
-        """Convenience: load all active company employees into the selection."""
+        """Create a draft line for every active company employee not yet in
+        ``line_ids``. Lines are the single source of truth for batch
+        membership (employee_ids is legacy).
+        """
         self._ensure_hr()
+        Line = self.env['sl.bonus.batch.line'].sudo()
         for rec in self:
-            emps = self.env['hr.employee'].sudo().search([
+            if rec.state not in ('draft', 'data_ready'):
+                raise UserError(_(
+                    "Employees can only be added while the batch is in Draft "
+                    "or Data Ready."
+                ))
+            existing_ids = set(rec.line_ids.mapped('employee_id.id'))
+            employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [rec.company_id.id, False]),
                 ('active', '=', True),
             ])
-            rec.employee_ids = [(6, 0, emps.ids)]
+            new_employees = employees.filtered(lambda e: e.id not in existing_ids)
+            if not new_employees:
+                continue
+            Line.create([{
+                'batch_id': rec.id,
+                'employee_id': emp.id,
+                'state': 'draft',
+            } for emp in new_employees])
         return True
 
     def action_mark_data_ready(self):
@@ -164,6 +203,7 @@ class SlBonusBatch(models.Model):
             if rec.state != 'draft':
                 raise UserError(_("Only Draft batches can be moved to Data Ready."))
             rec.state = 'data_ready'
+            rec.line_ids._sync_state_from_batch()
 
     def action_compute(self):
         self._ensure_hr()
@@ -176,6 +216,7 @@ class SlBonusBatch(models.Model):
                 'last_computed_on': fields.Datetime.now(),
                 'last_computed_by': self.env.user.id,
             })
+            rec.line_ids._sync_state_from_batch()
             rec.message_post(body=_("Bonuses recomputed by %s.") % self.env.user.name)
 
     def action_send_to_review(self):
@@ -184,6 +225,7 @@ class SlBonusBatch(models.Model):
             if rec.state != 'computed':
                 raise UserError(_("Only Computed batches can be sent to HR Review."))
             rec.state = 'hr_review'
+            rec.line_ids._sync_state_from_batch()
 
     def action_approve(self):
         self._ensure_hr()
@@ -197,6 +239,7 @@ class SlBonusBatch(models.Model):
                 'approved_by': self.env.user.id,
                 'approved_on': fields.Datetime.now(),
             })
+            rec.line_ids._sync_state_from_batch()
             rec.message_post(body=_("Batch approved."))
 
     def action_lock(self):
@@ -210,6 +253,7 @@ class SlBonusBatch(models.Model):
                 'locked_by': self.env.user.id,
                 'locked_on': fields.Datetime.now(),
             })
+            rec.line_ids._sync_state_from_batch()
 
     def action_reset_to_draft(self):
         if not self._is_admin():
@@ -220,38 +264,57 @@ class SlBonusBatch(models.Model):
                 'approved_by': False, 'approved_on': False,
                 'locked_by': False, 'locked_on': False,
             })
+            rec.line_ids._sync_state_from_batch()
 
     # ── Compute engine ────────────────────────────────────────────────
     def _compute_lines(self):
-        """Refresh batch lines for all active employees in the company.
+        """Refresh bonus lines from the set of employees in ``line_ids``.
 
-        Safe to run repeatedly. Manual overrides (line.manual_override_amount with
-        manual_override_reason) are preserved across recomputes; only the input
-        snapshot and the calculation breakdown components are refreshed for those
-        lines. Lines whose employee is no longer active are removed.
+        Employee selection model (single source of truth):
+          - If ``line_ids`` already contains lines, recompute exactly those
+            employees. Manually-added employees and manual overrides are
+            preserved across recomputes.
+          - If ``line_ids`` is empty AND the legacy ``employee_ids`` M2M is
+            set, seed lines from it (back-compat for existing draft batches
+            created before 18.0.2.0.0).
+          - If both are empty, fall back to all active company employees
+            (preserves the prior "leave empty to mean everyone" semantics).
 
-        Runs internal writes/unlinks via sudo() so that HR users (who can trigger
-        compute via action_compute) don't hit access errors on the internal
-        bookkeeping. Outer permission gating already happened in action_compute.
+        Lines whose employee was archived since the last run are removed.
+        Sudo is used for internal writes so HR users don't hit access errors
+        on bookkeeping — outer permission gating already ran in action_compute.
         """
         self.ensure_one()
         Calc = self.env['sl.bonus.calculator'].sudo()
         Line = self.env['sl.bonus.batch.line'].sudo()
         Component = self.env['sl.bonus.batch.line.component'].sudo()
-        if self.employee_ids:
-            # Selected-employees mode (like appraisal batches): only these.
+
+        # 1) Determine the active employee set for this run.
+        if self.line_ids:
+            employees = self.line_ids.sudo().mapped('employee_id').filtered(lambda e: e.active)
+        elif self.employee_ids:
             employees = self.employee_ids.sudo().filtered(lambda e: e.active)
+            # Materialize legacy M2M selection into draft lines so subsequent
+            # compute runs use line_ids exclusively.
+            Line.create([{
+                'batch_id': self.id, 'employee_id': emp.id, 'state': 'draft',
+            } for emp in employees])
         else:
-            # Default: all active employees in the company.
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [self.company_id.id, False]),
                 ('active', '=', True),
             ])
+            Line.create([{
+                'batch_id': self.id, 'employee_id': emp.id, 'state': 'draft',
+            } for emp in employees])
+
         if not employees:
             raise UserError(_(
                 "No employees to compute. Add employees to the batch, or — if you "
                 "left the selection empty — ensure active employees exist for '%s'."
             ) % self.company_id.name)
+
+        # 2) Compute / refresh per-employee, preserving manual overrides.
         existing_lines = {l.employee_id.id: l for l in self.sudo().line_ids}
         seen_emp_ids = set()
         for emp in employees:
@@ -262,14 +325,12 @@ class SlBonusBatch(models.Model):
             line_vals['employee_id'] = emp.id
             if emp.id in existing_lines:
                 line = existing_lines[emp.id].sudo()
-                # Preserve manual override on the bonus_amount column.
                 has_override = bool(line.manual_override_reason) and line.manual_override_amount is not False
                 if has_override:
                     overridden_amount = line.manual_override_amount
                     line.write({**line_vals, 'bonus_amount': overridden_amount})
                 else:
                     line.write(line_vals)
-                # Replace components atomically via sudo (HR otherwise may lack unlink).
                 if line.component_ids:
                     line.component_ids.sudo().unlink()
             else:
@@ -278,7 +339,7 @@ class SlBonusBatch(models.Model):
                 Component.create([
                     dict(c, line_id=line.id) for c in result['components']
                 ])
-        # Remove lines for employees no longer present (e.g. archived since last run).
+        # 3) Remove lines for employees no longer eligible (archived since last run).
         to_remove = self.sudo().line_ids.filtered(lambda l: l.employee_id.id not in seen_emp_ids)
         if to_remove:
             to_remove.sudo().unlink()

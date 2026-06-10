@@ -182,11 +182,39 @@ class SlBonusSelfEstimate(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # SUPERUSER (sudo / cron / migrations) bypasses ownership check —
+        # without this, batch back-ends and tests that create estimates on
+        # behalf of users via sudo() would fail.
+        is_superuser = self.env.su or self.env.user.id == 1
         for v in vals_list:
             v.setdefault('employee_id', self.env.user.employee_id.id)
+            if is_superuser:
+                continue
             # Enforce ownership: a non-admin user can only create rows for themselves.
             if not self.env.user.has_group('sl_monthly_bonus.group_bonus_admin') \
                     and not self.env.user.has_group('sl_monthly_bonus.group_bonus_hr_manager'):
                 if v.get('employee_id') != (self.env.user.employee_id.id or False):
                     raise AccessError(_("You can only create your own estimate."))
         return super().create(vals_list)
+
+    @api.model
+    def cron_cleanup_old_estimates(self):
+        """Delete self-estimate records older than 2 months.
+
+        The "current month estimate" form auto-creates a new row each month;
+        we don't want unbounded history. Kept simple: anything whose
+        ``period_start`` is more than 2 calendar months before today is
+        removed. Idempotent — safe to run repeatedly.
+        """
+        today = fields.Date.today()
+        # Cutoff = first day of (today - 2 months). Any row strictly older is removed.
+        year, month = today.year, today.month - 2
+        while month <= 0:
+            month += 12
+            year -= 1
+        cutoff = date(year, month, 1)
+        old = self.sudo().search([('period_start', '<', cutoff)])
+        n = len(old)
+        if old:
+            old.unlink()
+        return n
