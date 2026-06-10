@@ -21,10 +21,16 @@
         </record>
 
         <!-- ════════════════════ Batch lines ═════════════════════ -->
+        <!-- Phase 2: employees see only their OWN APPROVED/LOCKED lines.
+             Draft / computed / hr_review lines are hidden — HR must finalize
+             before an employee can see the amount. -->
         <record id="rule_batch_line_employee_own" model="ir.rule">
-            <field name="name">Bonus batch line: employee sees only own line</field>
+            <field name="name">Bonus batch line: employee sees only own approved/locked</field>
             <field name="model_id" ref="model_sl_bonus_batch_line"/>
-            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="domain_force">[
+                ('employee_id.user_id', '=', user.id),
+                ('state', 'in', ('approved', 'locked')),
+            ]</field>
             <field name="groups" eval="[(4, ref('group_bonus_employee'))]"/>
         </record>
         <record id="rule_batch_line_manager_team" model="ir.rule">
@@ -45,10 +51,14 @@
         </record>
 
         <!-- ════════════════════ Batch line components ═══════════ -->
+        <!-- Phase 2: employees see breakdown only for own approved/locked lines. -->
         <record id="rule_batch_line_component_employee_own" model="ir.rule">
-            <field name="name">Bonus line component: employee sees only own</field>
+            <field name="name">Bonus line component: employee sees only own approved/locked</field>
             <field name="model_id" ref="model_sl_bonus_batch_line_component"/>
-            <field name="domain_force">[('line_id.employee_id.user_id', '=', user.id)]</field>
+            <field name="domain_force">[
+                ('line_id.employee_id.user_id', '=', user.id),
+                ('line_id.state', 'in', ('approved', 'locked')),
+            ]</field>
             <field name="groups" eval="[(4, ref('group_bonus_employee'))]"/>
         </record>
         <record id="rule_batch_line_component_manager_team" model="ir.rule">

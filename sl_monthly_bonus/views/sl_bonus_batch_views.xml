@@ -25,20 +25,43 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="action_mark_data_ready" type="object" string="Mark Data Ready"
+                        <button name="action_mark_data_ready" type="object" string="📥 Mark Data Ready"
                                 invisible="state != 'draft'" class="oe_highlight"/>
-                        <button name="action_compute" type="object" string="Compute Bonuses"
+                        <button name="action_compute" type="object" string="🧮 Compute Bonuses"
                                 invisible="state not in ('data_ready','computed','hr_review')"
-                                class="oe_highlight"/>
-                        <button name="action_approve" type="object" string="Approve"
-                                invisible="state not in ('computed','hr_review')" class="oe_highlight"/>
-                        <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                                class="oe_highlight"
+                                confirm="Compute bonuses for all employees in this batch? Existing manual overrides will be preserved."/>
+                        <button name="action_approve" type="object" string="✅ Approve"
+                                invisible="state not in ('computed','hr_review')" class="oe_highlight"
+                                confirm="Approve this batch? After approval, only Admin can edit lines."/>
+                        <button name="action_lock" type="object" string="🔒 Lock"
+                                invisible="state != 'approved'"
                                 groups="sl_monthly_bonus.group_bonus_admin"
-                                confirm="Reset this batch back to draft? Manual overrides will be preserved."/>
+                                confirm="Lock this batch? It will become permanently read-only."/>
+                        <button name="action_reset_to_draft" type="object" string="↩️ Reset to Draft"
+                                invisible="state == 'draft'"
+                                groups="sl_monthly_bonus.group_bonus_admin"
+                                confirm="Reset this batch back to draft? Manual overrides on lines will be preserved."/>
                         <field name="state" widget="statusbar"
-                               statusbar_visible="draft,data_ready,computed,approved"/>
+                               statusbar_visible="draft,data_ready,computed,approved,locked"/>
                     </header>
                     <sheet>
+                        <!-- State banners (sl_appraisal style). -->
+                        <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                            <strong>Draft.</strong> Add employees (or leave empty for "all active"), then click <em>Mark Data Ready</em>.
+                        </div>
+                        <div class="alert alert-warning" role="alert" invisible="state != 'data_ready'">
+                            <strong>Data Ready.</strong> Click <em>Compute Bonuses</em> to run the calculator.
+                        </div>
+                        <div class="alert alert-warning" role="alert" invisible="state != 'computed'">
+                            <strong>Computed.</strong> Review the lines and apply any manual overrides, then <em>Approve</em>.
+                        </div>
+                        <div class="alert alert-success" role="alert" invisible="state != 'approved'">
+                            <strong>Approved.</strong> Lines are sealed for non-admins. Lock the batch to make it permanently read-only.
+                        </div>
+                        <div class="alert alert-secondary" role="alert" invisible="state != 'locked'">
+                            <strong>Locked.</strong> This batch is permanently read-only.
+                        </div>
                         <div class="oe_button_box" name="button_box">
                             <button name="action_view_lines" type="object"
                                     class="oe_stat_button" icon="fa-list-ul">
@@ -61,32 +84,35 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="Employees">
-                                <div class="text-muted">
-                                    Use <b>Add a line</b> to pick the employees this batch should
-                                    cover, then <b>Compute Bonuses</b>. Leave empty to compute for
-                                    all active employees.
+                            <page string="Employees &amp; Bonuses" name="page_employees_bonuses">
+                                <div class="text-muted mb-2">
+                                    Add the employees this batch should cover and (after Compute) review the calculated bonuses. Leave empty before Compute to include all active employees automatically.
                                 </div>
-                                <field name="employee_ids" readonly="state in ('approved','locked')"
-                                       options="{'no_create': True, 'no_create_edit': True}">
-                                    <list>
-                                        <field name="name"/>
-                                        <field name="department_id"/>
-                                        <field name="job_id"/>
-                                    </list>
-                                </field>
-                            </page>
-                            <page string="Bonus Lines">
-                                <field name="line_ids" readonly="state in ('approved','locked')">
-                                    <list>
-                                        <field name="employee_id"/>
-                                        <field name="job_id"/>
-                                        <field name="category"/>
-                                        <field name="basic_salary" optional="hide"/>
-                                        <field name="evaluation_percent"/>
-                                        <field name="computed_amount"/>
-                                        <field name="bonus_amount"/>
-                                        <field name="manual_override_reason" optional="hide"/>
+                                <button name="action_add_all_employees" type="object"
+                                        string="Add All Active Employees" class="btn btn-secondary mb-2"
+                                        invisible="state not in ('draft','data_ready')"
+                                        groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
+                                        confirm="Create a draft line for every active employee not yet in this batch?"/>
+                                <field name="line_ids"
+                                       readonly="state in ('approved','locked')"
+                                       context="{'default_batch_id': id}">
+                                    <list editable="bottom"
+                                          decoration-info="state=='draft'"
+                                          decoration-warning="state=='computed'"
+                                          decoration-success="state=='approved'"
+                                          decoration-muted="is_excluded"
+                                          decoration-bf="manual_override_reason">
+                                        <field name="employee_id"
+                                               options="{'no_create': True, 'no_create_edit': True}"/>
+                                        <field name="department_id" optional="show" readonly="1"/>
+                                        <field name="job_id" optional="show" readonly="1"/>
+                                        <field name="category" readonly="1"/>
+                                        <field name="evaluation_percent" readonly="1"/>
+                                        <field name="computed_amount" readonly="1"/>
+                                        <field name="bonus_amount" readonly="1"/>
+                                        <field name="state" readonly="1" optional="show"/>
+                                        <field name="is_excluded" optional="hide"/>
+                                        <field name="manual_override_reason" optional="hide" readonly="1"/>
                                         <field name="currency_id" column_invisible="True"/>
                                     </list>
                                 </field>
@@ -130,33 +156,86 @@
             <field name="name">sl.bonus.batch.line.form</field>
             <field name="model">sl.bonus.batch.line</field>
             <field name="arch" type="xml">
-                <form create="0" delete="0">
+                <form>
                     <header>
-                        <button name="action_open_manual_adjust" type="object" string="Manual Adjust"
+                        <!-- Independent-line workflow buttons. Hidden on batch-owned lines, which inherit state from the batch. -->
+                        <button name="action_compute" type="object" string="🧮 Compute"
                                 class="oe_highlight"
+                                invisible="not is_independent or state not in ('draft','computed')"/>
+                        <button name="action_approve" type="object" string="✅ Approve"
+                                class="oe_highlight"
+                                invisible="not is_independent or state != 'computed'"
+                                confirm="Approve this bonus line? Once approved, only Admin can edit."
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                        <button name="action_lock" type="object" string="🔒 Lock"
+                                invisible="not is_independent or state != 'approved'"
+                                confirm="Lock this bonus line? It will become read-only."
+                                groups="sl_monthly_bonus.group_bonus_admin"/>
+                        <button name="action_reset_to_draft" type="object" string="↩️ Reset to Draft"
+                                invisible="not is_independent or state == 'draft'"
+                                confirm="Reset this line back to draft? Manual overrides are preserved."
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                        <!-- Manual-adjust / clear-override available on both kinds of lines. -->
+                        <button name="action_open_manual_adjust" type="object" string="✏️ Manual Adjust"
                                 groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
-                                invisible="batch_state in ('locked',)"/>
-                        <button name="action_clear_override" type="object" string="Clear Override"
+                                invisible="(batch_state == 'locked') or (is_independent and state == 'locked') or state == 'draft'"/>
+                        <button name="action_clear_override" type="object" string="🧹 Clear Override"
                                 groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
-                                invisible="not manual_override_reason"/>
+                                invisible="not manual_override_reason"
+                                confirm="Clear the manual override and revert to the computed amount?"/>
+                        <button name="action_print_receipt" type="object" string="🖨️ Print Receipt"
+                                invisible="state not in ('approved','locked')"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,computed,approved,locked"/>
                     </header>
                     <sheet>
+                        <field name="is_independent" invisible="1"/>
+                        <!-- State banners (sl_appraisal style). -->
+                        <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                            <strong>Draft.</strong> Fill in employee &amp; period (independent line), then click <em>Compute</em>.
+                        </div>
+                        <div class="alert alert-warning" role="alert" invisible="state != 'computed'">
+                            <strong>Computed.</strong> Review the breakdown then <em>Approve</em>.
+                        </div>
+                        <div class="alert alert-success" role="alert" invisible="state != 'approved'">
+                            <strong>Approved.</strong> Receipt can now be printed. Admin can <em>Lock</em> for permanent seal.
+                        </div>
+                        <div class="alert alert-secondary" role="alert" invisible="state != 'locked'">
+                            <strong>Locked.</strong> This bonus line is permanently read-only.
+                        </div>
+                        <div class="oe_title">
+                            <h2>
+                                <field name="employee_id" readonly="state != 'draft' or batch_id"
+                                       options="{'no_create': True, 'no_create_edit': True}"/>
+                            </h2>
+                            <h4>
+                                <field name="period_label" readonly="1"/>
+                                <span invisible="not batch_id"> — <field name="batch_id" readonly="1"/></span>
+                            </h4>
+                        </div>
                         <group>
                             <group>
-                                <field name="employee_id" readonly="1"/>
+                                <field name="batch_id" readonly="1" invisible="not batch_id"/>
+                                <field name="company_id" readonly="not is_independent or state != 'draft'"
+                                       groups="base.group_multi_company"/>
+                                <field name="period_start"
+                                       readonly="not is_independent or state != 'draft'"/>
+                                <field name="period_end"
+                                       readonly="not is_independent or state != 'draft'"/>
                                 <field name="job_id" readonly="1"/>
                                 <field name="work_location_id" readonly="1"/>
                                 <field name="category" readonly="1"/>
                             </group>
                             <group>
-                                <field name="period_start" readonly="1"/>
-                                <field name="period_end" readonly="1"/>
                                 <field name="basic_salary" readonly="1"/>
                                 <field name="evaluation_percent" readonly="1"/>
                                 <field name="evaluation_source" readonly="1"/>
+                                <field name="is_excluded" readonly="1"/>
+                                <field name="exclusion_reason" readonly="1"
+                                       invisible="not exclusion_reason"/>
                             </group>
                         </group>
-                        <group string="Category Inputs">
+                        <group string="Category Inputs" invisible="state == 'draft'">
                             <group>
                                 <field name="service_pct" invisible="category != 'service'" readonly="1"/>
                                 <field name="target_amount" invisible="category != 'sales'" readonly="1"/>
@@ -173,6 +252,7 @@
                             <group>
                                 <field name="computed_amount" readonly="1"/>
                                 <field name="bonus_amount" readonly="1"/>
+                                <field name="currency_id" invisible="1"/>
                             </group>
                         </group>
                         <group string="Manual Override" invisible="not manual_override_reason">
@@ -182,7 +262,7 @@
                             <field name="manual_override_reason" readonly="1"/>
                         </group>
                         <notebook>
-                            <page string="Calculation Breakdown">
+                            <page string="Calculation Breakdown" invisible="state == 'draft'">
                                 <field name="component_ids" readonly="1">
                                     <list>
                                         <field name="sequence" widget="handle"/>
@@ -202,16 +282,54 @@
             <field name="name">sl.bonus.batch.line.tree</field>
             <field name="model">sl.bonus.batch.line</field>
             <field name="arch" type="xml">
-                <list create="0" delete="0">
-                    <field name="batch_id"/>
+                <list decoration-info="state=='draft'"
+                      decoration-warning="state=='computed'"
+                      decoration-success="state=='approved'"
+                      decoration-muted="is_excluded"
+                      decoration-bf="manual_override_reason">
                     <field name="period_start"/>
                     <field name="employee_id"/>
+                    <field name="department_id" optional="show"/>
+                    <field name="job_id"/>
                     <field name="category"/>
                     <field name="evaluation_percent"/>
                     <field name="computed_amount"/>
                     <field name="bonus_amount"/>
+                    <field name="state"/>
+                    <field name="batch_id" optional="show"/>
+                    <field name="is_independent" optional="hide"/>
+                    <field name="is_excluded" optional="hide"/>
+                    <field name="manual_override_reason" optional="hide"/>
                     <field name="currency_id" column_invisible="True"/>
                 </list>
+            </field>
+        </record>
+
+        <record id="view_sl_bonus_batch_line_search" model="ir.ui.view">
+            <field name="name">sl.bonus.batch.line.search</field>
+            <field name="model">sl.bonus.batch.line</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="employee_id"/>
+                    <field name="batch_id"/>
+                    <field name="period_start"/>
+                    <filter string="Independent" name="f_independent" domain="[('batch_id','=',False)]"/>
+                    <filter string="In Batch" name="f_in_batch" domain="[('batch_id','!=',False)]"/>
+                    <separator/>
+                    <filter string="Draft" name="f_draft" domain="[('state','=','draft')]"/>
+                    <filter string="Computed" name="f_computed" domain="[('state','=','computed')]"/>
+                    <filter string="Approved" name="f_approved" domain="[('state','=','approved')]"/>
+                    <filter string="Locked" name="f_locked" domain="[('state','=','locked')]"/>
+                    <separator/>
+                    <filter string="Excluded" name="f_excluded" domain="[('is_excluded','=',True)]"/>
+                    <filter string="Manually Adjusted" name="f_overridden" domain="[('manual_override_reason','!=',False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="State" name="g_state" context="{'group_by':'state'}"/>
+                        <filter string="Category" name="g_category" context="{'group_by':'category'}"/>
+                        <filter string="Month" name="g_period" context="{'group_by':'period_start'}"/>
+                        <filter string="Batch" name="g_batch" context="{'group_by':'batch_id'}"/>
+                    </group>
+                </search>
             </field>
         </record>
 
@@ -219,6 +337,18 @@
             <field name="name">All Bonus Lines</field>
             <field name="res_model">sl.bonus.batch.line</field>
             <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- Main standalone Bonuses action: opens all lines with an "independent" default filter. -->
+        <record id="action_sl_bonus_lines_main" model="ir.actions.act_window">
+            <field name="name">Bonuses</field>
+            <field name="res_model">sl.bonus.batch.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_f_independent': 1, 'default_batch_id': False}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create an individual employee bonus</p>
+                <p>An independent bonus line is a one-employee monthly bonus that does not require creating a full batch.</p>
+            </field>
         </record>
     </data>
 </odoo>

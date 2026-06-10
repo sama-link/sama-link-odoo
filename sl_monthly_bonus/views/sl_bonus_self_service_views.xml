@@ -66,12 +66,23 @@
             <field name="code">action = model.open_or_create_current()</field>
         </record>
 
-        <!-- Employee view of own bonus lines (read-only) -->
+        <!-- Employee read-only list of own approved/locked bonus lines.
+             Employees can review, drill into the breakdown, and download
+             their receipt PDF — but cannot edit, see drafts/computed, or
+             see anyone else's lines. -->
         <record id="action_sl_bonus_my_lines" model="ir.actions.act_window">
-            <field name="name">My Monthly Bonuses</field>
+            <field name="name">My Previous Bonuses</field>
             <field name="res_model">sl.bonus.batch.line</field>
             <field name="view_mode">list,form</field>
-            <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+            <field name="domain">[
+                ('employee_id.user_id', '=', uid),
+                ('state', 'in', ('approved', 'locked')),
+            ]</field>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">No bonuses yet</p>
+                <p>You'll see your monthly bonuses here once HR approves them.</p>
+            </field>
         </record>
     </data>
 </odoo>

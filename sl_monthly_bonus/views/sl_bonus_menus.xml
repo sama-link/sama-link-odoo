@@ -8,9 +8,17 @@
                   web_icon="sl_monthly_bonus,static/description/icon.png"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
 
+        <!-- ════════════════════ Bonuses (independent or batch-owned lines) ════════════════════ -->
+        <menuitem id="menu_sl_bonus_lines_main"
+                  name="🧮 Bonuses"
+                  parent="menu_sl_bonus_root"
+                  action="action_sl_bonus_lines_main"
+                  sequence="5"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+
         <!-- ════════════════════ Batches ════════════════════ -->
         <menuitem id="menu_sl_bonus_batches"
-                  name="Bonus Batches"
+                  name="📦 Bonus Batches"
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_batch"
                   sequence="10"
@@ -32,7 +40,7 @@
 
         <!-- ════════════════════ Self-Service (standalone top-level app) ════════════════════ -->
         <menuitem id="menu_sl_bonus_self"
-                  name="My Bonus"
+                  name="👤 My Bonus"
                   sequence="56"
                   web_icon="sl_monthly_bonus,static/description/icon.png"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
@@ -44,23 +52,31 @@
                   sequence="10"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
 
+        <menuitem id="menu_sl_bonus_self_previous"
+                  name="My Previous Bonuses"
+                  parent="menu_sl_bonus_self"
+                  action="action_sl_bonus_my_lines"
+                  sequence="20"
+                  groups="sl_monthly_bonus.group_bonus_employee"/>
+
+        <!-- Phase-2: history menu deactivated (replaced by Previous Bonuses). -->
         <menuitem id="menu_sl_bonus_self_history"
                   name="My Estimates History"
                   parent="menu_sl_bonus_self"
                   action="action_sl_bonus_self_estimate"
-                  sequence="20"
+                  sequence="900"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
 
         <menuitem id="menu_sl_bonus_self_lines"
                   name="My Monthly Bonuses"
                   parent="menu_sl_bonus_self"
                   action="action_sl_bonus_my_lines"
-                  sequence="30"
+                  sequence="901"
                   groups="sl_monthly_bonus.group_bonus_employee"/>
 
         <!-- ════════════════════ Edara ════════════════════ -->
         <menuitem id="menu_sl_bonus_edara"
-                  name="Edara Data"
+                  name="🔄 Edara Data"
                   parent="menu_sl_bonus_root"
                   sequence="40"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
@@ -160,7 +176,7 @@
 
         <!-- ════════════════════ Configuration ════════════════════ -->
         <menuitem id="menu_sl_bonus_config"
-                  name="Configuration"
+                  name="⚙️ Configuration"
                   parent="menu_sl_bonus_root"
                   sequence="60"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
@@ -203,7 +219,7 @@
 
         <!-- ════════════════════ Audit ════════════════════ -->
         <menuitem id="menu_sl_bonus_audit"
-                  name="Audit Log"
+                  name="📋 Audit Log"
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_audit_log"
                   sequence="80"
@@ -225,6 +241,11 @@
             <field name="active" eval="False"/>
         </record>
         <record id="menu_sl_bonus_self_lines" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <!-- Phase 2: replaced by My Previous Bonuses (which uses the same action
+             but filtered to approved/locked + own employee). -->
+        <record id="menu_sl_bonus_self_history" model="ir.ui.menu">
             <field name="active" eval="False"/>
         </record>
         <record id="menu_sl_bonus_edara" model="ir.ui.menu">
