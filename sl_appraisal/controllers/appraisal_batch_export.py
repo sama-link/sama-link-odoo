@@ -4,8 +4,7 @@ import xlsxwriter
 from werkzeug.exceptions import NotFound
 
 from odoo import fields, http
-from odoo.http import request
-from odoo.tools import content_disposition
+from odoo.http import content_disposition, request
 
 
 class AppraisalBatchExportController(http.Controller):
