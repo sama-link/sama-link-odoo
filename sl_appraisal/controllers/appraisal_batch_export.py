@@ -3,7 +3,7 @@ from io import BytesIO
 import xlsxwriter
 from werkzeug.exceptions import NotFound
 
-from odoo import fields, http
+from odoo import _, fields, http
 from odoo.http import content_disposition, request
 
 
@@ -55,38 +55,48 @@ class AppraisalBatchExportController(http.Controller):
         text_format = workbook.add_format({'border': 1, 'valign': 'top'})
         percent_format = workbook.add_format({'border': 1, 'num_format': '0.00'})
 
-        state_labels = dict(request.env['hr.appraisal']._fields['state'].selection)
+        # Selection labels and related names are read through ``env`` (the
+        # user's language), so the file follows the language the user picked in
+        # Odoo. For RTL languages (Arabic) the sheets are laid out right-to-left.
+        state_labels = dict(env['hr.appraisal'].fields_get(['state'])['state']['selection'])
+        lang = env['res.lang']._lang_get(env.context.get('lang') or env.user.lang)
+        is_rtl = lang.direction == 'rtl'
 
+        last_col = 12
         for batch in batches:
-            sheet = workbook.add_worksheet((batch.name or 'Batch')[:31])
+            sheet = workbook.add_worksheet((batch.name or _('Batch'))[:31])
+            if is_rtl:
+                sheet.right_to_left()
             sheet.set_column(0, 0, 28)
             sheet.set_column(1, 4, 22)
             sheet.set_column(5, 6, 30)
-            sheet.set_column(7, 9, 15)
-            sheet.set_column(10, 10, 18)
+            sheet.set_column(7, 11, 15)
+            sheet.set_column(12, 12, 18)
 
-            sheet.merge_range(0, 0, 0, 10, batch.name or 'Appraisal Batch', title_format)
-            sheet.write(1, 0, 'Period', label_format)
+            sheet.merge_range(0, 0, 0, last_col, batch.name or _('Appraisal Batch'), title_format)
+            sheet.write(1, 0, _('Period'), label_format)
             sheet.write(1, 1, f'{batch.date_from or ""} -> {batch.date_to or ""}', text_format)
-            sheet.write(2, 0, 'Deadline', label_format)
+            sheet.write(2, 0, _('Deadline'), label_format)
             sheet.write(2, 1, str(batch.date_deadline or ''), text_format)
-            sheet.write(3, 0, 'Created By', label_format)
+            sheet.write(3, 0, _('Created By'), label_format)
             sheet.write(3, 1, batch.creator_id.name or '', text_format)
-            sheet.write(4, 0, 'Generated On', label_format)
+            sheet.write(4, 0, _('Generated On'), label_format)
             sheet.write(4, 1, str(fields.Datetime.now()), text_format)
 
             headers = [
-                'Employee',
-                'Job Position',
-                'Work Location',
-                'General Manager',
-                'Coach Manager',
-                'Selected Managers',
-                'Selected Employees',
-                'Skills Average (%)',
-                'Manual Score (%)',
-                'Total Score (%)',
-                'State',
+                _('Employee'),
+                _('Job Position'),
+                _('Work Location'),
+                _('General Manager'),
+                _('Coach Manager'),
+                _('Selected Managers'),
+                _('Selected Employees'),
+                _('Skills Average (%)'),
+                _('Administration Score (%)'),
+                _('Manual Score (%)'),
+                _('Total Score (%)'),
+                _('Last Month Total (%)'),
+                _('State'),
             ]
             row = 6
             for col, header in enumerate(headers):
@@ -95,6 +105,7 @@ class AppraisalBatchExportController(http.Controller):
             scoped_appraisals = batch.appraisal_ids.filtered(
                 lambda app: not app.company_id or app.company_id.id in allowed_company_ids
             )
+            previous_totals = self._previous_batch_totals(env, batch, scoped_appraisals)
             for appraisal in scoped_appraisals.sorted(lambda app: app.employee_id.name or ''):
                 row += 1
                 sheet.write(row, 0, appraisal.employee_id.name or '', text_format)
@@ -105,13 +116,19 @@ class AppraisalBatchExportController(http.Controller):
                 sheet.write(row, 5, ', '.join(appraisal.hr_manager_ids.mapped('name')), text_format)
                 sheet.write(row, 6, ', '.join(appraisal.hr_employee_ids.mapped('name')), text_format)
                 sheet.write_number(row, 7, appraisal.skill_average_score or 0.0, percent_format)
-                sheet.write_number(row, 8, appraisal.manual_score or 0.0, percent_format)
-                sheet.write_number(row, 9, appraisal.total_score or 0.0, percent_format)
-                sheet.write(row, 10, state_labels.get(appraisal.state, appraisal.state), text_format)
+                sheet.write_number(row, 8, appraisal.admin_score or 0.0, percent_format)
+                sheet.write_number(row, 9, appraisal.manual_score or 0.0, percent_format)
+                sheet.write_number(row, 10, appraisal.total_score or 0.0, percent_format)
+                previous_total = previous_totals.get(appraisal.employee_id.id)
+                if previous_total is None:
+                    sheet.write(row, 11, '', text_format)
+                else:
+                    sheet.write_number(row, 11, previous_total, percent_format)
+                sheet.write(row, 12, state_labels.get(appraisal.state, appraisal.state), text_format)
 
             sheet.freeze_panes(7, 0)
             if row >= 6:
-                sheet.autofilter(6, 0, row, 10)
+                sheet.autofilter(6, 0, row, last_col)
 
         workbook.close()
         output.seek(0)
@@ -124,3 +141,25 @@ class AppraisalBatchExportController(http.Controller):
                 ('Content-Disposition', content_disposition(filename)),
             ],
         )
+
+    def _previous_batch_totals(self, env, batch, scoped_appraisals):
+        """Map each employee to their Total Score (%) from the most recent
+        EARLIER batch (by period end date). Used for the 'Last Month Total'
+        column. The search runs through ``env`` so the multi-company scope and
+        record rules already applied to the export are honoured here too."""
+        employee_ids = scoped_appraisals.employee_id.ids
+        if not batch.date_to or not employee_ids:
+            return {}
+        candidates = env['hr.appraisal'].search([
+            ('employee_id', 'in', employee_ids),
+            ('appraisal_batch_id', '!=', False),
+            ('appraisal_batch_id.date_to', '<', batch.date_to),
+        ])
+        latest = {}
+        for candidate in candidates:
+            employee_id = candidate.employee_id.id
+            candidate_date = candidate.appraisal_batch_id.date_to
+            current = latest.get(employee_id)
+            if current is None or candidate_date > current[0]:
+                latest[employee_id] = (candidate_date, candidate.total_score or 0.0)
+        return {employee_id: data[1] for employee_id, data in latest.items()}
