@@ -204,11 +204,9 @@ class HrAppraisalBatch(models.Model):
         self._run_bulk_state_change('action_reset_to_draft', 'draft', _("Reset to Draft"))
 
     def action_export_pdf(self):
-        self._check_exportable()
         return self.env.ref('sl_appraisal.action_report_appraisal_batch_pdf').report_action(self)
 
     def action_export_xlsx(self):
-        self._check_exportable()
         ids_param = ",".join(str(batch_id) for batch_id in self.ids)
         return {
             'type': 'ir.actions.act_url',
@@ -265,14 +263,6 @@ class HrAppraisalBatch(models.Model):
                 batch.state = 'published'
             else:
                 batch.state = 'draft'
-
-    def _check_exportable(self):
-        allowed_states = {'submitted', 'hr_finalization'}
-        invalid = self.filtered(lambda batch: batch.state not in allowed_states)
-        if invalid:
-            raise UserError(_(
-                "Export is only available for batches in Submitted or HR Finalization state."
-            ))
 
     def _check_hr_or_admin_access(self, action_name):
         if not (

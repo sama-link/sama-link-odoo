@@ -5,6 +5,7 @@ from werkzeug.exceptions import NotFound
 
 from odoo import fields, http
 from odoo.http import request
+from odoo.tools import content_disposition
 
 
 class AppraisalBatchExportController(http.Controller):
@@ -21,9 +22,7 @@ class AppraisalBatchExportController(http.Controller):
         if not batches:
             raise NotFound()
 
-        batches.check_access_rights('read')
-        batches.check_access_rule('read')
-        batches._check_exportable()
+        batches.check_access('read')
 
         output = BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
@@ -103,6 +102,6 @@ class AppraisalBatchExportController(http.Controller):
             output.getvalue(),
             headers=[
                 ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-                ('Content-Disposition', f'attachment; filename="{filename}"'),
+                ('Content-Disposition', content_disposition(filename)),
             ],
         )
