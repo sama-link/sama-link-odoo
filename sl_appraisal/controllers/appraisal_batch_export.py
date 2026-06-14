@@ -3,8 +3,13 @@ from io import BytesIO
 import xlsxwriter
 from werkzeug.exceptions import NotFound
 
-from odoo import _, fields, http
+from odoo import fields, http
 from odoo.http import content_disposition, request
+from odoo.tools.translate import code_translations
+
+# The appraisal export is always produced in Arabic, regardless of the
+# language the user has selected in the Odoo web client.
+EXPORT_LANG = 'ar_001'
 
 
 class AppraisalBatchExportController(http.Controller):
@@ -30,9 +35,23 @@ class AppraisalBatchExportController(http.Controller):
             cid for cid in requested_cids if cid in user_company_ids
         ] or [request.env.company.id]
 
+        # Force the render language to Arabic so selection labels and
+        # translatable related names come out in Arabic for every user.
         env = request.env(context=dict(
-            request.env.context, allowed_company_ids=allowed_company_ids,
+            request.env.context,
+            allowed_company_ids=allowed_company_ids,
+            lang=EXPORT_LANG,
         ))
+
+        # Header/label strings are pulled straight from the Arabic code
+        # translations on disk, so they stay Arabic even if the request
+        # language could not be resolved.
+        label_translations = code_translations.get_python_translations(
+            'sl_appraisal', EXPORT_LANG,
+        )
+
+        def t(source):
+            return label_translations.get(source, source)
 
         batches = env['hr.appraisal.batch'].browse(batch_ids).exists()
         if not batches:
@@ -55,16 +74,14 @@ class AppraisalBatchExportController(http.Controller):
         text_format = workbook.add_format({'border': 1, 'valign': 'top'})
         percent_format = workbook.add_format({'border': 1, 'num_format': '0.00'})
 
-        # Selection labels and related names are read through ``env`` (the
-        # user's language), so the file follows the language the user picked in
-        # Odoo. For RTL languages (Arabic) the sheets are laid out right-to-left.
+        # Selection labels are read through the Arabic env; the sheet is always
+        # laid out right-to-left because the export is always in Arabic.
         state_labels = dict(env['hr.appraisal'].fields_get(['state'])['state']['selection'])
-        lang = env['res.lang']._lang_get(env.context.get('lang') or env.user.lang)
-        is_rtl = lang.direction == 'rtl'
+        is_rtl = True
 
         last_col = 12
         for batch in batches:
-            sheet = workbook.add_worksheet((batch.name or _('Batch'))[:31])
+            sheet = workbook.add_worksheet((batch.name or t('Batch'))[:31])
             if is_rtl:
                 sheet.right_to_left()
             sheet.set_column(0, 0, 28)
@@ -73,30 +90,30 @@ class AppraisalBatchExportController(http.Controller):
             sheet.set_column(7, 11, 15)
             sheet.set_column(12, 12, 18)
 
-            sheet.merge_range(0, 0, 0, last_col, batch.name or _('Appraisal Batch'), title_format)
-            sheet.write(1, 0, _('Period'), label_format)
+            sheet.merge_range(0, 0, 0, last_col, batch.name or t('Appraisal Batch'), title_format)
+            sheet.write(1, 0, t('Period'), label_format)
             sheet.write(1, 1, f'{batch.date_from or ""} -> {batch.date_to or ""}', text_format)
-            sheet.write(2, 0, _('Deadline'), label_format)
+            sheet.write(2, 0, t('Deadline'), label_format)
             sheet.write(2, 1, str(batch.date_deadline or ''), text_format)
-            sheet.write(3, 0, _('Created By'), label_format)
+            sheet.write(3, 0, t('Created By'), label_format)
             sheet.write(3, 1, batch.creator_id.name or '', text_format)
-            sheet.write(4, 0, _('Generated On'), label_format)
+            sheet.write(4, 0, t('Generated On'), label_format)
             sheet.write(4, 1, str(fields.Datetime.now()), text_format)
 
             headers = [
-                _('Employee'),
-                _('Job Position'),
-                _('Work Location'),
-                _('General Manager'),
-                _('Coach Manager'),
-                _('Selected Managers'),
-                _('Selected Employees'),
-                _('Skills Average (%)'),
-                _('Administration Score (%)'),
-                _('Manual Score (%)'),
-                _('Total Score (%)'),
-                _('Last Month Total (%)'),
-                _('State'),
+                t('Employee'),
+                t('Job Position'),
+                t('Work Location'),
+                t('General Manager'),
+                t('Coach Manager'),
+                t('Selected Managers'),
+                t('Selected Employees'),
+                t('Skills Average (%)'),
+                t('Administration Score (%)'),
+                t('Manual Score (%)'),
+                t('Total Score (%)'),
+                t('Last Month Total (%)'),
+                t('State'),
             ]
             row = 6
             for col, header in enumerate(headers):
