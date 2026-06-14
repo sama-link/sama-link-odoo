@@ -208,9 +208,12 @@ class HrAppraisalBatch(models.Model):
 
     def action_export_xlsx(self):
         ids_param = ",".join(str(batch_id) for batch_id in self.ids)
+        # Forward the currently selected companies so the export honours the
+        # same multi-company scope as the appraisal list view.
+        cids_param = ",".join(str(cid) for cid in self.env.companies.ids)
         return {
             'type': 'ir.actions.act_url',
-            'url': f'/sl_appraisal/batch/export/xlsx?ids={ids_param}',
+            'url': f'/sl_appraisal/batch/export/xlsx?ids={ids_param}&cids={cids_param}',
             'target': 'self',
         }
 

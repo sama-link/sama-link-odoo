@@ -9,7 +9,7 @@ from odoo.http import content_disposition, request
 
 class AppraisalBatchExportController(http.Controller):
     @http.route('/sl_appraisal/batch/export/xlsx', type='http', auth='user')
-    def export_batch_xlsx(self, ids=None, **kwargs):
+    def export_batch_xlsx(self, ids=None, cids=None, **kwargs):
         try:
             batch_ids = [int(batch_id) for batch_id in (ids or '').split(',') if batch_id]
         except ValueError as exc:
@@ -17,7 +17,24 @@ class AppraisalBatchExportController(http.Controller):
         if not batch_ids:
             raise NotFound()
 
-        batches = request.env['hr.appraisal.batch'].browse(batch_ids).exists()
+        # Scope the export to the companies selected in the web client (passed
+        # as ``cids``) intersected with the companies the user may access. This
+        # is a full-page navigation, so the request carries no company context
+        # and ``allowed_company_ids`` would otherwise default to every company
+        # the user belongs to, leaking cross-company appraisals into the file.
+        user_company_ids = request.env.user.company_ids.ids
+        requested_cids = [
+            int(cid) for cid in (cids or '').split(',') if cid.strip().isdigit()
+        ]
+        allowed_company_ids = [
+            cid for cid in requested_cids if cid in user_company_ids
+        ] or [request.env.company.id]
+
+        env = request.env(context=dict(
+            request.env.context, allowed_company_ids=allowed_company_ids,
+        ))
+
+        batches = env['hr.appraisal.batch'].browse(batch_ids).exists()
         if not batches:
             raise NotFound()
 
@@ -75,7 +92,10 @@ class AppraisalBatchExportController(http.Controller):
             for col, header in enumerate(headers):
                 sheet.write(row, col, header, header_format)
 
-            for appraisal in batch.appraisal_ids.sorted(lambda app: app.employee_id.name or ''):
+            scoped_appraisals = batch.appraisal_ids.filtered(
+                lambda app: not app.company_id or app.company_id.id in allowed_company_ids
+            )
+            for appraisal in scoped_appraisals.sorted(lambda app: app.employee_id.name or ''):
                 row += 1
                 sheet.write(row, 0, appraisal.employee_id.name or '', text_format)
                 sheet.write(row, 1, appraisal.job_id.name or '', text_format)
