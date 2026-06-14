@@ -15,96 +15,115 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Batch"
 msgstr "دفعة"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Appraisal Batch"
 msgstr "دفعة التقييم"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Period"
 msgstr "الفترة"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Deadline"
 msgstr "الموعد النهائي"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Created By"
 msgstr "أنشئ بواسطة"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Generated On"
 msgstr "تم الإنشاء في"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Employee"
 msgstr "الموظف"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Job Position"
 msgstr "المسمى الوظيفي"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Work Location"
 msgstr "مكان العمل"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "General Manager"
 msgstr "المدير العام"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Coach Manager"
 msgstr "المدير المباشر"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Selected Managers"
 msgstr "المدراء المحددون"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Selected Employees"
 msgstr "الموظفون المحددون"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Skills Average (%)"
 msgstr "متوسط المهارات (%)"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Administration Score (%)"
 msgstr "الدرجة الإدارية (%)"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Manual Score (%)"
 msgstr "الدرجة اليدوية (%)"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Total Score (%)"
 msgstr "الدرجة الإجمالية (%)"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "Last Month Total (%)"
 msgstr "إجمالي الشهر الماضي (%)"
 
 #. module: sl_appraisal
+#. odoo-python
 #: code:addons/sl_appraisal/controllers/appraisal_batch_export.py:0
 msgid "State"
 msgstr "الحالة"
