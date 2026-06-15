@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Batch-level PDF: one row per employee + total. Appears in the
+             batch form's Print menu (binding_model_id = sl.bonus.batch). -->
+        <record id="action_report_sl_bonus_batch" model="ir.actions.report">
+            <field name="name">Bonus Batch</field>
+            <field name="model">sl.bonus.batch</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">sl_monthly_bonus.report_sl_bonus_batch</field>
+            <field name="report_file">sl_monthly_bonus.report_sl_bonus_batch</field>
+            <field name="binding_model_id" ref="model_sl_bonus_batch"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">'Bonus %s' % (object.period_label or object.name or '')</field>
+        </record>
+
+        <template id="report_sl_bonus_batch">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <h2 class="mb-1">
+                                Monthly Bonus — <span t-field="o.period_display"/>
+                            </h2>
+                            <p class="text-muted">
+                                <strong>Batch:</strong> <span t-field="o.name"/>
+                                &amp;nbsp;|&amp;nbsp; <strong>Company:</strong> <span t-field="o.company_id"/>
+                                &amp;nbsp;|&amp;nbsp; <strong>State:</strong> <span t-field="o.state"/>
+                            </p>
+                            <table class="table table-sm o_main_table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Job</th>
+                                        <th>Category</th>
+                                        <th class="text-end">Evaluation %</th>
+                                        <th class="text-end">Bonus</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="o.line_ids" t-as="l">
+                                        <td><span t-field="l.employee_id"/></td>
+                                        <td><span t-field="l.job_id"/></td>
+                                        <td><span t-field="l.category"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="'%.2f' % (l.evaluation_percent or 0.0)"/>
+                                        </td>
+                                        <td class="text-end"><span t-field="l.bonus_amount"/></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total</th>
+                                        <th class="text-end"><span t-field="o.total_amount"/></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

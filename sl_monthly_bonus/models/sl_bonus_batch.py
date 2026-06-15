@@ -353,15 +353,77 @@ class SlBonusBatch(models.Model):
             rec.line_ids._sync_state_from_batch()
 
     def action_reset_to_draft(self):
-        if not self._is_admin():
-            raise AccessError(_("Only Admin can reset a batch to draft."))
+        """Move a batch backward to Draft.
+
+        HR Manager / Admin may reset a batch (any state up to Approved). A
+        LOCKED batch stays Admin-only — locking is the final administrative seal.
+        """
         for rec in self:
+            if rec.state == 'locked' and not rec._is_admin():
+                raise AccessError(_("Only Admin can reset a LOCKED batch to draft."))
+            if not rec._is_hr():
+                raise AccessError(_("Only HR Manager / Admin can reset a batch to draft."))
             rec.write({
                 'state': 'draft',
                 'approved_by': False, 'approved_on': False,
                 'locked_by': False, 'locked_on': False,
             })
             rec.line_ids._sync_state_from_batch()
+
+    # ── Export ─────────────────────────────────────────────────────────
+    def action_export_xlsx(self):
+        """Export this batch's bonus lines to an .xlsx file (one-click download)."""
+        self.ensure_one()
+        self._ensure_hr()
+        import io
+        import base64
+        try:
+            import xlsxwriter
+        except ImportError:
+            raise UserError(_("The 'xlsxwriter' library is required to export to Excel."))
+        buf = io.BytesIO()
+        wb = xlsxwriter.Workbook(buf, {'in_memory': True})
+        ws = wb.add_worksheet('Bonuses')
+        bold = wb.add_format({'bold': True})
+        money = wb.add_format({'num_format': '#,##0.00'})
+        headers = [
+            _('Employee'), _('Department'), _('Job'), _('Category'),
+            _('Evaluation %'), _('Computed'), _('Bonus'), _('Excluded'), _('Reason'),
+        ]
+        for col, head in enumerate(headers):
+            ws.write(0, col, head, bold)
+        row = 1
+        for line in self.line_ids.sorted(lambda l: (l.employee_id.name or '')):
+            ws.write(row, 0, line.employee_id.name or '')
+            ws.write(row, 1, line.department_id.name or '')
+            ws.write(row, 2, line.job_id.name or '')
+            ws.write(row, 3, line.category or '')
+            ws.write_number(row, 4, line.evaluation_percent or 0.0)
+            ws.write_number(row, 5, line.computed_amount or 0.0, money)
+            ws.write_number(row, 6, line.bonus_amount or 0.0, money)
+            ws.write(row, 7, _('Yes') if line.is_excluded else _('No'))
+            ws.write(row, 8, line.exclusion_reason or '')
+            row += 1
+        # Total row (non-excluded bonus).
+        ws.write(row + 1, 5, _('Total'), bold)
+        ws.write_number(row + 1, 6, self.total_amount or 0.0, money)
+        for col, width in enumerate((28, 22, 20, 16, 13, 14, 14, 10, 40)):
+            ws.set_column(col, col, width)
+        wb.close()
+        fname = 'bonus_%s.xlsx' % (self.period_label or self.id)
+        attachment = self.env['ir.attachment'].create({
+            'name': fname,
+            'type': 'binary',
+            'datas': base64.b64encode(buf.getvalue()),
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'res_model': self._name,
+            'res_id': self.id,
+        })
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % attachment.id,
+            'target': 'self',
+        }
 
     # ── Compute engine ────────────────────────────────────────────────
     def _compute_lines(self):

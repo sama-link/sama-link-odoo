@@ -52,8 +52,11 @@
                                 confirm="Lock this batch? It will become permanently read-only."/>
                         <button name="action_reset_to_draft" type="object" string="↩️ Reset to Draft"
                                 invisible="state == 'draft'"
-                                groups="sl_monthly_bonus.group_bonus_admin"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"
                                 confirm="Reset this batch back to draft? Manual overrides on lines will be preserved."/>
+                        <button name="action_export_xlsx" type="object" string="⬇️ Export to Excel"
+                                invisible="state not in ('computed','hr_review','approved','locked')"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,data_ready,computed,approved,locked"/>
                     </header>
