@@ -52,9 +52,14 @@ class SlBonusCalculator(models.AbstractModel):
             })
             return result
 
+        # Employees on the evaluation-exception list have no appraisal by design,
+        # so they must NOT be excluded for a "missing appraisal" — they compute
+        # normally with evaluation treated as 100% (handled in _get_evaluation_percent).
+        is_eval_exempt = self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee)
+
         # Eligibility gate: when the batch is bound to a specific appraisal
-        # batch, every employee must have an appraisal in it.
-        if appraisal_batch:
+        # batch, every employee must have an appraisal in it — EXCEPT exempt ones.
+        if appraisal_batch and not is_eval_exempt:
             missing_reason = self._check_appraisal_batch_eligibility(employee, appraisal_batch)
             if missing_reason:
                 result['line_vals'].update({
