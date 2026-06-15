@@ -263,14 +263,16 @@ class SlBonusCalculator(models.AbstractModel):
         ).filtered('is_collected').mapped('amount'))
         target_amount = target.target_amount if target else 0.0
         achievement_pct = (sales / target_amount * 100.0) if target_amount else 0.0
-        tier = target.get_tier_for_achievement(achievement_pct) if target else False
-        tier_commission = tier.commission_amount if tier else 0.0
+        # Tiers are now GLOBAL (same thresholds for everyone) and pay a PERCENTAGE
+        # of the employee's own target amount.
+        tier = self.env['sl.bonus.sales.tier'].sudo().get_tier_for(achievement_pct)
+        tier_pct = tier.commission_percent if tier else 0.0
+        tier_commission = target_amount * (tier_pct / 100.0)
         if not target:
             result['line_vals']['exclusion_reason'] = _(
-                "No monthly sales target configured for this employee for %s. "
+                "No sales target configured for this employee. "
                 "Add one under Bonus → Configuration → Sales Targets."
-            ) % period_start.strftime('%Y-%m')
-        # Threshold: full commission at the highest tier reached.
+            )
         # 50% of commission paid fully + 50% scaled by evaluation%
         fixed_half = tier_commission * 0.5
         eval_half = tier_commission * 0.5 * (evaluation_pct / 100.0)
@@ -285,13 +287,14 @@ class SlBonusCalculator(models.AbstractModel):
         })
         result['components'].extend([
             {'sequence': 10, 'label': _('Formula'),
-             'value': _('(tier × 50%) + (tier × 50% × evaluation%)')},
+             'value': _('(target × tier% × 50%) + (target × tier% × 50% × evaluation%)')},
             {'sequence': 20, 'label': _('Target'), 'value': f"{target_amount:,.2f}"},
             {'sequence': 30, 'label': _('Achieved (collected)'), 'value': f"{sales:,.2f}"},
             {'sequence': 40, 'label': _('Achievement %'), 'value': f"{achievement_pct:,.2f}%"},
             {'sequence': 50, 'label': _('Tier'),
              'value': tier.name if tier else (_('No tier reached') if target else _('No target configured'))},
-            {'sequence': 60, 'label': _('Tier Commission'), 'value': f"{tier_commission:,.2f}"},
+            {'sequence': 60, 'label': _('Tier % of Target'), 'value': f"{tier_pct:,.2f}%"},
+            {'sequence': 65, 'label': _('Commission (target × tier%)'), 'value': f"{tier_commission:,.2f}"},
             {'sequence': 70, 'label': _('Fixed half (50%)'), 'value': f"{fixed_half:,.2f}"},
             {'sequence': 80, 'label': _('Eval-scaled half (50% × eval%)'), 'value': f"{eval_half:,.2f}"},
             {'sequence': 90, 'label': _('Evaluation %'), 'value': f"{evaluation_pct:,.2f}%"},

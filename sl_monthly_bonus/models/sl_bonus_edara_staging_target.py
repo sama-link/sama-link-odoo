@@ -125,10 +125,9 @@ class SlBonusEdaraStagingTarget(models.Model):
             if not rec.employee_id or not rec.period_start:
                 skipped += 1
                 continue
-            month = rec.period_start.replace(day=1)
+            # One target per employee (valid for all time): upsert by employee.
             existing = Target.search([
                 ('employee_id', '=', rec.employee_id.id),
-                ('period_start', '=', month),
             ], limit=1)
             if existing:
                 existing.write({'target_amount': rec.target_amount})
@@ -136,7 +135,7 @@ class SlBonusEdaraStagingTarget(models.Model):
             else:
                 target = Target.create({
                     'employee_id': rec.employee_id.id,
-                    'period_start': month,
+                    'period_start': rec.period_start,
                     'target_amount': rec.target_amount,
                 })
             rec.write({'promoted': True, 'promoted_target_id': target.id})

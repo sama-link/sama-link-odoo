@@ -196,6 +196,12 @@
                   action="action_sl_bonus_target"
                   sequence="20"/>
 
+        <menuitem id="menu_sl_bonus_config_sales_tiers"
+                  name="Sales Commission Tiers"
+                  parent="menu_sl_bonus_config"
+                  action="action_sl_bonus_sales_tier"
+                  sequence="22"/>
+
         <menuitem id="menu_sl_bonus_config_eval_exception"
                   name="Evaluation Exceptions"
                   parent="menu_sl_bonus_config"

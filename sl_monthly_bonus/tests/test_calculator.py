@@ -83,15 +83,15 @@ class TestBonusCalculator(TransactionCase):
         emp = self._make_employee('Sales Emp', job, 5000.0)
         target = self.env['sl.bonus.target'].create({
             'employee_id': emp.id,
-            'period_start': self.period_start,
             'target_amount': 100000.0,
-            'tier_ids': [
-                (0, 0, {'name': 'T1', 'achievement_min': 80.0, 'commission_amount': 2000.0}),
-                (0, 0, {'name': 'T2', 'achievement_min': 100.0, 'commission_amount': 3000.0}),
-                (0, 0, {'name': 'T3', 'achievement_min': 110.0, 'commission_amount': 4000.0}),
-            ],
         })
-        # 110% achievement → tier T3 with 4,000 commission
+        # Global commission tiers (apply to all sales employees), as % of target.
+        self.env['sl.bonus.sales.tier'].create([
+            {'name': 'T1', 'achievement_min': 80.0, 'commission_percent': 2.0},
+            {'name': 'T2', 'achievement_min': 100.0, 'commission_percent': 3.0},
+            {'name': 'T3', 'achievement_min': 110.0, 'commission_percent': 4.0},
+        ])
+        # 110% achievement → tier T3 → 4% of 100,000 = 4,000 commission
         self.env['sl.bonus.edara.staging.sales'].create({
             'employee_id': emp.id, 'date': date(2026, 4, 15),
             'amount': 110000.0, 'is_collected': True,

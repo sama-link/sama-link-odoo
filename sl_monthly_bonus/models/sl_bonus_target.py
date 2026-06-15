@@ -18,11 +18,12 @@ class SlBonusTarget(models.Model):
         related='employee_id.job_id', store=True, readonly=True,
     )
     period_start = fields.Date(
-        string='Month Start', required=True,
-        help='First day of the target month (use day 1).',
+        string='Period',
+        help='Legacy/optional. Targets are now valid for all time — one target '
+             'per employee — so this date is no longer required.',
     )
     target_amount = fields.Monetary(
-        string='Monthly Target', required=True,
+        string='Target', required=True,
         currency_field='currency_id',
     )
     currency_id = fields.Many2one(
@@ -30,24 +31,34 @@ class SlBonusTarget(models.Model):
         default=lambda self: self.env.company.currency_id,
     )
     tier_ids = fields.One2many(
-        'sl.bonus.target.tier', 'target_id', string='Threshold Tiers',
+        'sl.bonus.target.tier', 'target_id', string='Threshold Tiers (legacy)',
         copy=True,
+        help='Deprecated: commission tiers are now GLOBAL — see '
+             'Bonus → Configuration → Sales Commission Tiers.',
     )
     active = fields.Boolean(default=True)
     note = fields.Text(string='Note')
 
-    _sql_constraints = [
-        ('uniq_employee_period',
-         'unique(employee_id, period_start)',
-         'A sales target already exists for this employee and month.'),
-    ]
+    # One target per employee, valid for all time (no per-month uniqueness).
+    # Enforced in Python so pre-existing duplicate rows don't break the upgrade.
+    @api.constrains('employee_id', 'active')
+    def _check_one_per_employee(self):
+        for rec in self:
+            if rec.active and rec.employee_id and self.search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('active', '=', True),
+                ('id', '!=', rec.id),
+            ]):
+                raise ValidationError(_(
+                    "A sales target already exists for %s. Only one target per "
+                    "employee is allowed (it is valid for all time)."
+                ) % rec.employee_id.name)
 
-    @api.depends('employee_id', 'period_start', 'target_amount')
+    @api.depends('employee_id', 'target_amount')
     def _compute_name(self):
         for rec in self:
             label = rec.employee_id.name or _('Target')
-            period = rec.period_start and rec.period_start.strftime('%Y-%m') or ''
-            rec.name = f"{label} — {period} — {rec.target_amount:.2f}"
+            rec.name = f"{label} — {rec.target_amount or 0.0:.2f}"
 
     @api.constrains('target_amount')
     def _check_amount(self):
@@ -56,16 +67,18 @@ class SlBonusTarget(models.Model):
                 raise ValidationError(_("Target amount must be non-negative."))
 
     @api.model
-    def find_for(self, employee_id, period_date):
-        """Find the target record covering a period for an employee."""
-        if not employee_id or not period_date:
+    def find_for(self, employee_id, period_date=None):
+        """Return the employee's sales target (valid for all time).
+
+        ``period_date`` is accepted for backward compatibility but ignored —
+        there is one target per employee now.
+        """
+        if not employee_id:
             return self.browse()
-        # Match by year+month
-        first_of_month = fields.Date.from_string(period_date).replace(day=1)
         return self.search([
             ('employee_id', '=', employee_id),
-            ('period_start', '=', first_of_month),
-        ], limit=1)
+            ('active', '=', True),
+        ], order='id desc', limit=1)
 
     def get_tier_for_achievement(self, achievement_percent):
         """Return the highest tier whose achievement_min is satisfied (threshold).

@@ -57,6 +57,31 @@
                 </list>
             </field>
         </record>
+        <!-- ════════════════════ Sales Commission Tiers (global) ════════════════════ -->
+        <record id="view_sl_bonus_sales_tier_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.sales.tier.tree</field>
+            <field name="model">sl.bonus.sales.tier</field>
+            <field name="arch" type="xml">
+                <list string="Sales Commission Tiers" editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="achievement_min"/>
+                    <field name="commission_percent"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_sl_bonus_sales_tier" model="ir.actions.act_window">
+            <field name="name">Sales Commission Tiers</field>
+            <field name="res_model">sl.bonus.sales.tier</field>
+            <field name="view_mode">list</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Define the global commission tiers</p>
+                <p>These tiers apply to ALL sales employees. Each tier sets a minimum
+                   achievement % (collected ÷ target) and the commission as a percentage
+                   of that employee's own target amount.</p>
+            </field>
+        </record>
+
         <record id="action_sl_bonus_evaluation_exception" model="ir.actions.act_window">
             <field name="name">Evaluation Exceptions</field>
             <field name="res_model">sl.bonus.evaluation.exception</field>

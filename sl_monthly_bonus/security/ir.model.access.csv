@@ -81,3 +81,6 @@ access_add_from_appraisal_wiz_hr,bonus.add.appraisal.wiz.hr,model_sl_bonus_add_f
 access_add_from_appraisal_wiz_admin,bonus.add.appraisal.wiz.admin,model_sl_bonus_add_from_appraisal_wizard,group_bonus_admin,1,1,1,1
 access_eval_exception_hr,bonus.eval.exception.hr,model_sl_bonus_evaluation_exception,group_bonus_hr_manager,1,1,1,1
 access_eval_exception_admin,bonus.eval.exception.admin,model_sl_bonus_evaluation_exception,group_bonus_admin,1,1,1,1
+access_sales_tier_employee,bonus.sales.tier.emp,model_sl_bonus_sales_tier,group_bonus_employee,1,0,0,0
+access_sales_tier_hr,bonus.sales.tier.hr,model_sl_bonus_sales_tier,group_bonus_hr_manager,1,1,1,1
+access_sales_tier_admin,bonus.sales.tier.admin,model_sl_bonus_sales_tier,group_bonus_admin,1,1,1,1
