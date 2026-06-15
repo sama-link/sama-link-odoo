@@ -478,7 +478,6 @@
         <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
         <field name="binding_view_types">list</field>
         <field name="groups_id" eval="[(6, 0, [
-            ref('sl_appraisal.group_appraisal_hr'),
             ref('sl_appraisal.group_appraisal_administrator'),
             ref('base.group_system'),
         ])]"/>
@@ -492,8 +491,6 @@
         <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
         <field name="binding_view_types">list</field>
         <field name="groups_id" eval="[(6, 0, [
-            ref('sl_appraisal.group_appraisal_manager'),
-            ref('sl_appraisal.group_appraisal_hr'),
             ref('sl_appraisal.group_appraisal_administrator'),
             ref('base.group_system'),
         ])]"/>
@@ -520,7 +517,6 @@
         <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
         <field name="binding_view_types">list</field>
         <field name="groups_id" eval="[(6, 0, [
-            ref('sl_appraisal.group_appraisal_hr'),
             ref('sl_appraisal.group_appraisal_administrator'),
             ref('base.group_system'),
         ])]"/>
