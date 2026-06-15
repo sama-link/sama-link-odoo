@@ -387,7 +387,7 @@ class SlBonusBatch(models.Model):
         bold = wb.add_format({'bold': True})
         money = wb.add_format({'num_format': '#,##0.00'})
         headers = [
-            _('Employee'), _('Department'), _('Job'), _('Category'),
+            _('Employee'), _('Work Location'), _('Job'), _('Category'),
             _('Evaluation %'), _('Computed'), _('Bonus'), _('Excluded'), _('Reason'),
         ]
         for col, head in enumerate(headers):
@@ -395,7 +395,7 @@ class SlBonusBatch(models.Model):
         row = 1
         for line in self.line_ids.sorted(lambda l: (l.employee_id.name or '')):
             ws.write(row, 0, line.employee_id.name or '')
-            ws.write(row, 1, line.department_id.name or '')
+            ws.write(row, 1, line.work_location_id.name or '')
             ws.write(row, 2, line.job_id.name or '')
             ws.write(row, 3, line.category or '')
             ws.write_number(row, 4, line.evaluation_percent or 0.0)
