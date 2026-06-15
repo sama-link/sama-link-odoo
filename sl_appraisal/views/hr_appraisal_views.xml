@@ -469,6 +469,65 @@
         <field name="act_window_id" ref="sl_hr_appraisal_action"/>
     </record>
 
+    <!-- ============================================================
+         BULK STATE ACTIONS (list-view "Actions" gear menu)
+         ============================================================ -->
+    <record id="action_appraisal_batch_publish" model="ir.actions.server">
+        <field name="name">Publish (Draft → Published)</field>
+        <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system'),
+        ])]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_batch_publish()</field>
+    </record>
+
+    <record id="action_appraisal_batch_submit" model="ir.actions.server">
+        <field name="name">Submit (Published → Submitted)</field>
+        <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_manager'),
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system'),
+        ])]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_batch_submit()</field>
+    </record>
+
+    <record id="action_appraisal_batch_hr_finalize" model="ir.actions.server">
+        <field name="name">HR Finalize (Submitted → Finalized)</field>
+        <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system'),
+        ])]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_batch_hr_finalize()</field>
+    </record>
+
+    <record id="action_appraisal_batch_reset_to_draft" model="ir.actions.server">
+        <field name="name">Reset to Draft</field>
+        <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_model_id" ref="oh_appraisal.model_hr_appraisal"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system'),
+        ])]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_batch_reset_to_draft()</field>
+    </record>
+
     <record id="action_sync_hr_scores_from_manager" model="ir.actions.server">
         <field name="name">Sync HR Scores from Manager</field>
         <field name="model_id" ref="oh_appraisal.model_hr_appraisal"/>

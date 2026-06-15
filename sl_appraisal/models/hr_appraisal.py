@@ -831,6 +831,77 @@ class HrAppraisal(models.Model):
             'check_cancel': False,
         })
 
+    # ─── Bulk workflow actions (list-view "Actions" gear menu) ────────
+
+    def _notify_batch_result(self, title, done_count, skipped_count, skipped_reason):
+        message = _("%(count)s appraisal(s) updated.", count=done_count)
+        if skipped_count:
+            message += " " + _(
+                "Skipped %(count)s record(s) %(reason)s.",
+                count=skipped_count, reason=skipped_reason,
+            )
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': 'success',
+                'sticky': bool(skipped_count),
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            },
+        }
+
+    def action_batch_publish(self):
+        """Bulk Draft → Published from the list-view Actions menu."""
+        self._check_hr_or_admin_access("publish appraisals")
+        to_do = self.filtered(lambda a: a.state == 'draft')
+        skipped = self - to_do
+        if not to_do:
+            raise UserError(_("No appraisals in Draft state were selected."))
+        for appraisal in to_do:
+            appraisal.action_publish()
+        return self._notify_batch_result(
+            _("Appraisals Published"), len(to_do), len(skipped),
+            _("not in Draft state"))
+
+    def action_batch_submit(self):
+        """Bulk Published → Submitted from the list-view Actions menu."""
+        to_do = self.filtered(lambda a: a.state == 'published')
+        skipped = self - to_do
+        if not to_do:
+            raise UserError(_("No appraisals in Published state were selected."))
+        for appraisal in to_do:
+            appraisal.action_submit()
+        return self._notify_batch_result(
+            _("Appraisals Submitted"), len(to_do), len(skipped),
+            _("not in Published state"))
+
+    def action_batch_hr_finalize(self):
+        """Bulk Submitted → HR Finalization from the list-view Actions menu."""
+        to_do = self.filtered(lambda a: a.state == 'submitted')
+        skipped = self - to_do
+        if not to_do:
+            raise UserError(_("No appraisals in Submitted state were selected."))
+        for appraisal in to_do:
+            appraisal.action_hr_finalize()
+        return self._notify_batch_result(
+            _("Appraisals Finalized"), len(to_do), len(skipped),
+            _("not in Submitted state"))
+
+    def action_batch_reset_to_draft(self):
+        """Bulk reset to Draft from the list-view Actions menu."""
+        self._check_hr_or_admin_access("reset appraisals to draft")
+        to_do = self.filtered(lambda a: a.state != 'draft')
+        skipped = self - to_do
+        if not to_do:
+            raise UserError(_("All selected appraisals are already in Draft state."))
+        for appraisal in to_do:
+            appraisal.action_reset_to_draft()
+        return self._notify_batch_result(
+            _("Appraisals Reset to Draft"), len(to_do), len(skipped),
+            _("already in Draft state"))
+
     @api.model
     def _cron_auto_submit_appraisals(self):
         """Auto-submit published appraisals whose deadline has reached or passed."""
