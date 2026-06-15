@@ -21,9 +21,10 @@ class SlBonusSalesTier(models.Model):
              '(e.g. 80, 100, 110). Achievement % = collected sales ÷ target × 100.',
     )
     commission_percent = fields.Float(
-        string='Commission % of Target', required=True,
-        help='Commission paid at this tier, as a percentage of the employee\'s '
-             'target amount (e.g. 4 = 4% of the target).',
+        string='Commission %', required=True,
+        help='Commission paid at this tier, as a percentage of the ACHIEVED '
+             '(collected) sales (e.g. 4 = 4% of collected sales). The tier is '
+             'selected by achievement % = collected ÷ target × 100.',
     )
 
     @api.constrains('achievement_min', 'commission_percent')

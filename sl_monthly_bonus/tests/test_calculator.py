@@ -91,16 +91,18 @@ class TestBonusCalculator(TransactionCase):
             {'name': 'T2', 'achievement_min': 100.0, 'commission_percent': 3.0},
             {'name': 'T3', 'achievement_min': 110.0, 'commission_percent': 4.0},
         ])
-        # 110% achievement → tier T3 → 4% of 100,000 = 4,000 commission
+        # 110% achievement → tier T3 (4%). Commission is now 4% of the ACHIEVED
+        # collected sales: 110,000 × 4% = 4,400.
         self.env['sl.bonus.edara.staging.sales'].create({
             'employee_id': emp.id, 'date': date(2026, 4, 15),
             'amount': 110000.0, 'is_collected': True,
         })
         self._finalize_appraisal(emp, 80.0)
         result = self.Calc.calculate_for_employee(emp, self.period_start, self.period_end)
-        self.assertAlmostEqual(result['line_vals']['tier_commission'], 4000.0, places=2)
+        self.assertAlmostEqual(result['line_vals']['tier_commission'], 4400.0, places=2)
         self.assertAlmostEqual(result['line_vals']['achievement_percent'], 110.0, places=2)
-        self.assertAlmostEqual(result['line_vals']['computed_amount'], 3600.0, places=2)
+        # 4400×50% + 4400×50%×80% = 2200 + 1760 = 3960
+        self.assertAlmostEqual(result['line_vals']['computed_amount'], 3960.0, places=2)
 
     def test_stock_example(self):
         job = self._make_job('Test Stock Buyer', 'stock')

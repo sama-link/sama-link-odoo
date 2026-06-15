@@ -78,7 +78,7 @@
                 <p class="o_view_nocontent_smiling_face">Define the global commission tiers</p>
                 <p>These tiers apply to ALL sales employees. Each tier sets a minimum
                    achievement % (collected ÷ target) and the commission as a percentage
-                   of that employee's own target amount.</p>
+                   of the employee's ACHIEVED (collected) sales.</p>
             </field>
         </record>
 
