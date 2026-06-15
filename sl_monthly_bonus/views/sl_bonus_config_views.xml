@@ -46,6 +46,29 @@
             <field name="view_mode">list,form</field>
         </record>
 
+        <!-- ════════════════════ Evaluation Exceptions ════════════════════ -->
+        <record id="view_sl_bonus_evaluation_exception_tree" model="ir.ui.view">
+            <field name="name">sl.bonus.evaluation.exception.tree</field>
+            <field name="model">sl.bonus.evaluation.exception</field>
+            <field name="arch" type="xml">
+                <list string="Evaluation Exceptions" editable="bottom">
+                    <field name="employee_id"/>
+                    <field name="reason"/>
+                </list>
+            </field>
+        </record>
+        <record id="action_sl_bonus_evaluation_exception" model="ir.actions.act_window">
+            <field name="name">Evaluation Exceptions</field>
+            <field name="res_model">sl.bonus.evaluation.exception</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Add an employee to skip the evaluation factor</p>
+                <p>Employees listed here have their evaluation treated as 100% in bonus
+                   computation — use this for employees who never receive an appraisal
+                   (whose evaluation would otherwise be 0% and zero out the bonus).</p>
+            </field>
+        </record>
+
         <!-- ════════════════════ Installation Rate ════════════════════ -->
         <record id="view_sl_bonus_installation_rate_tree" model="ir.ui.view">
             <field name="name">sl.bonus.installation.rate.tree</field>

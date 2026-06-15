@@ -196,6 +196,12 @@
                   action="action_sl_bonus_target"
                   sequence="20"/>
 
+        <menuitem id="menu_sl_bonus_config_eval_exception"
+                  name="Evaluation Exceptions"
+                  parent="menu_sl_bonus_config"
+                  action="action_sl_bonus_evaluation_exception"
+                  sequence="25"/>
+
         <menuitem id="menu_sl_bonus_config_install"
                   name="Installation Fixed Bonus"
                   parent="menu_sl_bonus_config"

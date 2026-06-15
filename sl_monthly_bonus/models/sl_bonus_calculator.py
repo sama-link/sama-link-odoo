@@ -179,7 +179,13 @@ class SlBonusCalculator(models.AbstractModel):
            'hr_finalization' (final). If found, use its total_score.
         2. Else, look for the latest hr_finalization appraisal up to period_end.
         3. Else, return 0% and an explanatory source.
+
+        Exception: employees on the evaluation-exception list have no appraisal,
+        so the evaluation factor is skipped (treated as 100%) instead of zeroing
+        their bonus. Only the % fed into the formulas changes — the formulas do not.
         """
+        if self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee):
+            return 100.0, _("Evaluation skipped (exception list)")
         Appraisal = self.env['hr.appraisal'].sudo()
 
         if appraisal_batch:
