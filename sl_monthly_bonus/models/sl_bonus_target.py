@@ -30,6 +30,9 @@ class SlBonusTarget(models.Model):
         'res.currency', string='Currency',
         default=lambda self: self.env.company.currency_id,
     )
+    company_id = fields.Many2one(
+        'res.company', related='employee_id.company_id', store=True, readonly=True,
+    )
     tier_ids = fields.One2many(
         'sl.bonus.target.tier', 'target_id', string='Threshold Tiers (legacy)',
         copy=True,

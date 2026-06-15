@@ -14,6 +14,9 @@ class SlBonusBranchProfit(models.Model):
         'hr.work.location', string='Branch',
         required=True, ondelete='restrict',
     )
+    company_id = fields.Many2one(
+        'res.company', default=lambda self: self.env.company, readonly=True,
+    )
     department_id = fields.Many2one(
         'hr.department', string='Department',
         help='Optional: tie this profitability record to a department.',

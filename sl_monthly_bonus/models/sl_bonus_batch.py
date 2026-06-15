@@ -387,27 +387,43 @@ class SlBonusBatch(models.Model):
         bold = wb.add_format({'bold': True})
         money = wb.add_format({'num_format': '#,##0.00'})
         headers = [
-            _('Employee'), _('Work Location'), _('Job'), _('Category'),
-            _('Evaluation %'), _('Computed'), _('Bonus'), _('Excluded'), _('Reason'),
+            _('Employee'), _('Work Location'), _('Visa No'), _('Job'),
+            _('Salary Payment Method'), _('Category'), _('Evaluation %'),
+            _('Computed'), _('Bonus'), _('Excluded'), _('Reason'),
         ]
         for col, head in enumerate(headers):
             ws.write(0, col, head, bold)
+
+        def _payment_method_label(contract):
+            method = getattr(contract, 'salary_payment_method', False)
+            if not method:
+                return ''
+            field = contract._fields.get('salary_payment_method')
+            try:
+                labels = dict(field.selection)
+            except TypeError:  # callable selection
+                labels = dict(field._description_selection(self.env))
+            return labels.get(method, method)
+
         row = 1
         for line in self.line_ids.sorted(lambda l: (l.employee_id.name or '')):
+            contract = line.employee_id.contract_id
             ws.write(row, 0, line.employee_id.name or '')
             ws.write(row, 1, line.work_location_id.name or '')
-            ws.write(row, 2, line.job_id.name or '')
-            ws.write(row, 3, line.category or '')
-            ws.write_number(row, 4, line.evaluation_percent or 0.0)
-            ws.write_number(row, 5, line.computed_amount or 0.0, money)
-            ws.write_number(row, 6, line.bonus_amount or 0.0, money)
-            ws.write(row, 7, _('Yes') if line.is_excluded else _('No'))
-            ws.write(row, 8, line.exclusion_reason or '')
+            ws.write(row, 2, getattr(line.employee_id, 'visa_no', '') or '')
+            ws.write(row, 3, line.job_id.name or '')
+            ws.write(row, 4, _payment_method_label(contract))
+            ws.write(row, 5, line.category or '')
+            ws.write_number(row, 6, line.evaluation_percent or 0.0)
+            ws.write_number(row, 7, line.computed_amount or 0.0, money)
+            ws.write_number(row, 8, line.bonus_amount or 0.0, money)
+            ws.write(row, 9, _('Yes') if line.is_excluded else _('No'))
+            ws.write(row, 10, line.exclusion_reason or '')
             row += 1
         # Total row (non-excluded bonus).
-        ws.write(row + 1, 5, _('Total'), bold)
-        ws.write_number(row + 1, 6, self.total_amount or 0.0, money)
-        for col, width in enumerate((28, 22, 20, 16, 13, 14, 14, 10, 40)):
+        ws.write(row + 1, 7, _('Total'), bold)
+        ws.write_number(row + 1, 8, self.total_amount or 0.0, money)
+        for col, width in enumerate((28, 22, 14, 16, 20, 16, 13, 14, 14, 10, 40)):
             ws.set_column(col, col, width)
         wb.close()
         fname = 'bonus_%s.xlsx' % (self.period_label or self.id)

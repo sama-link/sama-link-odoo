@@ -57,6 +57,9 @@ class SlBonusSelfEstimate(models.Model):
     currency_id = fields.Many2one(
         'res.currency', default=lambda self: self.env.company.currency_id,
     )
+    company_id = fields.Many2one(
+        'res.company', related='employee_id.company_id', store=True, readonly=True,
+    )
     progress_target = fields.Monetary(compute='_compute_estimate', currency_field='currency_id')
     progress_achieved = fields.Monetary(compute='_compute_estimate', currency_field='currency_id')
     progress_pct = fields.Float(compute='_compute_estimate')

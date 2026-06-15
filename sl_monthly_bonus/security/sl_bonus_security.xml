@@ -123,5 +123,48 @@
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_bonus_hr_manager'))]"/>
         </record>
+
+        <!-- ════════════════════ Multi-company isolation (GLOBAL rules) ════════════
+             Global (no groups) -> AND-combined with the group rules above, so
+             users only see transactional bonus records of their allowed
+             companies. Records with no company (legacy/NULL) stay visible.
+             Configuration (rates, global tiers, exceptions) is intentionally
+             NOT scoped — it is shared across companies. -->
+        <record id="rule_batch_company" model="ir.rule">
+            <field name="name">Bonus Batch: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_batch"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_batch_line_company" model="ir.rule">
+            <field name="name">Bonus Batch Line: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_batch_line"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_target_company" model="ir.rule">
+            <field name="name">Sales Target: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_target"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_branch_profit_company" model="ir.rule">
+            <field name="name">Branch Profitability: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_branch_profit"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_audit_log_company" model="ir.rule">
+            <field name="name">Bonus Audit Log: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_audit_log"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_self_estimate_company" model="ir.rule">
+            <field name="name">Self Estimate: multi-company</field>
+            <field name="model_id" ref="model_sl_bonus_self_estimate"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
     </data>
 </odoo>
