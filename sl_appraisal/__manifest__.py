@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Appraisals v1.0.0',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.1.1',
     'summary': 'Customized HR Appraisals with Skills Integration & 3-Stage Workflow',
     'description': """
         Extends Open HRMS Appraisals for Samalink:

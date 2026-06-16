@@ -31,16 +31,17 @@ class AppraisalAdminScoreExclude(models.Model):
         ])
         if not appraisals:
             return
-        # admin_score and its breakdown are non-stored — invalidate so they
-        # recompute on next read; total_score is stored, so recompute it now
-        # (skipping records the administrator has manually overridden).
+        # The exclusion list is not part of any @api.depends chain, so the ORM
+        # never learns the scores are stale. admin_score and base_score are
+        # non-stored (they recompute on read), but total_score is stored: flag
+        # base_score as modified so the ORM schedules total_score for
+        # recomputation and flush. _compute_total_score itself skips records
+        # the administrator has manually overridden.
         appraisals.invalidate_recordset([
             'admin_score', 'admin_score_exempt',
             'weighted_admin_score', 'base_score',
         ])
-        appraisals.filtered(
-            lambda a: not a.total_score_manual_override
-        )._compute_total_score()
+        appraisals.modified(['base_score'])
 
     @api.model_create_multi
     def create(self, vals_list):
