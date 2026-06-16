@@ -118,6 +118,10 @@ class SlBonusSelfEstimate(models.Model):
             rec.progress_pct = line_vals.get('achievement_percent') or 0.0
             parts = ['<table class="table table-sm" style="direction:rtl;text-align:right;">']
             for c in result.get('components', []):
+                # Internal commission-split detail is shown only in the HR
+                # Monthly Bonus breakdown, not in the employee's My Bonus estimate.
+                if c.get('self_hidden'):
+                    continue
                 parts.append(
                     f"<tr><td style='font-weight:600'>{c.get('label','')}</td>"
                     f"<td>{c.get('value','')}</td></tr>"

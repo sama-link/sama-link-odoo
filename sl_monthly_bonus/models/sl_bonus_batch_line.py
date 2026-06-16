@@ -615,3 +615,6 @@ class SlBonusBatchLineComponent(models.Model):
     label = fields.Char(string='Label', required=True)
     value = fields.Char(string='Value', required=True)
     note = fields.Char(string='Note')
+    # Shown in the HR Monthly Bonus breakdown, but hidden from the employee's
+    # "My Bonus" self-service estimate (internal commission split detail).
+    self_hidden = fields.Boolean(default=False)
