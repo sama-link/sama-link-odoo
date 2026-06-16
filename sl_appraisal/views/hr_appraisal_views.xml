@@ -196,6 +196,10 @@
 
                         <page string="🧮 Administration Score" name="administration_score_tab"
                               groups="sl_appraisal.group_appraisal_manager,sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
+                            <field name="admin_score_exempt" invisible="1"/>
+                            <div class="alert alert-info" role="alert" invisible="not admin_score_exempt">
+                                This employee is in the administrative exclusion list — Administration Score is fixed at 100%.
+                            </div>
                             <group string="Period">
                                 <group>
                                     <field name="period_days" readonly="1"/>

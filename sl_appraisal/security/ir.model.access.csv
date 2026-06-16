@@ -25,3 +25,5 @@ access_hr_appraisal_batch_employees_admin,hr.appraisal.batch.employees.admin,mod
 access_hr_appraisal_batch_employees_sysadmin,hr.appraisal.batch.employees.sysadmin,model_hr_appraisal_batch_employees,base.group_system,1,1,1,1
 access_appraisal_admin_score_config_admin,appraisal.admin.score.config.admin,model_appraisal_admin_score_config,sl_appraisal.group_appraisal_administrator,1,1,1,1
 access_appraisal_admin_score_config_sysadmin,appraisal.admin.score.config.sysadmin,model_appraisal_admin_score_config,base.group_system,1,1,1,1
+access_appraisal_admin_score_exclude_admin,appraisal.admin.score.exclude.admin,model_appraisal_admin_score_exclude,sl_appraisal.group_appraisal_administrator,1,1,1,1
+access_appraisal_admin_score_exclude_sysadmin,appraisal.admin.score.exclude.sysadmin,model_appraisal_admin_score_exclude,base.group_system,1,1,1,1

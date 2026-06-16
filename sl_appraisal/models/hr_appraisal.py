@@ -194,6 +194,13 @@ class HrAppraisal(models.Model):
         digits=(16, 2),
         help="Starts from 100 and is adjusted by absence/late/penalty/bonus scoring.",
     )
+    admin_score_exempt = fields.Boolean(
+        string='Administration Score Exempt',
+        compute='_compute_administration_scores',
+        help="Employee is in the administrative exclusion list and always "
+             "receives a 100% administration score, regardless of absences, "
+             "lateness or penalties.",
+    )
     weighted_skill_score = fields.Float(
         string='Weighted Skills (70%)',
         compute='_compute_weighted_score_breakdown',
@@ -271,7 +278,12 @@ class HrAppraisal(models.Model):
         absence_model = self.env['hr.absent.entry'].sudo()
         attendance_model = self.env['hr.attendance'].sudo()
         config = self.env['appraisal.admin.score.config'].sudo().get_config()
+        exempt_employee_ids = set(
+            self.env['appraisal.admin.score.exclude'].sudo()
+            .search([]).employee_id.ids
+        )
         for rec in self:
+            rec.admin_score_exempt = False
             rec.absence_count = 0
             rec.late_count = 0
             rec.early_leaving_count = 0
@@ -285,6 +297,12 @@ class HrAppraisal(models.Model):
             rec.bonus_score = 0.0
             rec.admin_score = 100.0
             if not rec.employee_id or not rec.date_from or not rec.date_to:
+                continue
+
+            # Excluded employees always score 100% — skip all deductions.
+            if rec.employee_id.id in exempt_employee_ids:
+                rec.admin_score_exempt = True
+                rec.admin_score = 100.0
                 continue
 
             rec.period_days = (rec.date_to - rec.date_from).days + 1
