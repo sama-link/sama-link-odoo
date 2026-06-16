@@ -388,7 +388,8 @@ class SlBonusBatch(models.Model):
         money = wb.add_format({'num_format': '#,##0.00'})
         headers = [
             _('Employee'), _('Work Location'), _('Visa No'), _('Job'),
-            _('Salary Payment Method'), _('Category'), _('Evaluation %'),
+            _('Salary Payment Method'), _('Category'), _('Target'),
+            _('Achieved (collected)'), _('Evaluation %'),
             _('Computed'), _('Bonus'), _('Excluded'), _('Reason'),
         ]
         for col, head in enumerate(headers):
@@ -414,16 +415,23 @@ class SlBonusBatch(models.Model):
             ws.write(row, 3, line.job_id.name or '')
             ws.write(row, 4, _payment_method_label(contract))
             ws.write(row, 5, line.category or '')
-            ws.write_number(row, 6, line.evaluation_percent or 0.0)
-            ws.write_number(row, 7, line.computed_amount or 0.0, money)
-            ws.write_number(row, 8, line.bonus_amount or 0.0, money)
-            ws.write(row, 9, _('Yes') if line.is_excluded else _('No'))
-            ws.write(row, 10, line.exclusion_reason or '')
+            # Target / Achieved are meaningful for sales lines only.
+            if line.category == 'sales':
+                ws.write_number(row, 6, line.target_amount or 0.0, money)
+                ws.write_number(row, 7, line.achieved_amount or 0.0, money)
+            else:
+                ws.write(row, 6, '')
+                ws.write(row, 7, '')
+            ws.write_number(row, 8, line.evaluation_percent or 0.0)
+            ws.write_number(row, 9, line.computed_amount or 0.0, money)
+            ws.write_number(row, 10, line.bonus_amount or 0.0, money)
+            ws.write(row, 11, _('Yes') if line.is_excluded else _('No'))
+            ws.write(row, 12, line.exclusion_reason or '')
             row += 1
         # Total row (non-excluded bonus).
-        ws.write(row + 1, 7, _('Total'), bold)
-        ws.write_number(row + 1, 8, self.total_amount or 0.0, money)
-        for col, width in enumerate((28, 22, 14, 16, 20, 16, 13, 14, 14, 10, 40)):
+        ws.write(row + 1, 9, _('Total'), bold)
+        ws.write_number(row + 1, 10, self.total_amount or 0.0, money)
+        for col, width in enumerate((28, 22, 14, 16, 20, 16, 14, 16, 13, 14, 14, 10, 40)):
             ws.set_column(col, col, width)
         wb.close()
         fname = 'bonus_%s.xlsx' % (self.period_label or self.id)
