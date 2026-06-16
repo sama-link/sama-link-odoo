@@ -395,10 +395,27 @@ class SlBonusBatch(models.Model):
         for col, head in enumerate(headers):
             ws.write(0, col, head, bold)
 
+        # Arabic value maps (independent of the export user's UI language).
+        category_ar = {
+            'service': 'خدمات',
+            'sales': 'مبيعات',
+            'stock': 'مشتريات المخزون',
+            'installation': 'تركيبات',
+            'branch_manager': 'مدير فرع / منطقة',
+            'none': 'بدون مكافأة',
+        }
+        payment_ar = {
+            'bank_transfer': 'تحويل بنكي',
+            'cash': 'نقدي',
+            'other': 'أخرى',
+        }
+
         def _payment_method_label(contract):
             method = getattr(contract, 'salary_payment_method', False)
             if not method:
                 return ''
+            if method in payment_ar:
+                return payment_ar[method]
             field = contract._fields.get('salary_payment_method')
             try:
                 labels = dict(field.selection)
@@ -414,7 +431,7 @@ class SlBonusBatch(models.Model):
             ws.write(row, 2, getattr(line.employee_id, 'visa_no', '') or '')
             ws.write(row, 3, line.job_id.name or '')
             ws.write(row, 4, _payment_method_label(contract))
-            ws.write(row, 5, line.category or '')
+            ws.write(row, 5, category_ar.get(line.category, line.category or ''))
             # Target / Achieved are meaningful for sales lines only.
             if line.category == 'sales':
                 ws.write_number(row, 6, line.target_amount or 0.0, money)
