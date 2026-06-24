@@ -24,6 +24,9 @@ patch(SlideUploadCategory.prototype, {
         if (!isHtmlFile(file)) {
             return super.onChangeFileInput(ev);
         }
+        // Read event-derived values synchronously: after the await below, the DOM
+        // event has finished dispatching and ev.currentTarget becomes null.
+        const preventOnchange = ev.currentTarget.dataset.preventOnchange;
         this._alertRemove();
         if (file.size > 25 * 1024 * 1024) {
             this._alertDisplay(_t("File is too big. File size cannot exceed 25MB"));
@@ -37,7 +40,6 @@ patch(SlideUploadCategory.prototype, {
         this.file.data = dataURL.split(",", 2)[1];
         this.state.form.slideImage = "/website_slides/static/src/img/document.png";
         this.state.preview.show = true;
-        const preventOnchange = ev.currentTarget.dataset.preventOnchange;
         if (!preventOnchange && this.state.form.slideName === "") {
             const input = file.name;
             this.state.form.slideName = input.substr(0, input.lastIndexOf(".")) || input;
