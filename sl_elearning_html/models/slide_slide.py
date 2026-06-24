@@ -14,7 +14,9 @@ class SlideSlide(models.Model):
     # completion tracking keep working unchanged.
     slide_type = fields.Selection(
         selection_add=[('html', 'HTML Page')],
-        ondelete={'html': 'set default'},
+        # The base slide_type field defines no default, so 'set default' is invalid.
+        # slide_type is computed, so clearing it (set null) is safe - it recomputes.
+        ondelete={'html': 'set null'},
     )
 
     def _is_html_document(self):
