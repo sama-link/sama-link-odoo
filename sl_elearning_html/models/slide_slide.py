@@ -1,0 +1,69 @@
+import base64
+
+from markupsafe import Markup
+
+from odoo import _, api, fields, models
+from odoo.http import request
+
+
+class SlideSlide(models.Model):
+    _inherit = 'slide.slide'
+
+    # New document slide type for self-contained HTML files. It stays inside the
+    # 'document' slide_category so all the existing list UI / icons / ordering /
+    # completion tracking keep working unchanged.
+    slide_type = fields.Selection(
+        selection_add=[('html', 'HTML Page')],
+        ondelete={'html': 'set default'},
+    )
+
+    def _is_html_document(self):
+        """ Sniff whether the uploaded local file is an HTML document.
+
+        The model stores no filename, so we inspect the decoded content. Looking
+        at the first bytes is enough for self-contained HTML files. """
+        self.ensure_one()
+        if not self.binary_content:
+            return False
+        try:
+            head = base64.b64decode(self.binary_content)[:2048].lower()
+        except Exception:
+            return False
+        return b'<!doctype html' in head or b'<html' in head or b'<body' in head
+
+    @api.depends('slide_category', 'source_type', 'video_source_type', 'binary_content')
+    def _compute_slide_type(self):
+        # Re-declare the full original depends set (overriding the method replaces
+        # its dependencies) and add 'binary_content' so detection re-runs on upload.
+        super()._compute_slide_type()
+        for slide in self:
+            if (slide.slide_category == 'document'
+                    and slide.source_type == 'local_file'
+                    and slide._is_html_document()):
+                slide.slide_type = 'html'
+
+    @api.depends('slide_category', 'google_drive_id', 'video_source_type', 'youtube_id', 'slide_type')
+    def _compute_embed_code(self):
+        super()._compute_embed_code()
+        request_base_url = request.httprequest.url_root if request else False
+        for slide in self:
+            if not (slide.slide_type == 'html'
+                    and slide.slide_category == 'document'
+                    and slide.source_type == 'local_file'):
+                continue
+            base_url = request_base_url or slide.get_base_url()
+            if base_url and base_url[-1] == '/':
+                base_url = base_url[:-1]
+            slide_url = base_url + self.env['ir.http']._url_for('/slides/slide/%s/html_content' % slide.id)
+            # The fullscreen player rebuilds the iframe from only the src, so the
+            # sandbox is also enforced server-side via a CSP header on the route.
+            # The sandbox attribute here still applies on the non-fullscreen
+            # detail page where the raw embed_code is injected.
+            embed_code = Markup(
+                '<iframe src="%s" class="o_wslides_iframe_viewer" '
+                'sandbox="allow-scripts allow-popups allow-forms" '
+                'allowFullScreen="true" height="%s" width="%s" frameborder="0" '
+                'aria-label="%s"></iframe>'
+            ) % (slide_url, 315, 420, _('HTML content'))
+            slide.embed_code = embed_code
+            slide.embed_code_external = embed_code
