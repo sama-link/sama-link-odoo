@@ -1,6 +1,6 @@
 {
     'name': 'HR Mission',
-    'version': '1.0.1',
+    'version': '1.0.2',
     'summary': 'Manage employee missions',
     'description': """
         This module allows HR to manage and track employee missions.

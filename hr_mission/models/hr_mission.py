@@ -44,17 +44,6 @@ class HrMission(models.Model):
     ], string='Status', default='confirmed', tracking=True)
     attendance_ids = fields.One2many('hr.attendance', 'mission_id', string='Attendance Records', readonly=True)
 
-    @api.constrains('employee_id')
-    def _check_one_mission(self):
-        for record in self:
-            existing_missions = self.search_count([
-                ('employee_id', '=', record.employee_id.id),
-                ('state', '=', 'confirmed'),
-                ('id', '!=', record.id)
-            ])
-            if existing_missions:
-                raise ValidationError("There is already an ongoing mission request for this employee.")
-
     def action_hr_approve(self):
         if not self.env.user.has_group('hr_mission.group_hr_mission_manager'):
             raise ValidationError("You have to be a HR responsible to approve this request.")
@@ -65,22 +54,66 @@ class HrMission(models.Model):
         self.write({'state': 'rejected'})
 
     def action_cancel(self):
-        # Delete associated attendance records upon cancellation
-        self.env['hr.attendance'].search([('mission_id', 'in', self.ids)]).unlink()
+        # Undo the attendance changes made on approval, without destroying real check-ins.
+        linked = self.env['hr.attendance'].search([('mission_id', 'in', self.ids)])
+        # Purely mission-generated records (no real check-in behind them) are removed.
+        linked.filtered('mission_generated').unlink()
+        # Records the mission merged into a real check-in are restored to their original times.
+        for attendance in linked.filtered(lambda a: not a.mission_generated):
+            attendance.write({
+                'check_in': attendance.mission_orig_check_in or attendance.check_in,
+                'check_out': attendance.mission_orig_check_out,
+                'mission_id': False,
+                'mission_orig_check_in': False,
+                'mission_orig_check_out': False,
+            })
         self.write({'state': 'cancelled'})
 
     def _create_attendance_records(self):
-        vals_list = []
+        found_shift = False
         for record in self:
             current_date = record.start_date
             while current_date <= record.end_date:
-                vals = record._get_shift_start_end(current_date)
-                if vals:
-                    vals_list.append(vals)
+                shift_vals = record._get_shift_start_end(current_date)
+                if shift_vals:
+                    found_shift = True
+                    record._apply_mission_attendance(current_date, shift_vals)
                 current_date += timedelta(days=1)
-        if not vals_list:
+        if not found_shift:
             raise ValidationError("No attendance shifts found for the mission period. Please ensure attendance shifts are recorded before approving the mission.")
-        self.env['hr.attendance'].create(vals_list)
+
+    def _apply_mission_attendance(self, date, shift_vals):
+        """ Create or merge the mission's shift attendance for a single day.
+
+        If the employee already has attendance on that day, merge everything into one
+        record using the earliest check-in and latest check-out ("first check-in, last
+        check-out") instead of creating a conflicting/overlapping record. """
+        self.ensure_one()
+        Attendance = self.env['hr.attendance']
+        shift_start = shift_vals['check_in']
+        shift_end = shift_vals['check_out']
+        day_start = self._convert_to_gmt_naive(date, time.min)
+        day_end = self._convert_to_gmt_naive(date, time.max)
+        existing = Attendance.search([
+            ('employee_id', '=', self.employee_id.id),
+            ('check_in', '>=', day_start),
+            ('check_in', '<=', day_end),
+        ])
+        if not existing:
+            Attendance.create(dict(shift_vals, mission_generated=True))
+            return
+        first_check_in = min(existing.mapped('check_in') + [shift_start])
+        last_check_out = max([co for co in existing.mapped('check_out') if co] + [shift_end])
+        keep = existing.sorted('check_in')[0]
+        (existing - keep).unlink()
+        keep.write({
+            'mission_orig_check_in': keep.check_in,
+            'mission_orig_check_out': keep.check_out,
+            'check_in': first_check_in,
+            'check_out': last_check_out,
+            'mission_id': self.id,
+            'mission_generated': False,
+        })
 
     def _get_shift_start_end(self, date):
         contract = self.employee_id.contract_id
