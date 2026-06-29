@@ -48,8 +48,12 @@ class ZkAttendance(models.Model):
         existing_middleware_records = self.env['hr.attendance.middleware'].browse(existing_middleware_ids)
         _logger.info(f"Processing {len(existing_middleware_records)} existing HR attendance middleware records.")
         # existing_middleware_records.action_fix_work_entries(bulk=True)
-        zk_attendance_ids = existing_middleware_records.action_adjust_or_create_hr_attendance(bulk=True)
-        self.browse(zk_attendance_ids).write({'is_settled': True})
+        existing_middleware_records.action_adjust_or_create_hr_attendance(bulk=True)
+        # Only settle punches whose HR attendance was actually created/adjusted. Days
+        # that failed keep is_settled=False so the next cron run retries them, instead
+        # of being silently marked done with no attendance behind them.
+        settled = existing_middleware_records.filtered(lambda m: m.hr_attendance_id).mapped('zk_attendance_ids')
+        settled.write({'is_settled': True})
 
     @api.model
     def _format_hr_attendance_data(self, data):
@@ -72,3 +76,6 @@ class ZkAttendance(models.Model):
             _logger.info(f"Cron job completed: Linked {len(records)} ZK attendance records to HR attendance middleware.")
         else:
             _logger.info("Cron job completed: No ZK attendance records to link.")
+        # Self-heal: rebuild day-sheets whose HR attendance went missing (deleted by a
+        # user or failed to create) so payroll never ends up with permanent gaps.
+        self.env['hr.attendance.middleware'].cron_rebuild_missing_attendance(limit=limit, start_date=start_date)

@@ -508,6 +508,30 @@ class HrAttendanceMiddleware(models.Model):
         _logger.info(f"Adjusted or created HR attendance for {len(records)} HR attendance middleware records.")
         return zk_attendance_ids
 
+    def action_rebuild_missing_attendance(self):
+        """Button: rebuild the HR Attendance for the selected day-sheets whose
+        attendance is missing (it was created then deleted, or its creation failed).
+        Day-sheets that already have an attendance are left untouched."""
+        targets = self.filtered(lambda m: not m.hr_attendance_id)
+        if not targets:
+            raise UserError(_("All selected records already have an HR Attendance."))
+        targets.action_adjust_or_create_hr_attendance(bulk=True)
+        return True
+
+    @api.model
+    def cron_rebuild_missing_attendance(self, limit=30, start_date='2025-10-24'):
+        """Self-heal pass: rebuild day-sheets whose HR Attendance went missing
+        (deleted by a user or failed to create). Called from the daily link cron so
+        payroll never ends up with permanent gaps."""
+        domain = [('hr_attendance_id', '=', False)]
+        if start_date:
+            domain.append(('date', '>=', start_date))
+        broken = self.search(domain, order='date asc', limit=limit)
+        if broken:
+            _logger.info(f"Self-heal: rebuilding {len(broken)} day-sheets with missing HR attendance.")
+            broken.action_adjust_or_create_hr_attendance(bulk=True)
+        return broken
+
     def _check_leave_manager_permission(self):
         is_sl_admin = self.env.user.has_group('samalink_security_groups.group_samalink_administrator')
         is_sl_general_manager = self.env.user.has_group('samalink_security_groups.group_sl_general_manager')
