@@ -64,6 +64,10 @@ class HrPayslip(models.Model):
                           default=lambda self: fields.Date.to_string(
                               (datetime.now() + relativedelta(months=+1, day=1,
                                                               days=-1)).date()))
+    lock_dates = fields.Boolean(
+        string='Lock Period', copy=False,
+        help="When set, this payslip's Date From/To are not changed when the "
+             "parent batch period changes.")
     # this is chaos: 4 states are defined, 3 are used ('verify' isn't)
     # and 5 exist ('confirm' seems to have existed)
     state = fields.Selection(selection=[

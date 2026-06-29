@@ -1,0 +1,21 @@
+<odoo>
+    <record id="hr_payslip_run_view_form_samalink_entries" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.samalink.entries</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll_community.hr_payslip_run_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_bulk_compute_payslips']" position="after">
+                <button string="Generate Absence Entries"
+                        name="action_samalink_generate_absent_entries"
+                        type="object"
+                        invisible="state != 'draft' or not slip_ids"
+                        groups="hr_payroll_community.group_hr_payroll_community_user"/>
+                <button string="Adjust Flexible Work Entries"
+                        name="action_samalink_adjust_work_entries"
+                        type="object"
+                        invisible="state != 'draft' or not slip_ids"
+                        groups="hr_payroll_community.group_hr_payroll_community_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
