@@ -482,27 +482,33 @@ class HrAttendanceMiddleware(models.Model):
                 'zk_attendance_ids': [Command.set(record.zk_attendance_ids.ids)],
                 'middleware_id': record.id,
             }
+            # No check-in means there are no usable punches for this day, so we cannot
+            # build a valid attendance (check_in is a required column). Skip instead of
+            # raising a DB NOT NULL error that would abort the whole batch.
+            if not check_in:
+                record.message_post(body=_("Skipped: no check-in time available to build an HR Attendance."))
+                record.state = 'attendance_creation_error'
+                continue
+            had_attendance = bool(record.hr_attendance_id)
             compute_overtime = False
-            if record.hr_attendance_id:
-                vals.pop('employee_id')  # Employee cannot be changed on write
-                try:
-                    record.hr_attendance_id.write(vals)
-                    record.message_post(body=_("HR Attendance adjusted successfully vals: %s" % vals))
-                    record.state = 'attendance_adjusted'
-                    compute_overtime = True
-                except Exception as e:
-                    record.message_post(body=_("Failed to adjust HR Attendance: %s" % str(e)))
-                    record.state = 'attendance_adjustment_error'
-            else:
-                try:
-                    new_attendance = self.env['hr.attendance'].create(vals)
-                    record.message_post(body=_("HR Attendance created successfully vals: %s" % vals))
-                    record.state = 'attendance_created'
-                    compute_overtime = True
-                    record.hr_attendance_id = new_attendance.id
-                except Exception as e:
-                    record.message_post(body=_("Failed to create HR Attendance: %s" % str(e)))
-                    record.state = 'attendance_creation_error'
+            try:
+                # Isolate each record in a savepoint so one failing row cannot abort the
+                # whole transaction (which would also break the message_post below).
+                with self.env.cr.savepoint():
+                    if had_attendance:
+                        adjust_vals = dict(vals)
+                        adjust_vals.pop('employee_id')  # Employee cannot be changed on write
+                        record.hr_attendance_id.write(adjust_vals)
+                    else:
+                        new_attendance = self.env['hr.attendance'].create(vals)
+                        record.hr_attendance_id = new_attendance.id
+                record.state = 'attendance_adjusted' if had_attendance else 'attendance_created'
+                record.message_post(body=_("HR Attendance %s successfully vals: %s") % (
+                    'adjusted' if had_attendance else 'created', vals))
+                compute_overtime = True
+            except Exception as e:
+                record.message_post(body=_("Failed to build HR Attendance: %s") % str(e))
+                record.state = 'attendance_adjustment_error' if had_attendance else 'attendance_creation_error'
             if compute_overtime:
                 record.hr_attendance_id._compute_overtime_hours()
         _logger.info(f"Adjusted or created HR attendance for {len(records)} HR attendance middleware records.")
