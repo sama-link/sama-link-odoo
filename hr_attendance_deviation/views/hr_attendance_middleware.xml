@@ -11,6 +11,7 @@
                     <button type="object" name="action_cancel_early_check_out_approval" string="Cancel Early Check-Out Approval" confirm="Are you sure you want to cancel this early check-out approval?" class="btn-danger"/>
                     <button type="object" name="action_recheck_has_late_early_request" string="Recheck Late/Early Requests" class="btn-secondary"/>
                     <button type="object" name="action_rebuild_missing_attendance" string="Rebuild Missing Attendance" confirm="Rebuild HR Attendance for the selected day-sheets that are missing one?" class="btn-secondary" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
+                    <button type="object" name="action_rebuild_all_missing_attendance" string="Rebuild ALL Missing Attendance" confirm="Rebuild HR Attendance for ALL day-sheets that are missing one (all employees, ignores selection)?" class="btn-warning" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
                 </header>
                 <field name="employee_id"/>
                 <field name="date"/>
@@ -37,6 +38,7 @@
                     <field name="force_early_check_out" invisible="1"/>
                     <button type="object" name="action_adjust_or_create_hr_attendance" string="Adjust or Create Attendance" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
                     <button type="object" name="action_rebuild_missing_attendance" string="Rebuild Missing Attendance" invisible="hr_attendance_id" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
+                    <button type="object" name="action_rebuild_all_missing_attendance" string="Rebuild ALL Missing Attendance" confirm="Rebuild HR Attendance for ALL day-sheets that are missing one (all employees)?" class="btn-warning" groups="hr_attendance_deviation.group_hr_attendance_middleware_admin"/>
                     <button type="object" name="action_confirm_late_check_in" string="Confirm Late Check-In" invisible="not late_check_in and not force_late_check_in"/>
                     <button type="object" name="action_confirm_early_check_out" string="Confirm Early Check-Out" invisible="not early_check_out and not force_early_check_out"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,work_entries_valid"/>

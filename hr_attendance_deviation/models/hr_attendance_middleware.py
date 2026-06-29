@@ -524,6 +524,27 @@ class HrAttendanceMiddleware(models.Model):
         targets.action_adjust_or_create_hr_attendance(bulk=True)
         return True
 
+    def action_rebuild_all_missing_attendance(self):
+        """Button: rebuild EVERY day-sheet with a missing HR Attendance across all
+        employees, ignoring the current selection and the cron's batch limit."""
+        broken = self.search([('hr_attendance_id', '=', False)])
+        if not broken:
+            raise UserError(_("There are no day-sheets with a missing HR Attendance."))
+        total = len(broken)
+        broken.action_adjust_or_create_hr_attendance(bulk=True)
+        remaining = self.search_count([('hr_attendance_id', '=', False)])
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Done'),
+                'type': 'success',
+                'message': _("Processed %s day-sheets: rebuilt %s, %s could not be built "
+                             "(no punches or conflicting punches).") % (total, total - remaining, remaining),
+                'sticky': True,
+            },
+        }
+
     @api.model
     def cron_rebuild_missing_attendance(self, limit=30, start_date='2025-10-24'):
         """Self-heal pass: rebuild day-sheets whose HR Attendance went missing
