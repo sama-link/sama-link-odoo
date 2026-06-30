@@ -24,7 +24,7 @@
                     <group>
                         <group>
                             <field name="employee_id"
-                                   readonly="not can_edit_employee"
+                                   readonly="can_edit_employee == False"
                                    options="{'no_create': True}"/>
                             <field name="date"/>
                         </group>
