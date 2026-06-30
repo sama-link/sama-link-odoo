@@ -10,7 +10,7 @@ class SlFreelancerTask(models.Model):
     _check_company_auto = True
 
     employee_id = fields.Many2one(
-        'hr.employee', string='Employee', required=True,
+        'hr.employee', string='Employee', required=True, check_company=True,
         default=lambda self: self.env.user.employee_id.id, tracking=True)
     company_id = fields.Many2one(
         'res.company', related='employee_id.company_id',
@@ -19,7 +19,7 @@ class SlFreelancerTask(models.Model):
     attendance_ids = fields.Many2many(
         'hr.attendance',
         'sl_freelancer_task_attendance_rel', 'task_id', 'attendance_id',
-        string='Attendance Records',
+        string='Attendance Records', check_company=True,
         domain="[('employee_id', '=', employee_id)]",
         help="Attendance punch records selected for this freelancer task.")
     total_hours = fields.Float(
@@ -43,7 +43,11 @@ class SlFreelancerTask(models.Model):
             record.attendance_count = len(record.attendance_ids)
 
     def _compute_can_edit_employee(self):
-        is_admin = self.env.user.has_group('sl_freelancer.group_sl_freelancer_admin')
+        # Administrators (module admins or the technical system admin) pick the
+        # employee; plain self-service users get their own, read-only.
+        is_admin = (
+            self.env.user.has_group('sl_freelancer.group_sl_freelancer_admin')
+            or self.env.user.has_group('base.group_system'))
         for record in self:
             record.can_edit_employee = is_admin
 
