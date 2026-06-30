@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Freelancer Records v1.0.0',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.1.1',
     'summary': 'Track freelancer work records with selected attendance hours',
     'description': """
         Freelancer work records for Samalink:

@@ -19,7 +19,7 @@ class SlFreelancerTask(models.Model):
     attendance_ids = fields.Many2many(
         'hr.attendance',
         'sl_freelancer_task_attendance_rel', 'task_id', 'attendance_id',
-        string='Attendance Records', check_company=True,
+        string='Attendance Records',
         domain="[('employee_id', '=', employee_id)]",
         help="Attendance punch records selected for this freelancer task.")
     total_hours = fields.Float(
