@@ -42,9 +42,12 @@ class SlFreelancerTask(models.Model):
         for record in self:
             record.attendance_count = len(record.attendance_ids)
 
+    @api.depends_context('uid')
     def _compute_can_edit_employee(self):
         # Administrators (module admins or the technical system admin) pick the
         # employee; plain self-service users get their own, read-only.
+        # depends_context('uid') keeps the value correct per user (no cross-user
+        # cache bleed that could make an admin see the field read-only).
         is_admin = (
             self.env.user.has_group('sl_freelancer.group_sl_freelancer_admin')
             or self.env.user.has_group('base.group_system'))
