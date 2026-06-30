@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_sl_freelancer_root"
+              name="Freelancers"
+              web_icon="sl_freelancer,static/description/icon.png"
+              groups="sl_freelancer.group_sl_freelancer_user"
+              sequence="90"/>
+
+    <menuitem id="menu_sl_freelancer_records"
+              name="Freelancer Records"
+              parent="menu_sl_freelancer_root"
+              action="action_sl_freelancer_task"
+              groups="sl_freelancer.group_sl_freelancer_user"
+              sequence="10"/>
+
+    <menuitem id="menu_sl_freelancer_analysis"
+              name="Analysis"
+              parent="menu_sl_freelancer_root"
+              action="action_sl_freelancer_analysis"
+              groups="sl_freelancer.group_sl_freelancer_admin"
+              sequence="20"/>
+
+</odoo>
