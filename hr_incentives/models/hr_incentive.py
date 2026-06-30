@@ -101,7 +101,9 @@ class HrIncentive(models.Model):
                 if record.type == 'bonus':
                     record.amount = amount
                 elif record.type == 'penalty':
-                    record.amount = -amount
+                    # Penalty amount is kept POSITIVE here; the negative sign is
+                    # applied in the payroll salary-rule calculation.
+                    record.amount = amount
 
     @api.constrains('days', 'amount')
     def _check_days_amount(self):
