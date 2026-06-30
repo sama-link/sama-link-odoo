@@ -1,6 +1,6 @@
 {
     'name': 'HR Incentives v1.0.0',
-    'version': '1.0.2',
+    'version': '1.0.3',
     'summary': 'Manage HR incentives such as bonuses and penalties for employees',
     'description': 'Module to manage employee incentives within HR.',
     'author': '46-d-006',
