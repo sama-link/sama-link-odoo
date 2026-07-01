@@ -1,6 +1,6 @@
 {
     'name': 'Samalink HR',
-    'version': '1.2.0',
+    'version': '1.3.0',
     'summary': 'HR Module for Samalink',
     'description': 'Custom HR functionalities for Samalink. '
                    'Includes flexible rest day logic, absence entry filtering, '
@@ -30,6 +30,7 @@
         'views/res_config_settings_views.xml',
         'views/hr_payslip_views.xml',
         'views/hr_payslip_run_views.xml',
+        'data/salary_rule_ar_names.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,

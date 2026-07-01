@@ -1,0 +1,4 @@
+<odoo>
+    <!-- Apply Arabic (ar_001) salary-rule name translations on every module update. -->
+    <function model="hr.salary.rule" name="_samalink_load_ar_names"/>
+</odoo>

@@ -46,7 +46,7 @@
                                     <span t-field="o.employee_id.work_email"/>
                                 </td>
                                 <td>
-                                    <strong>Monthly Advantages in Cash</strong>
+                                    <strong>المزايا الشهرية النقدية</strong>
                                 </td>
                                 <td>
                                     <t t-if="o.contract_id">
@@ -64,7 +64,7 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <strong>Contract Start Date</strong>
+                                    <strong>تاريخ بداية العقد</strong>
                                 </td>
                                 <td>
                                     <span t-field="o.contract_id.date_start"/>
@@ -102,30 +102,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="adv_codes" t-value="['HRA', 'DA', 'Meal', 'Medical', 'Travel', 'Other']"/>
                                 <t t-set="sec1_codes" t-value="['REST_ALLOW', 'HOLIDAY_BONUS', 'PAID_HOLIDAY_BONUS', 'SICK_HOLIDAY_BONUS']"/>
                                 <t t-set="sec2_codes" t-value="['OVERTIME_HOURS', 'INCENTIV']"/>
                                 <t t-set="sec3_codes" t-value="['ADMIN_PENALTY', 'LATE_PENALTY', 'ABSENT_PENALTY']"/>
-                                <t t-set="grouped" t-value="adv_codes + sec1_codes + sec2_codes + sec3_codes"/>
-                                <t t-set="lines" t-value="o.details_by_salary_rule_category_ids"/>
-                                <!-- Main rules; the contract cash advantages (adv_codes) are shown in the top block instead. -->
-                                <t t-foreach="lines.filtered(lambda l: l.salary_rule_id.code not in grouped)" t-as="line">
+                                <t t-set="adv_codes" t-value="['HRA', 'DA', 'Meal', 'Medical', 'Travel', 'Other']"/>
+                                <!-- Keep the original rule order; the contract cash advantages show in the top block only. -->
+                                <t t-set="olines" t-value="o.details_by_salary_rule_category_ids.filtered(lambda l: l.salary_rule_id.code not in adv_codes)"/>
+                                <t t-set="s1" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec1_codes)"/>
+                                <t t-set="s2" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec2_codes)"/>
+                                <t t-set="s3" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec3_codes)"/>
+                                <t t-set="cur" t-value="o.company_id.currency_id"/>
+                                <t t-foreach="olines" t-as="line">
+                                    <t t-if="s1 and line.id == s1[0].id">
+                                        <tr class="table-active"><td colspan="3"><strong>البدلات</strong></td><td class="text-right"><strong><span t-esc="sum(s1.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
+                                    </t>
+                                    <t t-if="s2 and line.id == s2[0].id">
+                                        <tr class="table-active"><td colspan="3"><strong>الحوافز</strong></td><td class="text-right"><strong><span t-esc="sum(s2.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
+                                    </t>
+                                    <t t-if="s3 and line.id == s3[0].id">
+                                        <tr class="table-active"><td colspan="3"><strong>الجزاءات</strong></td><td class="text-right"><strong><span t-esc="sum(s3.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
+                                    </t>
                                     <t t-call="payslip_share.report_payslipdetails_simple_row"/>
-                                </t>
-                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec1_codes)"/>
-                                <t t-if="sec">
-                                    <tr><td colspan="4" class="table-active"><strong>البدلات</strong></td></tr>
-                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
-                                </t>
-                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec2_codes)"/>
-                                <t t-if="sec">
-                                    <tr><td colspan="4" class="table-active"><strong>الحوافز</strong></td></tr>
-                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
-                                </t>
-                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec3_codes)"/>
-                                <t t-if="sec">
-                                    <tr><td colspan="4" class="table-active"><strong>الجزاءات</strong></td></tr>
-                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
                                 </t>
                             </tbody>
                         </table>
