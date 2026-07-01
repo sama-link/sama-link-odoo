@@ -49,13 +49,17 @@
                                     <strong>Monthly Advantages in Cash</strong>
                                 </td>
                                 <td>
-                                    <t t-set="cur" t-value="o.company_id.currency_id"/>
-                                    <div t-if="o.contract_id.hra">HRA: <span t-field="o.contract_id.hra" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
-                                    <div t-if="o.contract_id.da">DA: <span t-field="o.contract_id.da" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
-                                    <div t-if="o.contract_id.travel_allowance">Travel Allowance: <span t-field="o.contract_id.travel_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
-                                    <div t-if="o.contract_id.meal_allowance">Meal Allowance: <span t-field="o.contract_id.meal_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
-                                    <div t-if="o.contract_id.medical_allowance">Medical Allowance: <span t-field="o.contract_id.medical_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
-                                    <div t-if="o.contract_id.other_allowance">Other Allowance: <span t-field="o.contract_id.other_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <t t-if="o.contract_id">
+                                        <t t-set="cur" t-value="o.company_id.currency_id"/>
+                                        <t t-set="adv_fields" t-value="['hra', 'da', 'travel_allowance', 'meal_allowance', 'medical_allowance', 'other_allowance']"/>
+                                        <t t-set="adv_desc" t-value="o.contract_id.fields_get(adv_fields)"/>
+                                        <t t-foreach="adv_fields" t-as="fname">
+                                            <div t-if="o.contract_id[fname]">
+                                                <span t-esc="adv_desc[fname]['string']"/>:
+                                                <span t-out="o.contract_id[fname]" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                            </div>
+                                        </t>
+                                    </t>
                                 </td>
                             </tr>
                             <tr>
