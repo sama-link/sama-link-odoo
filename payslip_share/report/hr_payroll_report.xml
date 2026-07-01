@@ -102,29 +102,47 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="o.details_by_salary_rule_category_ids"
-                                    t-as="line">
-                                    <td>
-                                        <span t-field="line.salary_rule_id.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-field="line.quantity"/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-field="line.amount"
-                                              t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-field="line.total"
-                                              t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
-                                    </td>
-                                </tr>
+                                <t t-set="adv_codes" t-value="['HRA', 'DA', 'Meal', 'Medical', 'Travel', 'Other']"/>
+                                <t t-set="sec1_codes" t-value="['REST_ALLOW', 'HOLIDAY_BONUS', 'PAID_HOLIDAY_BONUS', 'SICK_HOLIDAY_BONUS']"/>
+                                <t t-set="sec2_codes" t-value="['OVERTIME_HOURS', 'INCENTIV']"/>
+                                <t t-set="sec3_codes" t-value="['ADMIN_PENALTY', 'LATE_PENALTY', 'ABSENT_PENALTY']"/>
+                                <t t-set="grouped" t-value="adv_codes + sec1_codes + sec2_codes + sec3_codes"/>
+                                <t t-set="lines" t-value="o.details_by_salary_rule_category_ids"/>
+                                <!-- Main rules; the contract cash advantages (adv_codes) are shown in the top block instead. -->
+                                <t t-foreach="lines.filtered(lambda l: l.salary_rule_id.code not in grouped)" t-as="line">
+                                    <t t-call="payslip_share.report_payslipdetails_simple_row"/>
+                                </t>
+                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec1_codes)"/>
+                                <t t-if="sec">
+                                    <tr><td colspan="4" class="table-active"><strong>البدلات</strong></td></tr>
+                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
+                                </t>
+                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec2_codes)"/>
+                                <t t-if="sec">
+                                    <tr><td colspan="4" class="table-active"><strong>الحوافز</strong></td></tr>
+                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
+                                </t>
+                                <t t-set="sec" t-value="lines.filtered(lambda l: l.salary_rule_id.code in sec3_codes)"/>
+                                <t t-if="sec">
+                                    <tr><td colspan="4" class="table-active"><strong>الجزاءات</strong></td></tr>
+                                    <t t-foreach="sec" t-as="line"><t t-call="payslip_share.report_payslipdetails_simple_row"/></t>
+                                </t>
                             </tbody>
                         </table>
                     </div>
                 </t>
             </t>
         </t>
+    </template>
+
+    <!-- Shared row for the salary-computation table (rule name, qty, amount, total). -->
+    <template id="report_payslipdetails_simple_row">
+        <tr>
+            <td><span t-field="line.salary_rule_id.name"/></td>
+            <td><span t-field="line.quantity"/></td>
+            <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
+            <td class="text-right"><span t-field="line.total" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
+        </tr>
     </template>
 
 </odoo>
