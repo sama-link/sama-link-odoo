@@ -1,4 +1,10 @@
 <odoo>
+    <!-- Remove the third-party "Payslip Details" report from the payslip Print menu;
+         only "Payslip Details (Simple)" should remain. -->
+    <record id="hr_payroll_community.hr_payslip_report_action" model="ir.actions.report">
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
     <record id="hr_payslip_report_action_simple" model="ir.actions.report">
         <field name="name">Payslip Details (Simple)</field>
         <field name="model">hr.payslip</field>
@@ -40,18 +46,24 @@
                                     <span t-field="o.employee_id.work_email"/>
                                 </td>
                                 <td>
-                                    <strong>Identification No</strong>
+                                    <strong>Monthly Advantages in Cash</strong>
                                 </td>
                                 <td>
-                                    <span t-field="o.employee_id.identification_id"/>
+                                    <t t-set="cur" t-value="o.company_id.currency_id"/>
+                                    <div t-if="o.contract_id.hra">HRA: <span t-field="o.contract_id.hra" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <div t-if="o.contract_id.da">DA: <span t-field="o.contract_id.da" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <div t-if="o.contract_id.travel_allowance">Travel Allowance: <span t-field="o.contract_id.travel_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <div t-if="o.contract_id.meal_allowance">Meal Allowance: <span t-field="o.contract_id.meal_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <div t-if="o.contract_id.medical_allowance">Medical Allowance: <span t-field="o.contract_id.medical_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
+                                    <div t-if="o.contract_id.other_allowance">Other Allowance: <span t-field="o.contract_id.other_allowance" t-options='{"widget": "monetary", "display_currency": cur}'/></div>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <strong>Reference</strong>
+                                    <strong>Contract Start Date</strong>
                                 </td>
                                 <td>
-                                    <span t-field="o.number"/>
+                                    <span t-field="o.contract_id.date_start"/>
                                 </td>
                                 <td>
                                     <strong>Bank Account</strong>
@@ -89,7 +101,7 @@
                                 <tr t-foreach="o.details_by_salary_rule_category_ids"
                                     t-as="line">
                                     <td>
-                                        <span t-field="line.name"/>
+                                        <span t-field="line.salary_rule_id.name"/>
                                     </td>
                                     <td>
                                         <span t-field="line.quantity"/>

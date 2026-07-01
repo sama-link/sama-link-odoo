@@ -16,6 +16,29 @@
                         invisible="state != 'draft'"
                         groups="hr_payroll_community.group_hr_payroll_community_user"/>
             </xpath>
+
+            <!-- Replace the "Reference" (number) field with the contract start date (read-only). -->
+            <xpath expr="//field[@name='number']" position="replace">
+                <field name="contract_start_date" readonly="1"/>
+            </xpath>
+
+            <!-- Salary Computation lines: show the salary rule's (translatable) name and
+                 hide the technical columns (code, category, rate, rule). -->
+            <xpath expr="//field[@name='line_ids']//list//field[@name='name']" position="replace">
+                <field name="rule_name"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']//list//field[@name='code']" position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']//list//field[@name='category_id']" position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']//list//field[@name='rate']" position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']//list//field[@name='salary_rule_id']" position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>

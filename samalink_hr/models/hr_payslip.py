@@ -1,10 +1,14 @@
 from datetime import timedelta
 
-from odoo import models, _
+from odoo import models, fields, _
 
 
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
+
+    # Shown on the payslip form/report in place of the "Reference" (number) field.
+    contract_start_date = fields.Date(
+        related='contract_id.date_start', string='Contract Start Date', readonly=True)
 
     def action_compute_sheet(self):
         grouped_payslip_batches = self.grouped('payslip_run_id')

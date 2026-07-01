@@ -1,9 +1,13 @@
 from datetime import datetime, time
-from odoo import models, _
+from odoo import models, fields, _
 
 
 class HrPayslipLine(models.Model):
     _inherit = 'hr.payslip.line'
+
+    # The salary rule's translatable name (renders in the user's language, e.g. Arabic),
+    # shown on the payslip line list instead of the frozen compute-time `name`.
+    rule_name = fields.Char(related='salary_rule_id.name', string='Name', readonly=True)
 
     def _compute_adjusted_absent_penalty_count(self, slip):
         """Read penalty count directly from absence entries.
