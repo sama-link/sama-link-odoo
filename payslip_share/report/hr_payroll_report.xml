@@ -135,7 +135,10 @@
     <!-- Shared row for the salary-computation table (rule name, qty, amount, total). -->
     <template id="report_payslipdetails_simple_row">
         <tr>
-            <td><span t-field="line.salary_rule_id.name"/></td>
+            <td>
+                <strong t-if="line.salary_rule_id.code == 'ADVANCE'" t-field="line.salary_rule_id.name"/>
+                <span t-else="" t-field="line.salary_rule_id.name"/>
+            </td>
             <td><span t-field="line.quantity"/></td>
             <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
             <td class="text-right"><span t-field="line.total" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>

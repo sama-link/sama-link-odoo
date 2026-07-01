@@ -1,6 +1,6 @@
 {
     'name': 'Payslip Share',
-    'version': '1.4.0',
+    'version': '1.4.1',
     'summary': 'Module to share payslips with employees',
     'description': 'Allows HR to share payslips with employees securely.',
     'author': '46-d-006',

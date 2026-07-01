@@ -24,7 +24,7 @@ class HrSalaryRule(models.Model):
         'Medical': 'بدل طبي',
         'NET': 'صافي الراتب',
         'NET_H': 'صافي الراتب بالساعة',
-        'OTH': 'مدخلات أخرى',
+        'OTH': 'تسويات ادارية',
         'Other': 'بدلات أخرى',
         'OVERTIME_HOURS': 'الوقت الإضافي',
         'PAID_HOLIDAY_BONUS': 'بدل الاجازات المدفوعة',
