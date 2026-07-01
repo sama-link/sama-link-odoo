@@ -90,6 +90,17 @@
                                     <span t-field="o.date_to"/>
                                 </td>
                             </tr>
+                            <tr>
+                                <td>
+                                    <strong>الراتب الأساسي</strong>
+                                </td>
+                                <td>
+                                    <span t-field="o.contract_id.wage"
+                                          t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                </td>
+                                <td/>
+                                <td/>
+                            </tr>
                         </table>
                         <!-- <h3>Details</h3> -->
                         <table class="table table-sm mb32">
