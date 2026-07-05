@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="group_general_reviewer_manager" model="res.groups">
+            <field name="name">General Reviewer Manager</field>
+            <field name="category_id" ref="samalink_security_groups.module_category_samalink_hr"/>
+            <!-- menuitems_whitelist: 'ancestors' is the branch effectively
+                 applied for real users; every menu is whitelisted by
+                 ir.ui.menu._sl_reviewer_sync_menus() (data <function> +
+                 create/write hooks). -->
+            <field name="traversal_as">ancestors</field>
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('base.group_allow_export')),
+            ]"/>
+            <field name="comment">Members can READ every model and every record in the system: model ACLs and record rules (including multi-company rules) are bypassed for read operations only. The group grants no write/create/delete access by itself. Implemented by module sl_general_reviewer (overrides of ir.model.access and ir.rule).</field>
+        </record>
+    </data>
+</odoo>

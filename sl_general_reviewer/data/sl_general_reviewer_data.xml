@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Runs at install AND every upgrade: idempotent re-seed of the
+             menu whitelist + native menu groups. -->
+        <function model="ir.ui.menu" name="_sl_reviewer_sync_menus"/>
+    </data>
+</odoo>
