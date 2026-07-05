@@ -203,6 +203,56 @@ class HrAppraisalBatch(models.Model):
         self._check_hr_or_admin_access("reset appraisal batches to draft")
         self._run_bulk_state_change('action_reset_to_draft', 'draft', _("Reset to Draft"))
 
+    def action_duplicate_batch(self):
+        """Duplicate selected batch(es): a fresh draft batch per source, with one
+        draft appraisal per employee carrying the same manager assignment and
+        freshly populated skills."""
+        self._check_hr_or_admin_access("duplicate appraisal batches")
+        appraisal_model = self.env['hr.appraisal']
+        new_batches = self.env['hr.appraisal.batch']
+        for batch in self:
+            new_batch = self.env['hr.appraisal.batch'].create({
+                'name': _("%s (copy)", batch.name),
+                'company_id': batch.company_id.id,
+                'date_deadline': batch.date_deadline,
+                'date_from': batch.date_from,
+                'date_to': batch.date_to,
+            })
+            for appraisal in batch.appraisal_ids:
+                vals = {
+                    'employee_id': appraisal.employee_id.id,
+                    'company_id': appraisal.company_id.id or new_batch.company_id.id,
+                    'appraisal_deadline': new_batch.date_deadline,
+                    'date_from': new_batch.date_from,
+                    'date_to': new_batch.date_to,
+                    'appraisal_batch_id': new_batch.id,
+                    # preserve the exact evaluator assignment (manager or employee)
+                    'hr_manager_ids': [(6, 0, appraisal.hr_manager_ids.ids)],
+                    'hr_employee_ids': [(6, 0, appraisal.hr_employee_ids.ids)],
+                }
+                # appraisal_batch_sync=True skips the past-deadline constraint so an
+                # old batch can still be duplicated (same trick the batch date-sync uses)
+                new_appraisal = appraisal_model.with_context(
+                    appraisal_batch_sync=True,
+                ).create(vals)
+                if new_appraisal.employee_id.employee_skill_ids and not new_appraisal.skills_populated:
+                    new_appraisal.action_populate_skills()
+            new_batch.message_post(
+                body=_("Duplicated from batch %s with %s appraisal(s).",
+                       batch.name, len(batch.appraisal_ids)))
+            new_batches |= new_batch
+
+        action = self.env['ir.actions.actions']._for_xml_id(
+            'sl_appraisal.action_hr_appraisal_batch')
+        if len(new_batches) == 1:
+            action['res_id'] = new_batches.id
+            action['view_mode'] = 'form'
+            action['views'] = [
+                (self.env.ref('sl_appraisal.view_hr_appraisal_batch_form').id, 'form')]
+        else:
+            action['domain'] = [('id', 'in', new_batches.ids)]
+        return action
+
     def action_export_pdf(self):
         return self.env.ref('sl_appraisal.action_report_appraisal_batch_pdf').report_action(self)
 

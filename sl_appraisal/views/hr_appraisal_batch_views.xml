@@ -213,6 +213,21 @@
         <field name="code">action = records.action_export_pdf()</field>
     </record>
 
+    <record id="action_appraisal_batch_duplicate" model="ir.actions.server">
+        <field name="name">Duplicate Batch (same employees &amp; managers)</field>
+        <field name="model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_model_id" ref="model_hr_appraisal_batch"/>
+        <field name="binding_type">action</field>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('sl_appraisal.group_appraisal_hr'),
+            ref('sl_appraisal.group_appraisal_administrator'),
+            ref('base.group_system')
+        ])]"/>
+        <field name="code">action = records.action_duplicate_batch()</field>
+    </record>
+
     <menuitem id="sl_menu_appraisal_batches"
               name="Appraisal Batches"
               parent="oh_appraisal.hr_appraisal_menu_root"
