@@ -1,6 +1,6 @@
 {
     'name': 'Samalink General Reviewer',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': 'General Reviewer Manager group: read access to every model and every record',
     'description': """
 Adds the "General Reviewer Manager" security group.
@@ -13,7 +13,8 @@ write ability remains whatever their other groups grant.
 Menu visibility: the group whitelists every menu item (menuitems_whitelist
 gate, traversal 'ancestors') and is appended to the native groups of every
 group-restricted menu, so reviewers can navigate the whole backend. Newly
-created menus are picked up automatically.
+created menus are picked up automatically. The Apps, Settings and Surveys
+menu subtrees are excluded and stay hidden from reviewers.
 
 Limitations: field-level groups= restrictions are a separate mechanism and
 stay in force; debug mode stays gated by restrict_debug.
