@@ -117,8 +117,10 @@
                                 <t t-set="sec2_codes" t-value="['OVERTIME_HOURS', 'INCENTIV']"/>
                                 <t t-set="sec3_codes" t-value="['ADMIN_PENALTY', 'LATE_PENALTY', 'ABSENT_PENALTY']"/>
                                 <t t-set="adv_codes" t-value="['HRA', 'DA', 'Meal', 'Medical', 'Travel', 'Other']"/>
-                                <!-- Keep the original rule order; the contract cash advantages show in the top block only. -->
-                                <t t-set="olines" t-value="o.details_by_salary_rule_category_ids.filtered(lambda l: l.salary_rule_id.code not in adv_codes)"/>
+                                <!-- Keep the original rule order; the contract cash advantages show in the top block only.
+                                     sudo() the lines so salary-rule code/name render for non-payroll users
+                                     (e.g. employees printing their own payslip) who lack hr.salary.rule read access. -->
+                                <t t-set="olines" t-value="o.sudo().details_by_salary_rule_category_ids.filtered(lambda l: l.salary_rule_id.code not in adv_codes)"/>
                                 <t t-set="s1" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec1_codes)"/>
                                 <t t-set="s2" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec2_codes)"/>
                                 <t t-set="s3" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec3_codes)"/>
