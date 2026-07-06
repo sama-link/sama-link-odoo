@@ -1,0 +1,27 @@
+<odoo>
+    <!--
+        Swap the Tasks calendar to our variant (sl_project_task_calendar) and load
+        the candidate date fields as invisible fields so their metadata + values are
+        available when the calendar switches its date_start at runtime.
+        Applies to both the base Tasks calendar and the "All Tasks" calendar
+        (which inherits project.view_task_calendar).
+    -->
+    <record id="view_task_calendar_sl_date_field" model="ir.ui.view">
+        <field name="name">project.task.calendar.inherit.sl_project.date_field</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_calendar"/>
+        <field name="arch" type="xml">
+            <xpath expr="//calendar" position="attributes">
+                <attribute name="js_class">sl_project_task_calendar</attribute>
+            </xpath>
+            <xpath expr="//calendar" position="inside">
+                <!-- date_deadline is already the arch's date_start -->
+                <field name="date_assign" invisible="1"/>
+                <field name="date_end" invisible="1"/>
+                <field name="date_last_stage_update" invisible="1"/>
+                <field name="create_date" invisible="1"/>
+                <field name="write_date" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

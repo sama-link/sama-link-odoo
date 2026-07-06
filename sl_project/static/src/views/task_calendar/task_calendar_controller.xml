@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sl_project.TaskCalendarController" t-inherit="web.CalendarController" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_calendar_header')]" position="inside">
+            <div class="o_sl_calendar_date_field d-flex align-items-center gap-2 ms-2 d-print-none">
+                <label class="o_form_label mb-0 text-nowrap" for="sl_calendar_date_field">Date field</label>
+                <select id="sl_calendar_date_field"
+                        class="o_input w-auto"
+                        t-att-disabled="!dateFieldState.canEdit"
+                        t-on-change="onDateFieldChange">
+                    <t t-foreach="dateFieldState.options" t-as="opt" t-key="opt[0]">
+                        <option t-att-value="opt[0]" t-att-selected="opt[0] === dateFieldState.field">
+                            <t t-esc="opt[1]"/>
+                        </option>
+                    </t>
+                </select>
+            </div>
+        </xpath>
+    </t>
+
+</templates>
