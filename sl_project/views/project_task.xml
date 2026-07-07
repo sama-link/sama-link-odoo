@@ -10,6 +10,12 @@
             <field name="tag_ids" position="after">
                 <field name="company_ids" widget="many2many_tags" options="{'no_create': True}"/>
             </field>
+            <!-- Place on its own labeled row after the whole Deadline/recurrence block
+                 (not inside the inline flex div, which would render it unlabeled). -->
+            <xpath expr="//div[@id='date_deadline_and_recurring_task']" position="after">
+                <field name="project_has_published_date" invisible="1"/>
+                <field name="published_date" invisible="not project_has_published_date"/>
+            </xpath>
         </field>
     </record>
 

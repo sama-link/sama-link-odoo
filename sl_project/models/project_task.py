@@ -14,6 +14,7 @@ ALLOWED_CALENDAR_DATE_FIELDS = [
     'date_last_stage_update',  # Last Stage Update
     'create_date',             # Created On
     'write_date',              # Last Updated On
+    'published_date',          # Published Date (sl_project)
 ]
 
 
@@ -27,6 +28,12 @@ class ProjectTask(models.Model):
         compute='_compute_company_ids', store=True,
         readonly=False, recursive=True, copy=True,
     )
+
+    published_date = fields.Date(string="Published Date")
+    # Mirrors the project's toggle; used only to gate visibility of published_date
+    # on the task form (dotted paths can't be used in view `invisible` expressions).
+    project_has_published_date = fields.Boolean(
+        related='project_id.use_published_date', readonly=True)
 
     @api.depends('project_id.company_ids', 'parent_id.company_ids')
     def _compute_company_ids(self):

@@ -21,6 +21,7 @@
                 <field name="date_last_stage_update" invisible="1"/>
                 <field name="create_date" invisible="1"/>
                 <field name="write_date" invisible="1"/>
+                <field name="published_date" invisible="1"/>
             </xpath>
         </field>
     </record>
