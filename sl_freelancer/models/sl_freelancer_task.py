@@ -27,6 +27,9 @@ class SlFreelancerTask(models.Model):
         help="Sum of the worked hours of the selected attendance records.")
     attendance_count = fields.Integer(
         string='Attendance Count', compute='_compute_attendance_count', store=True)
+    project_line_ids = fields.One2many(
+        'sl.freelancer.project.line', 'freelancer_task_id',
+        string='Projects & Tasks')
     can_edit_employee = fields.Boolean(
         string='Can Edit Employee', compute='_compute_can_edit_employee')
     date = fields.Date(string='Date', default=fields.Date.today, tracking=True)
