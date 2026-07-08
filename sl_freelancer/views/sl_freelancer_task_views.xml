@@ -45,6 +45,16 @@
                             </list>
                         </field>
                     </group>
+                    <group string="Projects &amp; Tasks">
+                        <field name="project_line_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="project_id"/>
+                                <field name="task_id"
+                                       domain="[('project_id', '=', project_id)]"
+                                       options="{'no_create': True}"/>
+                            </list>
+                        </field>
+                    </group>
                     <group string="Description">
                         <field name="description" nolabel="1"
                                placeholder="Optional notes about this work record..."/>

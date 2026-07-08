@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Freelancer Records v1.0.0',
-    'version': '18.0.1.1.3',
+    'version': '18.0.1.2.0',
     'summary': 'Track freelancer work records with selected attendance hours',
     'description': """
         Freelancer work records for Samalink:
@@ -16,6 +16,7 @@
     'depends': [
         'hr',
         'hr_attendance',
+        'project',
     ],
     'data': [
         'security/sl_freelancer_groups.xml',

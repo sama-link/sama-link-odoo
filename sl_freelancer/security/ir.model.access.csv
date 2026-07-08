@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sl_freelancer_task_user,sl.freelancer.task.user,model_sl_freelancer_task,sl_freelancer.group_sl_freelancer_user,1,1,1,1
 access_sl_freelancer_task_admin,sl.freelancer.task.admin,model_sl_freelancer_task,sl_freelancer.group_sl_freelancer_admin,1,1,1,1
 access_sl_freelancer_task_sysadmin,sl.freelancer.task.sysadmin,model_sl_freelancer_task,base.group_system,1,1,1,1
+access_sl_freelancer_project_line_user,sl.freelancer.project.line.user,model_sl_freelancer_project_line,sl_freelancer.group_sl_freelancer_user,1,1,1,1
+access_sl_freelancer_project_line_admin,sl.freelancer.project.line.admin,model_sl_freelancer_project_line,sl_freelancer.group_sl_freelancer_admin,1,1,1,1
+access_sl_freelancer_project_line_sysadmin,sl.freelancer.project.line.sysadmin,model_sl_freelancer_project_line,base.group_system,1,1,1,1

@@ -43,5 +43,46 @@
             </field>
         </record>
 
+        <!-- ============================================================
+             FREELANCER PROJECT/TASK LINE RECORD RULES
+             ============================================================ -->
+
+        <!-- User: only lines belonging to their OWN freelancer records -->
+        <record id="sl_freelancer_line_rule_user_own" model="ir.rule">
+            <field name="name">Freelancer Line: User own only</field>
+            <field name="model_id" ref="model_sl_freelancer_project_line"/>
+            <field name="domain_force">[('freelancer_task_id.employee_id.user_id', '=', user.id)]</field>
+            <field name="groups"
+                   eval="[(4, ref('sl_freelancer.group_sl_freelancer_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Administrator: full access to all lines -->
+        <record id="sl_freelancer_line_rule_admin" model="ir.rule">
+            <field name="name">Freelancer Line: Administrator full access</field>
+            <field name="model_id" ref="model_sl_freelancer_project_line"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups"
+                   eval="[(4, ref('sl_freelancer.group_sl_freelancer_admin')),
+                          (4, ref('base.group_system'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Multi-company compatibility -->
+        <record id="sl_freelancer_line_rule_company" model="ir.rule">
+            <field name="name">Freelancer Line: multi-company</field>
+            <field name="model_id" ref="model_sl_freelancer_project_line"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
     </data>
 </odoo>
