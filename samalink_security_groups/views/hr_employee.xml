@@ -94,10 +94,12 @@
                                         <field name="resource_calendar_id" readonly="1" options="{'no_open': True}"/>
                                     </group>
                                 </div>
-                                <!-- Org chart removed: its nodes are clickable and let the
-                                     user open managers'/colleagues' employee cards from
-                                     My Info. Managers stay visible (read-only, non-
-                                     navigable) in the Management group above. -->
+                                <!-- Hierarchy stays visible; opening other employees'
+                                     cards from its nodes is gated server-side by
+                                     hr.employee.get_formview_action (models/hr_employee.py). -->
+                                <div id="o_work_employee_extra" class="ps-lg-4">
+                                    <field name="child_ids" widget="hr_org_chart" readonly="1"/>
+                                </div>
                             </div>
                         </page>
 
