@@ -35,6 +35,35 @@ class ProjectTask(models.Model):
     project_has_published_date = fields.Boolean(
         related='project_id.use_published_date', readonly=True)
 
+    # Assignment control: regular users may only assign tasks within their own
+    # org-chart team (subordinates via parent_id chain, coached employees, and
+    # themselves). Project managers and system admins stay unrestricted.
+    allowed_assignee_user_ids = fields.Many2many(
+        'res.users', string='Allowed Assignees',
+        compute='_compute_allowed_assignee_user_ids')
+
+    @api.depends_context('uid')
+    def _compute_allowed_assignee_user_ids(self):
+        user = self.env.user
+        if (user.has_group('project.group_project_manager')
+                or user.has_group('base.group_system')):
+            allowed = self.env['res.users'].search(
+                [('share', '=', False), ('active', '=', True)])
+        else:
+            allowed = user
+            employee = user.employee_id
+            if employee:
+                # sudo: the searching user may not be allowed to read the whole
+                # team hierarchy, but may still assign within it.
+                team = self.env['hr.employee'].sudo().search(
+                    ['|', ('id', 'child_of', employee.id),
+                          ('coach_id', '=', employee.id)])
+                team_users = team.mapped('user_id').filtered(
+                    lambda u: u.active and not u.share)
+                allowed = self.env['res.users'].browse(team_users.ids) | user
+        for task in self:
+            task.allowed_assignee_user_ids = allowed
+
     @api.depends('project_id.company_ids', 'parent_id.company_ids')
     def _compute_company_ids(self):
         for task in self:

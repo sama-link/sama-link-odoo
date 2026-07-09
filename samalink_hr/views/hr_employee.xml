@@ -27,6 +27,25 @@
             </field>
         </record>
 
+        <!-- Guard the eLearning stat-button block against non-officers.
+             On DBs where the stored hr_skills_slides arch predates the upstream
+             group gate, the field reaches users who don't get it in fields_get
+             and the employee form crashes (OwlError: has_subscribed_courses is
+             undefined). Forcing the groups here strips both nodes together. -->
+        <record id="view_employee_form_slides_gate" model="ir.ui.view">
+            <field name="name">hr.employee.form.slides.courses.gate</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr_skills_slides.hr_employee_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='has_subscribed_courses']" position="attributes">
+                    <attribute name="groups">website_slides.group_website_slides_officer</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_open_courses']" position="attributes">
+                    <attribute name="groups">website_slides.group_website_slides_officer</attribute>
+                </xpath>
+            </field>
+        </record>
+
         <record id="view_employee_tree" model="ir.ui.view">
             <field name="name">hr.employee.tree.inherit</field>
             <field name="model">hr.employee</field>

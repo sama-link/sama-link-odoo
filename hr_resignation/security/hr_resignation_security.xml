@@ -34,12 +34,14 @@
         <field name="perm_unlink" eval="False"/>
     </record>
     
-    <!--    Manager permission to view all record   -->
+    <!-- Only Resignation/HR sees all records. General Managers are NOT
+         resignation managers: without this group they fall back to their
+         own record (employee rule) / administrative-manager scope only. -->
     <record id="hr_resignation_rule_manager" model="ir.rule">
         <field name="name">Employee Resignation Manager</field>
         <field name="model_id" ref="hr_resignation.model_hr_resignation"/>
         <field name="domain_force">[(1,'=',1)]</field>
-        <field name="groups" eval="[(6, 0, [ref('samalink_security_groups.group_sl_general_manager'), ref('hr_resignation.group_resignation_hr')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('hr_resignation.group_resignation_hr')])]"/>
         <field name="global" eval="False"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>

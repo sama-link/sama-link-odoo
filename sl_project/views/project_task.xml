@@ -4,8 +4,11 @@
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.view_task_form2"/>
         <field name="arch" type="xml">
+            <field name="user_ids" position="before">
+                <field name="allowed_assignee_user_ids" invisible="1"/>
+            </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">['|', ('company_id', 'not in', company_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), '|', ('company_id', 'not in', company_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
             </field>
             <field name="tag_ids" position="after">
                 <field name="company_ids" widget="many2many_tags" options="{'no_create': True}"/>
@@ -24,8 +27,55 @@
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.quick_create_task_form"/>
         <field name="arch" type="xml">
+            <field name="user_ids" position="before">
+                <field name="allowed_assignee_user_ids" invisible="1"/>
+            </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">[('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
+            </field>
+        </field>
+    </record>
+
+    <!-- To-dos are project.task records too: same assignment restriction. -->
+    <record id="project_task_view_todo_form" model="ir.ui.view">
+        <field name="name">project.task.view.todo.form.inherit.sl_project</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project_todo.project_task_view_todo_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_ids']" position="before">
+                <field name="allowed_assignee_user_ids" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='user_ids']" position="attributes">
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="project_task_view_todo_tree" model="ir.ui.view">
+        <field name="name">project.task.todo.list.inherit.sl_project</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project_todo.project_task_view_todo_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_ids']" position="before">
+                <field name="allowed_assignee_user_ids" column_invisible="True"/>
+            </xpath>
+            <xpath expr="//field[@name='user_ids']" position="attributes">
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Same assignment restriction for inline editing in the tasks list. -->
+    <record id="view_task_tree2" model="ir.ui.view">
+        <field name="name">project.task.list.inherit.sl_project</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_tree2"/>
+        <field name="arch" type="xml">
+            <field name="user_ids" position="before">
+                <field name="allowed_assignee_user_ids" column_invisible="True"/>
+            </field>
+            <field name="user_ids" position="attributes">
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
             </field>
         </field>
     </record>

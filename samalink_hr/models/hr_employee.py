@@ -26,6 +26,15 @@ class HrEmployee(models.Model):
     allow_check_from_odoo = fields.Boolean(string="Allow Check From Odoo", default=False, groups="base.group_system,hr.group_hr_user")
     medical_insurance = fields.Selection(related='contract_id.medical_insurance', string="Medical Insurance", readonly=True)
 
+    # hr_skills_slides gates these compute fields to hr.group_hr_user in
+    # PYTHON while gating the form nodes to website_slides officer. The view
+    # postprocessor synthesizes an ungated helper node for the button's
+    # invisible-modifier reference, so any non-HR user opening the employee
+    # form crashes with 'has_subscribed_courses field is undefined'. Widen
+    # the python groups to all internal users (UI stays officer-gated).
+    has_subscribed_courses = fields.Boolean(groups="base.group_user")
+    courses_completion_text = fields.Char(groups="base.group_user")
+
     @api.constrains('pin')
     def _check_pin(self):
         groups = self.read_group(
