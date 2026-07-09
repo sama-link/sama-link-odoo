@@ -28,7 +28,7 @@
                                 </div>
                                 <field name="private_email" placeholder="e.g. myprivateemail@example.com" readonly="1"/>
                                 <field name="private_phone" readonly="1"/>
-                                <field name="bank_account_id" context="{'default_partner_id': work_contact_id}" options="{'no_quick_create': True}" readonly="1"/>
+                                <field name="bank_account_id" context="{'default_partner_id': work_contact_id}" options="{'no_quick_create': True, 'no_open': True}" readonly="1"/>
                                 <label for="distance_home_work"/>
                                 <div class="o_row" name="div_km_home_work">
                                     <field name="distance_home_work" class="o_hr_narrow_field" readonly="1"/>
@@ -74,29 +74,30 @@
                             <div id="o_work_employee_container" class="d-lg-flex">
                                 <div id="o_work_employee_main" class="flex-grow-1">
                                     <group string="Position">
-                                        <field name="job_id" readonly="1"/>
+                                        <field name="job_id" readonly="1" options="{'no_open': True}"/>
                                         <field name="job_title" readonly="1"/>
-                                        <field name="department_id" readonly="1"/>
-                                        <field name="company_id" readonly="1"/>
+                                        <field name="department_id" readonly="1" options="{'no_open': True}"/>
+                                        <field name="company_id" readonly="1" options="{'no_open': True}"/>
                                     </group>
                                     <group string="Management">
-                                        <field name="parent_id" readonly="1"/>
-                                        <field name="coach_id" readonly="1"/>
-                                        <field name="leave_manager_id" readonly="1"/>
-                                        <field name="attendance_manager_id" readonly="1"/>
+                                        <field name="parent_id" readonly="1" options="{'no_open': True}"/>
+                                        <field name="coach_id" readonly="1" options="{'no_open': True}"/>
+                                        <field name="leave_manager_id" readonly="1" options="{'no_open': True}"/>
+                                        <field name="attendance_manager_id" readonly="1" options="{'no_open': True}"/>
                                     </group>
                                     <group string="Work Contact">
-                                        <field name="work_location_id" readonly="1"/>
+                                        <field name="work_location_id" readonly="1" options="{'no_open': True}"/>
                                         <field name="work_phone" readonly="1" widget="phone"/>
                                         <field name="work_email" readonly="1" widget="email"/>
                                     </group>
                                     <group string="Schedule">
-                                        <field name="resource_calendar_id" readonly="1"/>
+                                        <field name="resource_calendar_id" readonly="1" options="{'no_open': True}"/>
                                     </group>
                                 </div>
-                                <div id="o_work_employee_extra" class="ps-lg-4">
-                                    <field name="child_ids" widget="hr_org_chart" readonly="1"/>
-                                </div>
+                                <!-- Org chart removed: its nodes are clickable and let the
+                                     user open managers'/colleagues' employee cards from
+                                     My Info. Managers stay visible (read-only, non-
+                                     navigable) in the Management group above. -->
                             </div>
                         </page>
 
