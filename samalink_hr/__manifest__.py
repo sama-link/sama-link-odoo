@@ -1,6 +1,6 @@
 {
     'name': 'Samalink HR',
-    'version': '1.3.1',
+    'version': '1.3.2',
     'summary': 'HR Module for Samalink',
     'description': 'Custom HR functionalities for Samalink. '
                    'Includes flexible rest day logic, absence entry filtering, '
@@ -11,6 +11,8 @@
     'depends': [
         'base', 'hr', 'hr_contract', 'hr_payroll_community',
         'resource', 'hr_work_entry', 'hr_holidays', 'hr_skills',
+        # Required by the eLearning stat-button group gate in views/hr_employee.xml
+        'hr_skills_slides',
     ],
     'data': [
         'security/ir.model.access.csv',
