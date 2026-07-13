@@ -35,8 +35,9 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
         'hr.employee', 'sl_bonus_add_emp_wiz_emp_rel',
         'wizard_id', 'employee_id',
         string='Employees',
-        domain="[('active','=',True), ('company_id', 'in', [company_id, False])]",
-        help='Selected employees — used when mode is "Specific employees".',
+        domain="[('company_id', 'in', [company_id, False])]",
+        help='Selected employees — used when mode is "Specific employees". '
+             'Archived (departed) employees can be added too.',
     )
     department_ids = fields.Many2many(
         'hr.department', 'sl_bonus_add_emp_wiz_dep_rel',
@@ -58,7 +59,7 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
             candidate = wiz._candidate_employees()
             existing_ids = set(wiz.batch_id.line_ids.mapped('employee_id.id'))
             wiz.preview_count = sum(
-                1 for e in candidate if e.id not in existing_ids and e.active
+                1 for e in candidate if e.id not in existing_ids
             )
 
     def _candidate_employees(self):

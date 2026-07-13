@@ -224,8 +224,9 @@ class SlBonusBatch(models.Model):
 
         Used by the legacy ``action_add_all_employees`` entry point AND by
         the two new wizards (``sl.bonus.add.employees.wizard`` and
-        ``sl.bonus.add.from.appraisal.wizard``). Active-flag filtering is
-        applied; duplicates against existing ``line_ids`` are silently
+        ``sl.bonus.add.from.appraisal.wizard``). Archived employees are
+        accepted — an employee who departed after working the period keeps
+        the bonus. Duplicates against existing ``line_ids`` are silently
         skipped (the per-line @api.constrains also guards against this).
         """
         self.ensure_one()
@@ -237,7 +238,7 @@ class SlBonusBatch(models.Model):
         Line = self.env['sl.bonus.batch.line'].sudo()
         existing_ids = set(self.line_ids.mapped('employee_id.id'))
         new_employees = employees.sudo().filtered(
-            lambda e: e.active and e.id not in existing_ids
+            lambda e: e.id not in existing_ids
         )
         if not new_employees:
             return Line.browse()
