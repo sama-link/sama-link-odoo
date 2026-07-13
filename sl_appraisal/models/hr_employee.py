@@ -24,6 +24,21 @@ class HrEmployee(models.Model):
         string='Skill Timeline',
         help="Timeline of skill changes approved from appraisals.")
 
+    def _has_active_contract_in_period(self, date_from, date_to):
+        """True when the employee holds a running or closed contract that
+        overlaps [date_from, date_to] — i.e. the employee was actually
+        employed during (part of) the appraisal period. Draft/cancelled
+        contracts don't count."""
+        self.ensure_one()
+        if not date_from or not date_to:
+            return True
+        return bool(self.env['hr.contract'].sudo().search_count([
+            ('employee_id', '=', self.id),
+            ('state', 'in', ('open', 'close')),
+            ('date_start', '<=', date_to),
+            '|', ('date_end', '=', False), ('date_end', '>=', date_from),
+        ]))
+
     @api.depends('appraisal_ids')
     def _compute_appraisal_count(self):
         appraisal_data = self.env['hr.appraisal'].sudo().read_group(
