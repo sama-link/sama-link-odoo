@@ -5,9 +5,10 @@
             <field name="name">sl.bonus.target.tree</field>
             <field name="model">sl.bonus.target</field>
             <field name="arch" type="xml">
-                <list string="Sales Targets" editable="bottom">
+                <list string="Sales Targets &amp; Commissions" editable="bottom" open_form_view="1">
                     <field name="employee_id"/>
                     <field name="target_amount"/>
+                    <field name="commission_tier_count" string="Custom Tiers"/>
                     <field name="currency_id" column_invisible="True"/>
                     <field name="active" optional="hide"/>
                 </list>
@@ -24,10 +25,26 @@
                             <field name="target_amount"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <div class="text-muted">
-                            One target per employee, valid for all time. Commission tiers are
-                            global — see Configuration → Sales Commission Tiers.
+                        <separator string="Commission Tiers"/>
+                        <div class="text-muted mb-2">
+                            Commission tiers for THIS employee — the tier is picked by
+                            achievement % (collected ÷ target) and pays its Commission %
+                            of the collected sales. Leave the table empty to use the
+                            global default tiers; use the button to copy the defaults
+                            here and adjust the rates for this employee.
                         </div>
+                        <button name="action_load_default_tiers"
+                                string="Load Default Tiers"
+                                type="object"
+                                class="btn-secondary mb-2"/>
+                        <field name="commission_tier_ids">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="name"/>
+                                <field name="achievement_min"/>
+                                <field name="commission_percent"/>
+                            </list>
+                        </field>
                     </sheet>
                 </form>
             </field>
@@ -46,9 +63,15 @@
             </field>
         </record>
         <record id="action_sl_bonus_target" model="ir.actions.act_window">
-            <field name="name">Sales Targets</field>
+            <field name="name">Sales Targets &amp; Commissions</field>
             <field name="res_model">sl.bonus.target</field>
             <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Set each employee's sales target and commission tiers</p>
+                <p>One target per employee. Open a target to manage that employee's
+                   own commission tiers — employees without custom tiers use the
+                   global default table.</p>
+            </field>
         </record>
     </data>
 </odoo>

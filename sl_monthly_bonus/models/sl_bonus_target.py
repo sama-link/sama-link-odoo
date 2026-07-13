@@ -36,8 +36,16 @@ class SlBonusTarget(models.Model):
     tier_ids = fields.One2many(
         'sl.bonus.target.tier', 'target_id', string='Threshold Tiers (legacy)',
         copy=True,
-        help='Deprecated: commission tiers are now GLOBAL — see '
-             'Bonus → Configuration → Sales Commission Tiers.',
+        help='Deprecated fixed-amount threshold system — kept for history only.',
+    )
+    commission_tier_ids = fields.One2many(
+        'sl.bonus.sales.tier', 'target_id', string='Commission Tiers',
+        copy=True,
+        help='Commission tiers specific to THIS employee. Leave empty to use '
+             'the global default tiers.',
+    )
+    commission_tier_count = fields.Integer(
+        string='Custom Tiers', compute='_compute_commission_tier_count',
     )
     active = fields.Boolean(default=True)
     note = fields.Text(string='Note')
@@ -56,6 +64,11 @@ class SlBonusTarget(models.Model):
                     "A sales target already exists for %s. Only one target per "
                     "employee is allowed (it is valid for all time)."
                 ) % rec.employee_id.name)
+
+    @api.depends('commission_tier_ids')
+    def _compute_commission_tier_count(self):
+        for rec in self:
+            rec.commission_tier_count = len(rec.commission_tier_ids)
 
     @api.depends('employee_id', 'target_amount')
     def _compute_name(self):
@@ -95,6 +108,36 @@ class SlBonusTarget(models.Model):
             if achievement_percent >= tier.achievement_min:
                 winning = tier
         return winning
+
+    def get_commission_tier_for(self, achievement_percent):
+        """Return the winning ``sl.bonus.sales.tier`` for this employee.
+
+        Employee-specific tiers (``commission_tier_ids``) take precedence;
+        when the employee has none, the global default table applies.
+        Returns False if no tier qualifies.
+        """
+        self.ensure_one()
+        if not self.commission_tier_ids:
+            return self.env['sl.bonus.sales.tier'].get_tier_for(achievement_percent)
+        winning = False
+        for tier in self.commission_tier_ids.sorted(lambda t: t.achievement_min):
+            if achievement_percent >= tier.achievement_min:
+                winning = tier
+        return winning
+
+    def action_load_default_tiers(self):
+        """Copy the global default tiers into this target so HR can adjust
+        the rates for this employee. Tiers whose Min Achievement % already
+        exists on the target are skipped."""
+        Tier = self.env['sl.bonus.sales.tier']
+        for rec in self:
+            existing_mins = set(rec.commission_tier_ids.mapped('achievement_min'))
+            defaults = Tier.search(
+                [('target_id', '=', False)], order='achievement_min',
+            ).filtered(lambda t: t.achievement_min not in existing_mins)
+            for tier in defaults:
+                tier.copy({'target_id': rec.id})
+        return True
 
 
 class SlBonusTargetTier(models.Model):

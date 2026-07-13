@@ -317,10 +317,16 @@ class SlBonusCalculator(models.AbstractModel):
         ).filtered('is_collected').mapped('amount'))
         target_amount = target.target_amount if target else 0.0
         achievement_pct = (sales / target_amount * 100.0) if target_amount else 0.0
-        # Tiers are GLOBAL (same thresholds for everyone). The tier is selected by
-        # achievement % (collected ÷ target), but the commission is a PERCENTAGE of
-        # the ACHIEVED (collected) sales — not the target.
-        tier = self.env['sl.bonus.sales.tier'].sudo().get_tier_for(achievement_pct)
+        # The tier is selected by achievement % (collected ÷ target), but the
+        # commission is a PERCENTAGE of the ACHIEVED (collected) sales — not
+        # the target. Employee-specific tiers (set on the sales target) take
+        # precedence over the global default table.
+        if target:
+            tier = target.sudo().get_commission_tier_for(achievement_pct)
+            uses_custom_tiers = bool(target.sudo().commission_tier_ids)
+        else:
+            tier = self.env['sl.bonus.sales.tier'].sudo().get_tier_for(achievement_pct)
+            uses_custom_tiers = False
         tier_pct = tier.commission_percent if tier else 0.0
         tier_commission = sales * (tier_pct / 100.0)
         if not target:
@@ -349,6 +355,9 @@ class SlBonusCalculator(models.AbstractModel):
             {'sequence': 50, 'label': _('Tier'),
              'value': tier.name if tier else (_('No tier reached') if target else _('No target configured'))},
             {'sequence': 60, 'label': _('Tier %'), 'value': f"{tier_pct:,.2f}%"},
+            {'sequence': 62, 'label': _('Tier Table'),
+             'value': _('Employee-specific') if uses_custom_tiers else _('Global default'),
+             'self_hidden': True},
             {'sequence': 65, 'label': _('Commission (achieved × tier%)'), 'value': f"{tier_commission:,.2f}", 'self_hidden': True},
             {'sequence': 70, 'label': _('Fixed half (50%)'), 'value': f"{fixed_half:,.2f}", 'self_hidden': True},
             {'sequence': 80, 'label': _('Eval-scaled half (50% × eval%)'), 'value': f"{eval_half:,.2f}", 'self_hidden': True},

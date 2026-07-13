@@ -3,16 +3,27 @@ from odoo.exceptions import ValidationError
 
 
 class SlBonusSalesTier(models.Model):
-    """GLOBAL sales commission tiers — the same thresholds apply to ALL employees.
+    """Sales commission tiers — global defaults plus per-employee overrides.
 
-    Each tier maps a minimum target-achievement % to a commission percentage of
-    the employee's own target amount. The calculator picks the highest tier whose
-    ``achievement_min`` is reached, then commission = target_amount × percentage.
+    Each tier maps a minimum target-achievement % to a commission percentage
+    of the employee's ACHIEVED (collected) sales. The calculator picks the
+    highest tier whose ``achievement_min`` is reached.
+
+    Records with ``target_id`` set belong to that employee's sales target and
+    override the defaults; records without it are the GLOBAL default table
+    used for every employee that has no tiers of their own. Both are managed
+    from Bonus → Configuration → Sales Targets & Commissions.
     """
     _name = 'sl.bonus.sales.tier'
-    _description = 'Sales Commission Tier (global)'
+    _description = 'Sales Commission Tier'
     _order = 'achievement_min'
 
+    target_id = fields.Many2one(
+        'sl.bonus.target', string='Sales Target',
+        ondelete='cascade', index=True,
+        help='When set, this tier applies only to the employee of this sales '
+             'target. When empty, the tier is part of the global default table.',
+    )
     sequence = fields.Integer(default=10)
     name = fields.Char(string='Tier Name')
     achievement_min = fields.Float(
@@ -37,9 +48,12 @@ class SlBonusSalesTier(models.Model):
 
     @api.model
     def get_tier_for(self, achievement_percent):
-        """Return the highest global tier whose achievement_min is reached."""
+        """Return the highest GLOBAL tier whose achievement_min is reached
+        (per-employee tiers are resolved via sl.bonus.target)."""
         winning = False
-        for tier in self.sudo().search([], order='achievement_min'):
+        for tier in self.sudo().search(
+            [('target_id', '=', False)], order='achievement_min',
+        ):
             if achievement_percent >= tier.achievement_min:
                 winning = tier
         return winning
