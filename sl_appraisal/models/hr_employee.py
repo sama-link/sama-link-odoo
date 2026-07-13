@@ -32,7 +32,11 @@ class HrEmployee(models.Model):
         self.ensure_one()
         if not date_from or not date_to:
             return True
-        return bool(self.env['hr.contract'].sudo().search_count([
+        # active_test=False: archiving an employee archives their contracts
+        # too — a departed employee who worked during the period still counts.
+        return bool(self.env['hr.contract'].sudo().with_context(
+            active_test=False,
+        ).search_count([
             ('employee_id', '=', self.id),
             ('state', 'in', ('open', 'close')),
             ('date_start', '<=', date_to),
