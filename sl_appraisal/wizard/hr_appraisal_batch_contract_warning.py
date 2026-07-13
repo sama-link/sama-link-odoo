@@ -54,14 +54,15 @@ class HrAppraisalBatchContractWarning(models.TransientModel):
         batch._generate_appraisals_for_employees(employees)
         excluded = self.line_ids.filtered(lambda l: l.decision == 'exclude')
         if excluded:
+            # Plain text — message_post escapes HTML in interpolated bodies.
             batch.message_post(body=_(
                 "Skipped %(count)s employee(s) without an active contract in "
-                "the period %(date_from)s → %(date_to)s:<br/>- %(names)s"
+                "the period %(date_from)s → %(date_to)s: %(names)s"
             ) % {
                 'count': len(excluded),
                 'date_from': batch.date_from,
                 'date_to': batch.date_to,
-                'names': "<br/>- ".join(excluded.mapped('employee_id.name')),
+                'names': "، ".join(excluded.mapped('employee_id.name')),
             })
         return {'type': 'ir.actions.act_window_close'}
 

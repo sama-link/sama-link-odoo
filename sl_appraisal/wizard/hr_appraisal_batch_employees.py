@@ -24,6 +24,10 @@ class HrAppraisalBatchEmployees(models.TransientModel):
         'wizard_id',
         'employee_id',
         string='Employees',
+        # Without active_test=False, archived (departed) employees silently
+        # vanish when the M2M is read back — they must stay selectable so
+        # the contract-warning wizard can decide about them explicitly.
+        context={'active_test': False},
     )
 
     @api.onchange('company_id', 'department_id', 'job_id', 'work_location_id', 'manager_id', 'employee_search')

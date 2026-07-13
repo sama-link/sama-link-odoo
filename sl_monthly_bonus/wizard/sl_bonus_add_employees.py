@@ -36,6 +36,9 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
         'wizard_id', 'employee_id',
         string='Employees',
         domain="[('company_id', 'in', [company_id, False])]",
+        # active_test=False so archived (departed) employees survive the
+        # M2M read-back — otherwise they are silently dropped on confirm.
+        context={'active_test': False},
         help='Selected employees — used when mode is "Specific employees". '
              'Archived (departed) employees can be added too.',
     )
