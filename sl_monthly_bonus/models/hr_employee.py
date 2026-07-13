@@ -27,7 +27,9 @@ class HrEmployee(models.Model):
         """
         self.ensure_one()
         on_date = on_date or fields.Date.today()
-        Contract = self.env['hr.contract'].sudo()
+        # active_test=False: archiving an employee archives their contracts
+        # too — those must still be found for departed employees.
+        Contract = self.env['hr.contract'].sudo().with_context(active_test=False)
         base_domain = [
             ('employee_id', '=', self.id),
             ('date_start', '<=', on_date),
