@@ -137,6 +137,31 @@ class HrAppraisalBatch(models.Model):
             },
         }
 
+    def _generate_appraisals_for_employees(self, employees):
+        """Create one draft appraisal per employee in this batch, mirroring
+        the batch period/deadline and defaulting the evaluator to the
+        employee's direct manager. Shared by the generate wizard and the
+        contract-warning wizard so both paths behave identically."""
+        self.ensure_one()
+        appraisal_model = self.env['hr.appraisal'].sudo()
+        for employee in employees:
+            vals = {
+                'employee_id': employee.id,
+                'company_id': employee.company_id.id or self.company_id.id,
+                'appraisal_deadline': self.date_deadline,
+                'date_from': self.date_from,
+                'date_to': self.date_to,
+                'appraisal_batch_id': self.id,
+            }
+            if employee.parent_id.user_id:
+                vals['hr_manager_ids'] = [(6, 0, employee.parent_id.ids)]
+            appraisal = appraisal_model.create(vals)
+            if employee.employee_skill_ids and not appraisal.skills_populated:
+                appraisal.action_populate_skills()
+        self.message_post(
+            body=_("Generated %s appraisal(s) from the batch wizard.") % len(employees)
+        )
+
     def action_open_appraisals(self):
         self.ensure_one()
         action = self.env['ir.actions.actions']._for_xml_id('oh_appraisal.hr_appraisal_action')

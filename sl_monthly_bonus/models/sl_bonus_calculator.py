@@ -83,6 +83,43 @@ class SlBonusCalculator(models.AbstractModel):
         )
         result['line_vals']['evaluation_percent'] = evaluation_pct
         result['line_vals']['evaluation_source'] = eval_source
+
+        # Policy gate: evaluation below the minimum (default 60%) → zero
+        # bonus, full stop (this also stops the sales fixed-half from being
+        # paid). Exempt employees are already at 100% here; 'none'-category
+        # jobs keep their more specific exclusion message. When the score is
+        # 0 because no finalized appraisal exists yet, keep the operational
+        # "not finalized" message instead of the below-minimum one.
+        min_eval = self._get_min_evaluation_percent()
+        if not is_eval_exempt and category != 'none' and evaluation_pct < min_eval:
+            has_finalized_score = (eval_source or '').startswith('hr.appraisal#')
+            if evaluation_pct == 0 and not has_finalized_score:
+                if appraisal_batch:
+                    reason = _(
+                        "تقييم الموظف ضمن دفعة التقييم المرجعية '%s' لم يكتمل بعد. "
+                        "المكافأة = 0 حتى اعتماد التقييم."
+                    ) % appraisal_batch.name
+                else:
+                    reason = _(
+                        "No finalized monthly evaluation (state = 'HR Finalization') was found for this "
+                        "employee covering %s. Bonus = 0 until the evaluation is approved."
+                    ) % period_start.strftime('%Y-%m')
+            else:
+                reason = _(
+                    "نسبة التقييم (%(score).2f%%) أقل من الحد الأدنى المطلوب "
+                    "(%(minimum).2f%%) — لا تصرف مكافأة لهذا الشهر."
+                ) % {'score': evaluation_pct, 'minimum': min_eval}
+            result['line_vals'].update({
+                'is_excluded': True,
+                'exclusion_reason': reason,
+                'computed_amount': 0.0,
+                'bonus_amount': 0.0,
+            })
+            result['components'].append({
+                'sequence': 10, 'label': _('Excluded'), 'value': reason,
+            })
+            return result
+
         # Surface the most common operational issue (no finalized appraisal yet) as a
         # readable, HR-friendly hint on the line. This is set BEFORE the category formula
         # runs so the formula may override with a more specific config issue.
@@ -117,6 +154,18 @@ class SlBonusCalculator(models.AbstractModel):
         return result
 
     # ── Init / helpers ────────────────────────────────────────────────
+    @api.model
+    def _get_min_evaluation_percent(self):
+        """Minimum evaluation % required to receive any bonus (policy: 60).
+        Tunable via the ``sl_monthly_bonus.min_evaluation_percent`` system
+        parameter; set it to 0 to disable the gate entirely."""
+        param = self.env['ir.config_parameter'].sudo().get_param(
+            'sl_monthly_bonus.min_evaluation_percent', '60')
+        try:
+            return float(param)
+        except (TypeError, ValueError):
+            return 60.0
+
     def _init_result(self, employee, period_start, period_end):
         contract = employee._bonus_get_active_contract(on_date=period_end)
         basic = contract.wage if contract else 0.0
@@ -268,10 +317,16 @@ class SlBonusCalculator(models.AbstractModel):
         ).filtered('is_collected').mapped('amount'))
         target_amount = target.target_amount if target else 0.0
         achievement_pct = (sales / target_amount * 100.0) if target_amount else 0.0
-        # Tiers are GLOBAL (same thresholds for everyone). The tier is selected by
-        # achievement % (collected ÷ target), but the commission is a PERCENTAGE of
-        # the ACHIEVED (collected) sales — not the target.
-        tier = self.env['sl.bonus.sales.tier'].sudo().get_tier_for(achievement_pct)
+        # The tier is selected by achievement % (collected ÷ target), but the
+        # commission is a PERCENTAGE of the ACHIEVED (collected) sales — not
+        # the target. Employee-specific tiers (set on the sales target) take
+        # precedence over the global default table.
+        if target:
+            tier = target.sudo().get_commission_tier_for(achievement_pct)
+            uses_custom_tiers = bool(target.sudo().commission_tier_ids)
+        else:
+            tier = self.env['sl.bonus.sales.tier'].sudo().get_tier_for(achievement_pct)
+            uses_custom_tiers = False
         tier_pct = tier.commission_percent if tier else 0.0
         tier_commission = sales * (tier_pct / 100.0)
         if not target:
@@ -300,6 +355,9 @@ class SlBonusCalculator(models.AbstractModel):
             {'sequence': 50, 'label': _('Tier'),
              'value': tier.name if tier else (_('No tier reached') if target else _('No target configured'))},
             {'sequence': 60, 'label': _('Tier %'), 'value': f"{tier_pct:,.2f}%"},
+            {'sequence': 62, 'label': _('Tier Table'),
+             'value': _('Employee-specific') if uses_custom_tiers else _('Global default'),
+             'self_hidden': True},
             {'sequence': 65, 'label': _('Commission (achieved × tier%)'), 'value': f"{tier_commission:,.2f}", 'self_hidden': True},
             {'sequence': 70, 'label': _('Fixed half (50%)'), 'value': f"{fixed_half:,.2f}", 'self_hidden': True},
             {'sequence': 80, 'label': _('Eval-scaled half (50% × eval%)'), 'value': f"{eval_half:,.2f}", 'self_hidden': True},

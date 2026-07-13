@@ -16,6 +16,7 @@
                         </group>
                         <group string="Employees" invisible="mode != 'specific'">
                             <field name="employee_ids" nolabel="1" widget="many2many_tags"
+                                   context="{'active_test': False}"
                                    options="{'no_create': True, 'no_create_edit': True}"/>
                         </group>
                         <group string="Departments" invisible="mode != 'by_department'">

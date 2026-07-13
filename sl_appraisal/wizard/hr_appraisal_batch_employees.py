@@ -24,6 +24,10 @@ class HrAppraisalBatchEmployees(models.TransientModel):
         'wizard_id',
         'employee_id',
         string='Employees',
+        # Without active_test=False, archived (departed) employees silently
+        # vanish when the M2M is read back — they must stay selectable so
+        # the contract-warning wizard can decide about them explicitly.
+        context={'active_test': False},
     )
 
     @api.onchange('company_id', 'department_id', 'job_id', 'work_location_id', 'manager_id', 'employee_search')
@@ -83,23 +87,28 @@ class HrAppraisalBatchEmployees(models.TransientModel):
                 "These employees already exist in this batch:\n%s"
             ) % "\n".join(duplicates.mapped('name')))
 
-        appraisal_model = self.env['hr.appraisal'].sudo()
-        for employee in self.employee_ids:
-            vals = {
-                'employee_id': employee.id,
-                'company_id': employee.company_id.id or batch.company_id.id,
-                'appraisal_deadline': batch.date_deadline,
-                'date_from': batch.date_from,
-                'date_to': batch.date_to,
-                'appraisal_batch_id': batch.id,
-            }
-            if employee.parent_id.user_id:
-                vals['hr_manager_ids'] = [(6, 0, employee.parent_id.ids)]
-            appraisal = appraisal_model.create(vals)
-            if employee.employee_skill_ids and not appraisal.skills_populated:
-                appraisal.action_populate_skills()
-
-        batch.message_post(
-            body=_("Generated %s appraisal(s) from the batch wizard.") % len(self.employee_ids)
+        # Employees with no contract overlapping the batch period are not
+        # generated silently — HR decides per employee in a warning wizard.
+        no_contract = self.employee_ids.filtered(
+            lambda e: not e._has_active_contract_in_period(
+                batch.date_from, batch.date_to)
         )
+        if no_contract:
+            warning_wizard = self.env['hr.appraisal.batch.contract.warning'].create({
+                'batch_id': batch.id,
+                'ok_employee_ids': [(6, 0, (self.employee_ids - no_contract).ids)],
+                'line_ids': [
+                    (0, 0, {'employee_id': emp.id}) for emp in no_contract
+                ],
+            })
+            return {
+                'name': _('Employees Without Active Contract'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.appraisal.batch.contract.warning',
+                'res_id': warning_wizard.id,
+                'view_mode': 'form',
+                'target': 'new',
+            }
+
+        batch._generate_appraisals_for_employees(self.employee_ids)
         return {'type': 'ir.actions.act_window_close'}

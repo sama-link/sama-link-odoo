@@ -231,6 +231,13 @@ class HrAppraisal(models.Model):
         string='Score Reason',
         help="Reason for the manual score adjustment.")
 
+    has_active_contract_in_period = fields.Boolean(
+        string='Has Active Contract In Period',
+        compute='_compute_has_active_contract_in_period',
+        compute_sudo=True,
+        help="Technical flag: the employee holds a contract that overlaps "
+             "the appraisal period. Used to show a warning when they don't.")
+
     # ─── Overrides ────────────────────────────────────────────────────
 
     @api.depends('appraisal_skill_line_ids')
@@ -999,6 +1006,37 @@ class HrAppraisal(models.Model):
             raise AccessError(
                 _("Only HR Officers and Administrators can %s.",
                   action_name))
+
+    @api.depends('employee_id', 'date_from', 'date_to')
+    def _compute_has_active_contract_in_period(self):
+        for rec in self:
+            rec.has_active_contract_in_period = (
+                not rec.employee_id
+                or rec.employee_id._has_active_contract_in_period(
+                    rec.date_from, rec.date_to)
+            )
+
+    @api.onchange('employee_id', 'date_from', 'date_to')
+    def _onchange_warn_no_contract_in_period(self):
+        if (
+            self.employee_id and self.date_from and self.date_to
+            and not self.employee_id._has_active_contract_in_period(
+                self.date_from, self.date_to)
+        ):
+            return {
+                'warning': {
+                    'title': _("No active contract in this period"),
+                    'message': _(
+                        "%(employee)s has no active contract covering the "
+                        "appraisal period %(date_from)s → %(date_to)s. "
+                        "Check the hire/departure dates before appraising."
+                    ) % {
+                        'employee': self.employee_id.name,
+                        'date_from': self.date_from,
+                        'date_to': self.date_to,
+                    },
+                }
+            }
 
     @api.onchange('employee_id')
     def _onchange_employee_id_limit_managers(self):

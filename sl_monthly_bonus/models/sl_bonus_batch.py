@@ -224,8 +224,9 @@ class SlBonusBatch(models.Model):
 
         Used by the legacy ``action_add_all_employees`` entry point AND by
         the two new wizards (``sl.bonus.add.employees.wizard`` and
-        ``sl.bonus.add.from.appraisal.wizard``). Active-flag filtering is
-        applied; duplicates against existing ``line_ids`` are silently
+        ``sl.bonus.add.from.appraisal.wizard``). Archived employees are
+        accepted — an employee who departed after working the period keeps
+        the bonus. Duplicates against existing ``line_ids`` are silently
         skipped (the per-line @api.constrains also guards against this).
         """
         self.ensure_one()
@@ -237,7 +238,7 @@ class SlBonusBatch(models.Model):
         Line = self.env['sl.bonus.batch.line'].sudo()
         existing_ids = set(self.line_ids.mapped('employee_id.id'))
         new_employees = employees.sudo().filtered(
-            lambda e: e.active and e.id not in existing_ids
+            lambda e: e.id not in existing_ids
         )
         if not new_employees:
             return Line.browse()
@@ -489,11 +490,13 @@ class SlBonusBatch(models.Model):
         Line = self.env['sl.bonus.batch.line'].sudo()
         Component = self.env['sl.bonus.batch.line.component'].sudo()
 
-        # 1) Determine the active employee set for this run.
+        # 1) Determine the employee set for this run. Lines/selections are
+        #    kept as-is — archived (departed) employees still compute, since
+        #    they keep the bonus for the period they worked.
         if self.line_ids:
-            employees = self.line_ids.sudo().mapped('employee_id').filtered(lambda e: e.active)
+            employees = self.line_ids.sudo().mapped('employee_id')
         elif self.employee_ids:
-            employees = self.employee_ids.sudo().filtered(lambda e: e.active)
+            employees = self.employee_ids.sudo()
             # Materialize legacy M2M selection into draft lines so subsequent
             # compute runs use line_ids exclusively.
             Line.create([{
@@ -545,7 +548,8 @@ class SlBonusBatch(models.Model):
                 Component.create([
                     dict(c, line_id=line.id) for c in result['components']
                 ])
-        # 3) Remove lines for employees no longer eligible (archived since last run).
+        # 3) Remove stale lines for employees that were not part of this run
+        #    (only possible via the legacy employee_ids / whole-company paths).
         to_remove = self.sudo().line_ids.filtered(lambda l: l.employee_id.id not in seen_emp_ids)
         if to_remove:
             to_remove.sudo().unlink()

@@ -23,5 +23,11 @@
             <field name="key">sl_monthly_bonus.edara_page_size</field>
             <field name="value">500</field>
         </record>
+        <!-- Minimum evaluation % to receive ANY bonus. Below it the line is
+             excluded with an Arabic reason. Set to 0 to disable the gate. -->
+        <record id="param_min_evaluation_percent" model="ir.config_parameter">
+            <field name="key">sl_monthly_bonus.min_evaluation_percent</field>
+            <field name="value">60</field>
+        </record>
     </data>
 </odoo>

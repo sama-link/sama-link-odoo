@@ -46,7 +46,7 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
                 if wiz.batch_id else set()
             )
             wiz.preview_count = sum(
-                1 for e in employees if e.id not in existing_ids and e.active
+                1 for e in employees if e.id not in existing_ids
             )
 
     def _candidate_employees(self):
