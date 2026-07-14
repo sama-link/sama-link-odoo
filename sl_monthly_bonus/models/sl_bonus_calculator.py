@@ -175,6 +175,10 @@ class SlBonusCalculator(models.AbstractModel):
                 'basic_salary': basic,
                 'category': 'none',
                 'is_excluded': False,
+                # Reset on every compute — otherwise a reason set by a past
+                # run (e.g. a warning the formula no longer emits) sticks to
+                # the line forever.
+                'exclusion_reason': False,
                 'evaluation_percent': 0.0,
                 'evaluation_source': '',
                 'computed_amount': 0.0,
