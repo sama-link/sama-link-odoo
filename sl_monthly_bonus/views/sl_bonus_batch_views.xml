@@ -259,7 +259,6 @@
                                 <field name="tier_name" invisible="category != 'sales'" readonly="1"/>
                                 <field name="tier_commission" invisible="category != 'sales'" readonly="1"/>
                                 <field name="stock_sales_value" invisible="category != 'stock'" readonly="1"/>
-                                <field name="stock_commission_pct" invisible="category != 'stock'" readonly="1"/>
                                 <field name="installation_fixed_amount" invisible="category != 'installation'" readonly="1"/>
                                 <field name="branch_profit_factor" invisible="category != 'branch_manager'" readonly="1"/>
                                 <field name="branch_manager_pct" invisible="category != 'branch_manager'" readonly="1"/>

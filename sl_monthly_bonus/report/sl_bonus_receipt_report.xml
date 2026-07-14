@@ -389,11 +389,9 @@
                                 <t t-if="o.category == 'stock'">
                                     <tr>
                                         <td t-att-style="td_lbl" style="width:25%;">قيمة مبيعات المخزون</td>
-                                        <td t-att-style="td_val">
+                                        <td t-att-style="td_val" colspan="3">
                                             <span dir="ltr" t-out="o.stock_sales_value" t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
                                         </td>
-                                        <td t-att-style="td_lbl" style="width:25%;">نسبة العمولة</td>
-                                        <td t-att-style="td_val"><span dir="ltr"><t t-out="'%.4f' % (o.stock_commission_pct or 0.0)"/>%</span></td>
                                     </tr>
                                 </t>
                                 <t t-if="o.category == 'installation'">

@@ -105,18 +105,17 @@ class TestBonusCalculator(TransactionCase):
         self.assertAlmostEqual(result['line_vals']['computed_amount'], 3960.0, places=2)
 
     def test_stock_example(self):
+        # Stock bonus = stock_sales × evaluation% (commission % removed by policy).
         job = self._make_job('Test Stock Buyer', 'stock')
-        self.env['sl.bonus.stock.commission.rate'].create({
-            'percentage': 1.5, 'date_from': date(2025, 1, 1),
-        })
         emp = self._make_employee('Stock Emp', job, 6000.0)
         self.env['sl.bonus.edara.staging.stock'].create({
             'employee_id': emp.id, 'date': date(2026, 4, 10),
-            'stock_sales_value': 200000.0,
+            'stock_sales_value': 2000.0,
         })
         self._finalize_appraisal(emp, 90.0)
         result = self.Calc.calculate_for_employee(emp, self.period_start, self.period_end)
-        self.assertAlmostEqual(result['line_vals']['computed_amount'], 2700.0, places=2)
+        # 2,000 × 90% = 1,800
+        self.assertAlmostEqual(result['line_vals']['computed_amount'], 1800.0, places=2)
 
     def test_installation_example(self):
         job = self._make_job('Test Installer', 'installation')

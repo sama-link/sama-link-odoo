@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.2.8.0',
+    'version': '18.0.2.10.0',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
@@ -8,7 +8,7 @@
         Categories:
         - Service roles (basic_salary x rate x evaluation)
         - Sales (threshold-tier commission, 50% fixed + 50% x evaluation)
-        - Stock purchasing (stock_value x commission x evaluation)
+        - Stock purchasing (stock_value x evaluation)
         - Installations (fixed amount x evaluation)
         - Branch / area managers (basic_salary x branch tier x evaluation)
 

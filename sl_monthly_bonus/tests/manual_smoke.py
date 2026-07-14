@@ -74,15 +74,12 @@ def run(db='sama'):
         r = Calc.calculate_for_employee(e_sales, ps, pe)
         print(f"Sales:   expected 3600, got {r['line_vals']['computed_amount']}")
 
-        # Stock: 200,000 x 1.5% x 90% = 2,700
+        # Stock: 3,000 x 90% = 2,700 (commission % removed from the equation)
         j_stock = env['hr.job'].create({'name': 'SMK Stock', 'bonus_category': 'stock'})
-        env['sl.bonus.stock.commission.rate'].create({
-            'percentage': 1.5, 'date_from': date(2025, 1, 1),
-        })
         e_stock = _make_emp(env, 'SMK Stock Emp', j_stock, 6000.0)
         env['sl.bonus.edara.staging.stock'].create({
             'employee_id': e_stock.id, 'date': date(2026, 4, 10),
-            'stock_sales_value': 200000.0,
+            'stock_sales_value': 3000.0,
         })
         _finalize(env, e_stock, ps, pe, 90.0)
         r = Calc.calculate_for_employee(e_stock, ps, pe)
