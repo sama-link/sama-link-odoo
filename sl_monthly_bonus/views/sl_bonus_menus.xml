@@ -83,6 +83,14 @@
                   parent="menu_sl_bonus_root"
                   sequence="40"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+        <!-- This menu was archived on prod and every module upgrade kept
+             re-archiving it (its xmlid was treated as not-reloaded by the
+             end-of-upgrade cleanup). The explicit record below re-asserts
+             active=True AND registers the xmlid on each load, which stops
+             the cleanup from deactivating it. Do not remove. -->
+        <record id="menu_sl_bonus_edara" model="ir.ui.menu">
+            <field name="active" eval="True"/>
+        </record>
 
         <menuitem id="menu_sl_bonus_edara_settings"
                   name="Edara Settings"
