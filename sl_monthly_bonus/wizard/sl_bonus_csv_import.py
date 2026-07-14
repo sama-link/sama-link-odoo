@@ -41,8 +41,8 @@ TEMPLATES = {
         '2026-06,E001,Ahmed Ali,100000',
     ),
     'stock_purchasing': (
-        'month,employee_code,employee_name,related_stock_sales_value,external_ref,note',
-        '2026-06,E002,Mohamed Hassan,75000,STK-001,Manual stock purchasing sales',
+        'month,employee_code,employee_name,related_stock_sales_value',
+        '2026-06,E002,Mohamed Hassan,75000',
     ),
     'installations': (
         'month,employee_code,employee_name,installation_count,installation_amount,external_ref,note',

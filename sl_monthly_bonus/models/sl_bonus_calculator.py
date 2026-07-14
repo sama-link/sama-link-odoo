@@ -366,27 +366,20 @@ class SlBonusCalculator(models.AbstractModel):
         ])
 
     def _calc_stock(self, employee, period_start, period_end, evaluation_pct, result):
-        Rate = self.env['sl.bonus.stock.commission.rate'].sudo()
-        rate_pct = Rate.get_rate_for(employee.job_id.id if employee.job_id else False, period_end)
+        # The imported stock value IS the commission base — no commission %
+        # factor anymore (removed by policy): bonus = stock_sales × evaluation%.
         stock_value = sum(self._get_period_staging(
             'sl.bonus.edara.staging.stock', employee, period_start, period_end
         ).mapped('stock_sales_value'))
-        amount = stock_value * (rate_pct / 100.0) * (evaluation_pct / 100.0)
+        amount = stock_value * (evaluation_pct / 100.0)
         result['line_vals'].update({
             'stock_sales_value': stock_value,
-            'stock_commission_pct': rate_pct,
             'computed_amount': amount,
         })
-        if rate_pct == 0:
-            result['line_vals']['exclusion_reason'] = _(
-                "No stock commission rate configured. "
-                "Add one under Bonus → Configuration → Stock Commission."
-            )
         result['components'].extend([
             {'sequence': 10, 'label': _('Formula'),
-             'value': _('stock_sales × commission% × evaluation%')},
+             'value': _('stock_sales × evaluation%')},
             {'sequence': 20, 'label': _('Stock Sales Value'), 'value': f"{stock_value:,.2f}"},
-            {'sequence': 30, 'label': _('Commission %'), 'value': f"{rate_pct:,.4f}%"},
             {'sequence': 40, 'label': _('Evaluation %'), 'value': f"{evaluation_pct:,.2f}%"},
             {'sequence': 50, 'label': _('Result'), 'value': f"{amount:,.2f}"},
         ])
