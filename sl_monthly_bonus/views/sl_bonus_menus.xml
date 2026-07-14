@@ -184,6 +184,12 @@
                   sequence="60"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
+        <menuitem id="menu_sl_bonus_config_settings"
+                  name="Bonus Settings"
+                  parent="menu_sl_bonus_config"
+                  action="action_sl_bonus_settings"
+                  sequence="5"/>
+
         <menuitem id="menu_sl_bonus_config_service"
                   name="Service Rates"
                   parent="menu_sl_bonus_config"

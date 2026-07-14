@@ -2,6 +2,43 @@
 <odoo>
     <data>
 
+        <!-- ════════════════════ Bonus Policy Settings ════════════════════ -->
+        <record id="view_sl_bonus_settings_form" model="ir.ui.view">
+            <field name="name">sl.bonus.settings.form</field>
+            <field name="model">sl.bonus.settings</field>
+            <field name="arch" type="xml">
+                <form string="Bonus Settings">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Bonus Policy Settings</h1>
+                        </div>
+                        <group string="Evaluation Gate">
+                            <field name="min_evaluation_percent"/>
+                        </group>
+                        <div class="alert alert-info" role="alert">
+                            Employees whose evaluation is <b>below</b> this percentage get
+                            <b>zero bonus</b> — their line is excluded with the reason
+                            «نسبة التقييم أقل من الحد الأدنى المطلوب». Set it to 0 to disable
+                            the rule. Changing it affects the next compute — recompute open
+                            batches to apply it.
+                        </div>
+                        <footer>
+                            <button name="action_save" type="object"
+                                    string="Save" class="btn-primary"/>
+                            <button string="Cancel" special="cancel" class="btn-secondary"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sl_bonus_settings" model="ir.actions.act_window">
+            <field name="name">Bonus Settings</field>
+            <field name="res_model">sl.bonus.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
         <!-- ════════════════════ Edara Settings ════════════════════ -->
         <record id="view_sl_bonus_edara_settings_form" model="ir.ui.view">
             <field name="name">sl.bonus.edara.settings.form</field>
