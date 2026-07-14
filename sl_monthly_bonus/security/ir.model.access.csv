@@ -29,10 +29,13 @@ access_edara_mapping_hr,bonus.edara.mapping.hr,model_sl_bonus_edara_mapping,grou
 access_edara_mapping_admin,bonus.edara.mapping.admin,model_sl_bonus_edara_mapping,group_bonus_admin,1,1,1,1
 access_edara_staging_sales_employee,bonus.edara.staging.sales.emp,model_sl_bonus_edara_staging_sales,group_bonus_employee,1,0,0,0
 access_edara_staging_sales_hr,bonus.edara.staging.sales.hr,model_sl_bonus_edara_staging_sales,group_bonus_hr_manager,1,1,1,1
+access_edara_staging_sales_admin,bonus.edara.staging.sales.admin,model_sl_bonus_edara_staging_sales,group_bonus_admin,1,1,1,1
 access_edara_staging_stock_employee,bonus.edara.staging.stock.emp,model_sl_bonus_edara_staging_stock,group_bonus_employee,1,0,0,0
 access_edara_staging_stock_hr,bonus.edara.staging.stock.hr,model_sl_bonus_edara_staging_stock,group_bonus_hr_manager,1,1,1,1
+access_edara_staging_stock_admin,bonus.edara.staging.stock.admin,model_sl_bonus_edara_staging_stock,group_bonus_admin,1,1,1,1
 access_edara_staging_install_employee,bonus.edara.staging.install.emp,model_sl_bonus_edara_staging_installation,group_bonus_employee,1,0,0,0
 access_edara_staging_install_hr,bonus.edara.staging.install.hr,model_sl_bonus_edara_staging_installation,group_bonus_hr_manager,1,1,1,1
+access_edara_staging_install_admin,bonus.edara.staging.install.admin,model_sl_bonus_edara_staging_installation,group_bonus_admin,1,1,1,1
 access_edara_sync_employee,bonus.edara.sync.emp,model_sl_bonus_edara_sync,group_bonus_employee,1,0,0,0
 access_edara_sync_hr,bonus.edara.sync.hr,model_sl_bonus_edara_sync,group_bonus_hr_manager,1,1,1,0
 access_edara_sync_admin,bonus.edara.sync.admin,model_sl_bonus_edara_sync,group_bonus_admin,1,1,1,1
