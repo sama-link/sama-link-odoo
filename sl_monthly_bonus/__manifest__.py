@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.2.11.0',
+    'version': '18.0.2.11.1',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
