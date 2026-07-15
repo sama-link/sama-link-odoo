@@ -1,6 +1,6 @@
 {
     'name': 'Samalink General Reviewer',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'summary': 'General Reviewer Manager group: read access to every model and every record',
     'description': """
 Adds the "General Reviewer Manager" security group.
@@ -26,6 +26,13 @@ stay in force; debug mode stays gated by restrict_debug.
         'base',
         'menuitems_whitelist',        # whitelisted_menu_ids / traversal_as on res.groups
         'samalink_security_groups',   # reuse the "SamaLink" ir.module.category
+        # sl_appraisal rewrites appraisal menu groups_id with (6,0,...) on every
+        # upgrade, and during a registry rebuild our ir.ui.menu write-hook is not
+        # yet loaded when sl_appraisal's XML runs. Depending on it makes any
+        # sl_appraisal upgrade cascade an upgrade of this module AFTER it, so the
+        # data <function> re-sync repairs the stripped reviewer joins in the same
+        # upgrade run.
+        'sl_appraisal',
     ],
     'data': [
         'security/sl_general_reviewer_groups.xml',
