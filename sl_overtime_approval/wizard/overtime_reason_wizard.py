@@ -15,4 +15,7 @@ class OvertimeApprovalReasonWizard(models.TransientModel):
         attendances.write({'overtime_approval_reason': self.reason})
         # The context flag lets the approval pass through without re-opening the
         # wizard; the samalink permission checks still run inside the approval.
-        return attendances.with_context(sl_skip_overtime_reason=True).action_approve_overtime()
+        attendances.with_context(sl_skip_overtime_reason=True).action_approve_overtime()
+        # Core's action_approve_overtime returns None, which XML-RPC cannot
+        # marshal - close the dialog explicitly instead of forwarding it.
+        return {'type': 'ir.actions.act_window_close'}
