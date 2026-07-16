@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_overtime_approval_reason_wizard_form" model="ir.ui.view">
+        <field name="name">sl.overtime.approval.reason.wizard.form</field>
+        <field name="model">sl.overtime.approval.reason.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Overtime Approval Reason">
+                <group>
+                    <field name="reason" placeholder="Why is this overtime approved?"/>
+                </group>
+                <field name="attendance_ids" readonly="1">
+                    <list>
+                        <field name="employee_id"/>
+                        <field name="check_in"/>
+                        <field name="overtime_hours" string="Worked Extra Hours" widget="float_time"/>
+                        <field name="validated_overtime_hours" string="Extra Hours" widget="float_time"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" string="Approve" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
