@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sl_overtime_exception_admin,sl.overtime.approval.exception (Samalink Admin),model_sl_overtime_approval_exception,samalink_security_groups.group_samalink_administrator,1,1,1,1
+access_sl_overtime_exception_hr_officer,sl.overtime.approval.exception (HR Officer),model_sl_overtime_approval_exception,samalink_security_groups.group_samalink_hr_officer,1,1,1,1
+access_sl_overtime_reason_wizard_user,sl.overtime.approval.reason.wizard (User),model_sl_overtime_approval_reason_wizard,base.group_user,1,1,1,1

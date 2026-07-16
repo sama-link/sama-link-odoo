@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Show the stored reason on the attendance form, next to the extra hours. -->
+    <record id="hr_attendance_view_form_inherit_overtime_reason" model="ir.ui.view">
+        <field name="name">hr.attendance.form.inherit.overtime.reason</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='validated_overtime_hours']/.." position="after">
+                <field name="overtime_approval_reason" readonly="1"
+                       invisible="not overtime_approval_reason"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Show the reason as a column in the Management (Extra Hours) list. -->
+    <record id="view_attendance_tree_management_inherit_overtime_reason" model="ir.ui.view">
+        <field name="name">hr.attendance.list.management.inherit.overtime.reason</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree_management"/>
+        <field name="arch" type="xml">
+            <field name="overtime_status" position="after">
+                <field name="overtime_approval_reason" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>
