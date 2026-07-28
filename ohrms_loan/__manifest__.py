@@ -21,8 +21,8 @@
 #
 #############################################################################
 {
-    'name': 'Open HRMS Loan Management v1.1.0',
-    'version': '1.1.0',
+    'name': 'Open HRMS Loan Management v1.2.1',
+    'version': '1.2.1',
     'category': 'Human Resources',
     'summary': 'Manage Employee Loan Requests',
     'description': """This module facilitates the creation and management of 
@@ -45,6 +45,7 @@
         'views/hr_loan_line.xml',
         'views/res_config_settings.xml',
         'wizard/hr_loan_pay_amount.xml',
+        'wizard/hr_loan_add_installment.xml',
     ],
     'demo': ['data/hr_salary_rule_demo.xml',
              'data/hr_rule_input_demo.xml', ],

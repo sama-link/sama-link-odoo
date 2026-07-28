@@ -5,3 +5,4 @@ access_hr_loan_line_user,access.hr.loan.line.user,model_hr_loan_line,base.group_
 access_hr_loan_officer,access.hr.loan.officer,model_hr_loan,ohrms_loan.group_loan_officer,1,1,1,1
 access_hr_loan_line_officer,access.hr.loan.line.officer,model_hr_loan_line,ohrms_loan.group_loan_officer,1,1,1,1
 access_hr_loan_pay_amount_wizard_officer,access.hr.loan.pay.amount.wizard.officer,model_hr_loan_pay_amount_wizard,ohrms_loan.group_loan_officer,1,1,1,1
+access_hr_loan_add_installment_wizard_officer,access.hr.loan.add.installment.wizard.officer,model_hr_loan_add_installment_wizard,ohrms_loan.group_loan_officer,1,1,1,1

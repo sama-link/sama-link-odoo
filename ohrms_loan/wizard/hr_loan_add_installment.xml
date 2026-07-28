@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_hr_loan_add_installment_wizard_form" model="ir.ui.view">
+        <field name="name">hr.loan.add.installment.wizard.form</field>
+        <field name="model">hr.loan.add.installment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add Installment">
+                <group>
+                    <field name="loan_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="total_amount" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    <field name="balance_amount" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    <field name="date"/>
+                    <field name="amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                </group>
+                <footer>
+                    <button name="do_action" type="object" string="Add Installment" class="btn-primary" confirm="Adding this installment will increase the total loan amount and the remaining balance. Continue?"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

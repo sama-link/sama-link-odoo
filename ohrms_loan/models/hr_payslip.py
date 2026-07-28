@@ -58,7 +58,42 @@ class HrPayslip(models.Model):
             })
             (lo_inputs - primary).unlink()
 
+    def _refresh_loan_input_lines(self):
+        """Input lines are only built by the form onchanges, so a slip created
+        before a loan change keeps a stale LO row forever (installment added or
+        re-dated, new loan approved). Recomputing must re-read the current
+        schedule: amount and links follow the live loan lines. Manually typed
+        LO amounts are re-synced too — partial payments belong on the loan
+        (Pay Amount wizard), not typed into the input.
+        """
+        LoanLine = self.env['hr.loan.line'].sudo()
+        for slip in self:
+            if slip.state in ('done', 'cancel'):
+                continue
+            if not (slip.employee_id and slip.date_from and slip.date_to):
+                continue
+            lo_inputs = slip.input_line_ids.filtered(lambda l: l.code == 'LO')
+            if not lo_inputs:
+                continue
+            loan_lines = LoanLine.search([
+                ('date', '>=', slip.date_from),
+                ('date', '<=', slip.date_to),
+                ('paid', '=', False),
+                ('loan_id.employee_id', '=', slip.employee_id.id),
+                ('loan_id.state', '=', 'approve'),
+            ], order='loan_id, date, id')
+            currency = slip.company_id.currency_id
+            prec = currency.rounding if currency else 0.01
+            primary = lo_inputs.sorted('sequence')[0]
+            primary.write({
+                'amount': float_round(sum(loan_lines.mapped('amount')),
+                                      precision_rounding=prec),
+                'loan_line_ids': [(6, 0, loan_lines.ids)],
+            })
+            (lo_inputs - primary).unlink()
+
     def action_compute_sheet(self):
+        self._refresh_loan_input_lines()
         self._consolidate_loan_input_lines()
         return super().action_compute_sheet()
 

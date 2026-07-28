@@ -145,6 +145,18 @@ class HrLoan(models.Model):
             loan.write({'state': 'paid'})
             loan.action_archive()
 
+    def action_add_installment(self):
+        return {
+            'name': _('Add Installment'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'hr.loan.add.installment.wizard',
+            'target': 'new',
+            'context': {
+                'default_loan_id': self.id,
+            }
+        }
+
     def action_pay_amount(self):
         return {
             'name': _('Pay Loan Amount'),
