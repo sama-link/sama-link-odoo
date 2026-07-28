@@ -125,6 +125,11 @@
                             <div class="oe_clear"/>
                         </page>
                     </notebook>
+                    <button name="action_add_installment" type="object"
+                            string="Add Installment" icon="fa-plus"
+                            class="btn-secondary"
+                            invisible="state in ('refuse', 'cancel') or not id"
+                            groups="ohrms_loan.group_loan_officer"/>
                 </sheet>
                 <chatter/>
             </form>
