@@ -73,14 +73,17 @@
                                 <th style="width: 18%;" class="text-center">المبلغ</th>
                                 <th style="width: 18%;" class="text-center">الإجمالي</th>
                             </tr>
+                            <!-- Main struct: BASIC_SALARY is informational (total 0, pay flows
+                                 through attendance). Basic struct: SALARY is the actual fixed pay. -->
+                            <t t-set="bs" t-value="L.get('BASIC_SALARY') or L.get('SALARY')"/>
                             <tr>
                                 <td>الراتب الأساسي</td>
                                 <td class="text-center">-</td>
                                 <td class="text-center">
-                                    <span t-esc="L['BASIC_SALARY'].amount if 'BASIC_SALARY' in L else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    <span t-esc="bs.amount if bs else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
                                 </td>
                                 <td class="text-center">
-                                    <span t-esc="L['BASIC_SALARY'].amount if 'BASIC_SALARY' in L else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    <span t-esc="bs.amount if bs else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
                                 </td>
                             </tr>
                             <t t-set="row_label" t-value="'أيام الحضور'"/>
@@ -142,10 +145,24 @@
                             <tr style="background-color: #d9d9d9;">
                                 <th colspan="2" class="text-center">ملخص الراتب</th>
                             </tr>
+                            <!-- Fixed-salary structs (code SALARY) contribute the wage to net
+                                 directly; Main-struct slips have no such line so the row hides
+                                 and the sheet matches the paper form. -->
+                            <t t-if="'SALARY' in L and L['SALARY'].total">
+                                <tr>
+                                    <td style="width: 55%;">الراتب الأساسي</td>
+                                    <td class="text-center">
+                                        <span t-esc="L['SALARY'].total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    </td>
+                                </tr>
+                            </t>
                             <tr>
                                 <td style="width: 55%;">أيام الحضور</td>
                                 <td class="text-center">
-                                    <span t-esc="L['PRESENT_DAYS'].total if 'PRESENT_DAYS' in L else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    <t t-if="'PRESENT_DAYS' in L and L['PRESENT_DAYS'].total">
+                                        <span t-esc="L['PRESENT_DAYS'].total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    </t>
+                                    <t t-else="">-</t>
                                 </td>
                             </tr>
                             <tr>
