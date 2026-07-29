@@ -15,129 +15,190 @@
         <field name="print_report_name">('%s Payslip %s - %s' % (object.employee_id.name, object.date_from, object.date_to))</field>
     </record>
 
-    <!--Template for Payslip Details Report Simple-->
+    <!-- مفردات مرتب — Arabic salary itemization sheet.
+         Sections are driven by payslip LINES (not contract fields) so every
+         figure shown participates in the same arithmetic as the NET rule. -->
     <template id="report_payslipdetails_simple">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2>Pay Slip</h2>
-                        <p t-field="o.name"/>
-                        <table class="table table-sm table-bordered">
+                    <div class="page" dir="rtl" style="text-align: right; font-size: 13px;">
+                        <t t-set="cur" t-value="o.company_id.currency_id"/>
+                        <t t-set="months_ar" t-value="['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']"/>
+                        <!-- sudo: salary-rule code/name must render for non-payroll users
+                             (e.g. employees opening their own share link). -->
+                        <t t-set="L" t-value="dict((l.salary_rule_id.code, l) for l in o.sudo().line_ids)"/>
+                        <t t-set="adv_specs" t-value="[('HRA', 'بدل سكن'), ('DA', 'بدل غلاء معيشة'), ('Travel', 'بدل انتقال'), ('Meal', 'بدل وجبة'), ('Medical', 'بدل علاج'), ('Other', 'بدلات أخرى')]"/>
+                        <t t-set="inc_specs" t-value="[('REST_ALLOW', 'مقابل أيام الراحة'), ('HOLIDAY_BONUS', 'مقابل الاجازات الرسمية'), ('PAID_HOLIDAY_BONUS', 'مقابل الاجازات المدفوعة'), ('SICK_HOLIDAY_BONUS', 'مقابل الاجازات المرضية'), ('OVERTIME_HOURS', 'الوقت الإضافي (ساعة)'), ('INCENTIV', 'المكافآت')]"/>
+                        <t t-set="ded_specs" t-value="[('ADMIN_PENALTY', 'الجزاءات الإدارية'), ('LATE_PENALTY', 'جزاء تأخير / انصراف مبكر'), ('ABSENT_PENALTY', 'جزاء الغياب بدون إذن'), ('ADVANCE', 'السلف')]"/>
+                        <t t-set="adv_total" t-value="sum(L[c].total for c, lbl in adv_specs if c in L)"/>
+                        <t t-set="inc_total" t-value="sum(L[c].total for c, lbl in inc_specs if c in L)"/>
+                        <t t-set="ded_total" t-value="sum(L[c].total for c, lbl in ded_specs if c in L)"/>
+
+                        <h3 class="text-center" style="margin-bottom: 16px;">
+                            مفردات راتب شهر <t t-esc="months_ar[o.date_to.month - 1]"/> <t t-esc="o.date_to.year"/>
+                        </h3>
+
+                        <!-- Employee info -->
+                        <table class="table table-sm table-bordered" style="direction: rtl;">
                             <tr>
-                                <td>
-                                    <strong>Name</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.employee_id"/>
-                                </td>
-                                <td>
-                                    <strong>Designation</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.employee_id.job_id"/>
-                                </td>
+                                <td style="width: 22%; background-color: #f2f2f2;"><strong>اسم الموظف</strong></td>
+                                <td style="width: 28%;"><span t-field="o.employee_id.name"/></td>
+                                <td style="width: 22%; background-color: #f2f2f2;"><strong>المسمى الوظيفي</strong></td>
+                                <td style="width: 28%;"><span t-field="o.employee_id.job_id"/></td>
                             </tr>
                             <tr>
+                                <td style="background-color: #f2f2f2;"><strong>تاريخ بداية العقد</strong></td>
                                 <td>
-                                    <strong>Email</strong>
+                                    <t t-set="ds" t-value="o.contract_id.date_start"/>
+                                    <t t-if="ds" t-esc="'%02d %s، %d' % (ds.day, months_ar[ds.month - 1], ds.year)"/>
+                                    <t t-else="">-</t>
                                 </td>
-                                <td>
-                                    <span t-field="o.employee_id.work_email"/>
-                                </td>
-                                <td>
-                                    <strong>المزايا الشهرية النقدية</strong>
-                                </td>
-                                <td>
-                                    <t t-if="o.contract_id">
-                                        <t t-set="cur" t-value="o.company_id.currency_id"/>
-                                        <t t-set="adv_fields" t-value="['hra', 'da', 'travel_allowance', 'meal_allowance', 'medical_allowance', 'other_allowance']"/>
-                                        <t t-set="adv_desc" t-value="o.contract_id.fields_get(adv_fields)"/>
-                                        <t t-foreach="adv_fields" t-as="fname">
-                                            <div t-if="o.contract_id[fname]">
-                                                <span t-esc="adv_desc[fname]['string']"/>:
-                                                <span t-out="o.contract_id[fname]" t-options='{"widget": "monetary", "display_currency": cur}'/>
-                                            </div>
-                                        </t>
-                                    </t>
-                                </td>
+                                <td style="background-color: #f2f2f2;"><strong>الحساب البنكي</strong></td>
+                                <td><t t-esc="o.employee_id.sudo().bank_account_id.acc_number or '-'"/></td>
                             </tr>
                             <tr>
-                                <td>
-                                    <strong>تاريخ بداية العقد</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.contract_id.date_start"/>
-                                </td>
-                                <td>
-                                    <strong>Bank Account</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.employee_id.bank_account_id"/>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <strong>Date From</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.date_from"/>
-                                </td>
-                                <td>
-                                    <strong>Date To</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.date_to"/>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <strong>الراتب الأساسي</strong>
-                                </td>
-                                <td>
-                                    <span t-field="o.contract_id.wage"
-                                          t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
-                                </td>
-                                <td/>
-                                <td/>
+                                <td style="background-color: #f2f2f2;"><strong>تاريخ احتساب الراتب من</strong></td>
+                                <td><t t-esc="'%d / %d / %d' % (o.date_from.day, o.date_from.month, o.date_from.year)"/></td>
+                                <td style="background-color: #f2f2f2;"><strong>إلى</strong></td>
+                                <td><t t-esc="'%d / %d / %d' % (o.date_to.day, o.date_to.month, o.date_to.year)"/></td>
                             </tr>
                         </table>
-                        <!-- <h3>Details</h3> -->
-                        <table class="table table-sm mb32">
-                            <thead>
-                                <tr>
-                                    <th>Rule Name</th>
-                                    <th>Qty</th>
-                                    <th>Amount</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-set="sec1_codes" t-value="['REST_ALLOW', 'HOLIDAY_BONUS', 'PAID_HOLIDAY_BONUS', 'SICK_HOLIDAY_BONUS']"/>
-                                <t t-set="sec2_codes" t-value="['OVERTIME_HOURS', 'INCENTIV']"/>
-                                <t t-set="sec3_codes" t-value="['ADMIN_PENALTY', 'LATE_PENALTY', 'ABSENT_PENALTY']"/>
-                                <t t-set="adv_codes" t-value="['HRA', 'DA', 'Meal', 'Medical', 'Travel', 'Other']"/>
-                                <!-- Keep the original rule order; the contract cash advantages show in the top block only.
-                                     sudo() the lines so salary-rule code/name render for non-payroll users
-                                     (e.g. employees printing their own payslip) who lack hr.salary.rule read access. -->
-                                <t t-set="olines" t-value="o.sudo().details_by_salary_rule_category_ids.filtered(lambda l: l.salary_rule_id.code not in adv_codes)"/>
-                                <t t-set="s1" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec1_codes)"/>
-                                <t t-set="s2" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec2_codes)"/>
-                                <t t-set="s3" t-value="olines.filtered(lambda l: l.salary_rule_id.code in sec3_codes)"/>
-                                <t t-set="cur" t-value="o.company_id.currency_id"/>
-                                <t t-foreach="olines" t-as="line">
-                                    <t t-if="s1 and line.id == s1[0].id">
-                                        <tr class="table-active"><td colspan="3"><strong>البدلات</strong></td><td class="text-right"><strong><span t-esc="sum(s1.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
-                                    </t>
-                                    <t t-if="s2 and line.id == s2[0].id">
-                                        <tr class="table-active"><td colspan="3"><strong>الحوافز</strong></td><td class="text-right"><strong><span t-esc="sum(s2.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
-                                    </t>
-                                    <t t-if="s3 and line.id == s3[0].id">
-                                        <tr class="table-active"><td colspan="3"><strong>الجزاءات</strong></td><td class="text-right"><strong><span t-esc="sum(s3.mapped('total'))" t-options='{"widget": "monetary", "display_currency": cur}'/></strong></td></tr>
-                                    </t>
+
+                        <!-- Basic salary + attendance days -->
+                        <table class="table table-sm table-bordered" style="direction: rtl;">
+                            <tr style="background-color: #d9d9d9;">
+                                <th style="width: 46%;">البند</th>
+                                <th style="width: 18%;" class="text-center">الكمية</th>
+                                <th style="width: 18%;" class="text-center">المبلغ</th>
+                                <th style="width: 18%;" class="text-center">الإجمالي</th>
+                            </tr>
+                            <!-- Main struct: BASIC_SALARY is informational (total 0, pay flows
+                                 through attendance). Basic struct: SALARY is the actual fixed pay. -->
+                            <t t-set="bs" t-value="L.get('BASIC_SALARY') or L.get('SALARY')"/>
+                            <tr>
+                                <td>الراتب الأساسي</td>
+                                <td class="text-center">-</td>
+                                <td class="text-center">
+                                    <span t-esc="bs.amount if bs else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                </td>
+                                <td class="text-center">
+                                    <span t-esc="bs.amount if bs else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                </td>
+                            </tr>
+                            <t t-set="row_label" t-value="'أيام الحضور'"/>
+                            <t t-set="row_line" t-value="L.get('PRESENT_DAYS')"/>
+                            <t t-call="payslip_share.report_payslipdetails_simple_row"/>
+                        </table>
+
+                        <!-- Allowances -->
+                        <table class="table table-sm table-bordered" style="direction: rtl;">
+                            <tr style="background-color: #d9d9d9;">
+                                <th colspan="3" style="width: 82%;">البدلات</th>
+                                <th style="width: 18%;" class="text-center">
+                                    <span t-esc="adv_total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                </th>
+                            </tr>
+                            <t t-foreach="adv_specs" t-as="spec">
+                                <t t-if="spec[0] in L and L[spec[0]].total">
+                                    <t t-set="row_label" t-value="spec[1]"/>
+                                    <t t-set="row_line" t-value="L[spec[0]]"/>
                                     <t t-call="payslip_share.report_payslipdetails_simple_row"/>
                                 </t>
-                            </tbody>
+                            </t>
+                        </table>
+
+                        <!-- Increments -->
+                        <table class="table table-sm table-bordered" style="direction: rtl;">
+                            <tr style="background-color: #d9d9d9;">
+                                <th colspan="3" style="width: 82%;">العلاوات</th>
+                                <th style="width: 18%;" class="text-center">
+                                    <span t-esc="inc_total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                </th>
+                            </tr>
+                            <t t-foreach="inc_specs" t-as="spec">
+                                <t t-set="row_label" t-value="spec[1]"/>
+                                <t t-set="row_line" t-value="L.get(spec[0])"/>
+                                <t t-call="payslip_share.report_payslipdetails_simple_row"/>
+                            </t>
+                        </table>
+
+                        <!-- Deductions -->
+                        <table class="table table-sm table-bordered" style="direction: rtl;">
+                            <tr style="background-color: #d9d9d9;">
+                                <th colspan="3" style="width: 82%;">الإستقطاعات</th>
+                                <th style="width: 18%;" class="text-center">
+                                    <span t-esc="ded_total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                </th>
+                            </tr>
+                            <t t-foreach="ded_specs" t-as="spec">
+                                <t t-set="row_label" t-value="spec[1]"/>
+                                <t t-set="row_line" t-value="L.get(spec[0])"/>
+                                <t t-set="row_abs_amount" t-value="True"/>
+                                <t t-call="payslip_share.report_payslipdetails_simple_row"/>
+                            </t>
+                            <t t-set="row_abs_amount" t-value="False"/>
+                        </table>
+
+                        <!-- Salary summary -->
+                        <table class="table table-sm table-bordered" style="direction: rtl; width: 60%;">
+                            <tr style="background-color: #d9d9d9;">
+                                <th colspan="2" class="text-center">ملخص الراتب</th>
+                            </tr>
+                            <!-- Fixed-salary structs (code SALARY) contribute the wage to net
+                                 directly; Main-struct slips have no such line so the row hides
+                                 and the sheet matches the paper form. -->
+                            <t t-if="'SALARY' in L and L['SALARY'].total">
+                                <tr>
+                                    <td style="width: 55%;">الراتب الأساسي</td>
+                                    <td class="text-center">
+                                        <span t-esc="L['SALARY'].total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <tr>
+                                <td style="width: 55%;">أيام الحضور</td>
+                                <td class="text-center">
+                                    <t t-if="'PRESENT_DAYS' in L and L['PRESENT_DAYS'].total">
+                                        <span t-esc="L['PRESENT_DAYS'].total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                                    </t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>البدلات</td>
+                                <td class="text-center">
+                                    <t t-if="adv_total"><span t-esc="adv_total" t-options='{"widget": "monetary", "display_currency": cur}'/></t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>العلاوات</td>
+                                <td class="text-center">
+                                    <t t-if="inc_total"><span t-esc="inc_total" t-options='{"widget": "monetary", "display_currency": cur}'/></t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>الإستقطاعات</td>
+                                <td class="text-center">
+                                    <t t-if="ded_total"><span t-esc="ded_total" t-options='{"widget": "monetary", "display_currency": cur}'/></t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>تسويات ادارية</td>
+                                <td class="text-center">
+                                    <t t-if="'OTH' in L and L['OTH'].total"><span t-esc="L['OTH'].total" t-options='{"widget": "monetary", "display_currency": cur}'/></t>
+                                    <t t-else="">-</t>
+                                </td>
+                            </tr>
+                            <tr style="background-color: #f2f2f2;">
+                                <td><strong>صافي الراتب</strong></td>
+                                <td class="text-center">
+                                    <strong><span t-esc="L['NET'].total if 'NET' in L else 0.0" t-options='{"widget": "monetary", "display_currency": cur}'/></strong>
+                                </td>
+                            </tr>
                         </table>
                     </div>
                 </t>
@@ -145,16 +206,29 @@
         </t>
     </template>
 
-    <!-- Shared row for the salary-computation table (rule name, qty, amount, total). -->
+    <!-- Shared section row: label, quantity, unit amount, total.
+         Zero/missing lines render as dashes, mirroring the paper form.
+         row_abs_amount shows the unit amount unsigned (deduction rows). -->
     <template id="report_payslipdetails_simple_row">
         <tr>
-            <td>
-                <strong t-if="line.salary_rule_id.code == 'ADVANCE'" t-field="line.salary_rule_id.name"/>
-                <span t-else="" t-field="line.salary_rule_id.name"/>
-            </td>
-            <td><span t-field="line.quantity"/></td>
-            <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
-            <td class="text-right"><span t-field="line.total" t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
+            <td><span t-esc="row_label"/></td>
+            <t t-if="row_line and row_line.total">
+                <td class="text-center">
+                    <t t-if="row_line.quantity" t-esc="'%g' % row_line.quantity"/>
+                    <t t-else="">-</t>
+                </td>
+                <td class="text-center">
+                    <span t-esc="abs(row_line.amount) if row_abs_amount else row_line.amount" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                </td>
+                <td class="text-center">
+                    <span t-esc="row_line.total" t-options='{"widget": "monetary", "display_currency": cur}'/>
+                </td>
+            </t>
+            <t t-else="">
+                <td class="text-center">-</td>
+                <td class="text-center">-</td>
+                <td class="text-center">-</td>
+            </t>
         </tr>
     </template>
 
