@@ -240,8 +240,55 @@ class HrPayslip(models.Model):
                         '|'] + clause_1 + clause_2 + clause_3
         return self.env['hr.contract'].search(clause_final).ids
 
+    @api.model
+    def _contract_period_bounds(self, contract, period_from, period_to):
+        """Intersect a batch period with a contract's own start/end dates.
+
+        A contract that starts or ends mid-period must not be paid — nor
+        penalised for absence — for days outside itself, so the payslip
+        covers only the overlap. Returns the period untouched when there is
+        no contract or no overlap at all. `contract` may be a record or an id.
+        """
+        period_from = fields.Date.to_date(period_from)
+        period_to = fields.Date.to_date(period_to)
+        if not contract or not period_from or not period_to:
+            return period_from, period_to
+        if isinstance(contract, int):
+            contract = self.env['hr.contract'].browse(contract)
+        date_from, date_to = period_from, period_to
+        if contract.date_start and contract.date_start > date_from:
+            date_from = contract.date_start
+        if contract.date_end and contract.date_end < date_to:
+            date_to = contract.date_end
+        if date_from > date_to:
+            return period_from, period_to
+        return date_from, date_to
+
+    def apply_contract_bounded_period(self, period_from=None, period_to=None):
+        """Set each payslip's period to the batch period clamped to its contract.
+
+        The BATCH period is the reference, never the slip's current (already
+        clamped) dates — otherwise recomputing a slip whose contract started
+        mid-period would keep shrinking it, and widening the batch dates would
+        never widen the slip back. Payslips flagged lock_dates keep their own
+        period.
+        """
+        for payslip in self:
+            if payslip.lock_dates:
+                continue
+            run = payslip.payslip_run_id
+            base_from = period_from or (run.date_start if run else payslip.date_from)
+            base_to = period_to or (run.date_end if run else payslip.date_to)
+            new_from, new_to = self._contract_period_bounds(
+                payslip.contract_id, base_from, base_to)
+            if new_from and new_to and (new_from != payslip.date_from or
+                                        new_to != payslip.date_to):
+                payslip.date_from = new_from
+                payslip.date_to = new_to
+
     def action_compute_sheet(self):
         """Function for compute Payslip sheet"""
+        self.apply_contract_bounded_period()
         for payslip in self:
             number = payslip.number or self.env['ir.sequence'].next_by_code(
                 'salary.slip')

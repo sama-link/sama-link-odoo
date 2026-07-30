@@ -11,13 +11,22 @@ class HrPayslip(models.Model):
         related='contract_id.date_start', string='Contract Start Date', readonly=True)
 
     def action_compute_sheet(self):
+        # Clamp first: a contract starting mid-batch must not collect absence
+        # entries for the days before the employee was hired.
+        self.apply_contract_bounded_period()
         grouped_payslip_batches = self.grouped('payslip_run_id')
         for batch, payslips in grouped_payslip_batches.items():
             if not batch:
                 for payslip in payslips:
                     payslip._samalink_generate_absence_and_adjust_work()
             else:
-                payslips._samalink_generate_absence_for_batch(batch)
+                full_period = payslips.filtered(
+                    lambda p: p.date_from == batch.date_start
+                    and p.date_to == batch.date_end)
+                full_period._samalink_generate_absence_for_batch(batch)
+                # Slips bounded by their contract get their own shorter period.
+                for payslip in payslips - full_period:
+                    payslip._samalink_generate_absence_and_adjust_work()
         return super().action_compute_sheet()
 
     def _samalink_generate_absence_and_adjust_work(self):
