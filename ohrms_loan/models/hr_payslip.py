@@ -65,7 +65,14 @@ class HrPayslip(models.Model):
         schedule: amount and links follow the live loan lines. Manually typed
         LO amounts are re-synced too — partial payments belong on the loan
         (Pay Amount wizard), not typed into the input.
+
+        NEVER run inside the confirm flow: action_payslip_done marks the linked
+        installments paid and THEN the community payroll recomputes the sheet —
+        re-querying paid=False at that moment finds nothing and silently wipes
+        the loan deduction from the confirmed salary.
         """
+        if self.env.context.get('loan_skip_input_refresh'):
+            return
         LoanLine = self.env['hr.loan.line'].sudo()
         for slip in self:
             if slip.state in ('done', 'cancel'):
@@ -162,4 +169,7 @@ class HrPayslip(models.Model):
             if line.loan_line_ids:
                 line.loan_line_ids.write({'paid': True})
                 line.loan_line_ids.loan_id.check_fully_paid()
-        return super(HrPayslip, self).action_payslip_done()
+        # loan_skip_input_refresh: super() recomputes the sheet after the lines
+        # above were marked paid — refreshing there would zero the LO input.
+        return super(HrPayslip, self.with_context(
+            loan_skip_input_refresh=True)).action_payslip_done()
