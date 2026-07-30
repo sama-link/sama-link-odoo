@@ -22,7 +22,7 @@
 #############################################################################
 {
     'name': 'Odoo 18 HR Payroll v1.0.0',
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.3.0',
     'category': 'Human Resources',
     'summary': """Odoo 18 HR Payroll, Odoo18 Payroll, Payroll, Odoo Payroll, Payroll V18, Odoo18, Payroll Management, Odoo18 Payslip""",
     'description': """The system automates payroll management by streamlining

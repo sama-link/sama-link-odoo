@@ -174,8 +174,16 @@ class HrPayslip(models.Model):
         return self.write({'state': 'draft'})
 
     def action_payslip_done(self):
-        """Function for change stage of Payslip"""
-        self.action_compute_sheet()
+        """Confirm the payslip without touching an already-computed sheet.
+
+        Confirming — in particular closing a whole batch — must never silently
+        change amounts that were reviewed and paid: attendance, absence entries
+        and loan schedules move after payroll is computed, so recomputing here
+        rewrote salaries at the worst possible moment. Only payslips that were
+        never computed get their lines built, so confirming an empty slip still
+        produces a real one. Recomputing stays an explicit user action.
+        """
+        self.filtered(lambda payslip: not payslip.line_ids).action_compute_sheet()
         return self.write({'state': 'done'})
 
     def action_payslip_cancel(self):
