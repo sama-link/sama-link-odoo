@@ -1,5 +1,7 @@
 from odoo import models, fields
 
+
+
 class HrCustodyType(models.Model):
     _name = 'hr.custody.type'
     _description = 'Custody Type'
