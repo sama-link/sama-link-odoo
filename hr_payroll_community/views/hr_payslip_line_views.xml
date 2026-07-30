@@ -107,8 +107,11 @@
                             type='object'/>
                     <button string="Set to Draft" name="action_payslip_draft"
                             type="object" invisible="state != 'cancel'" groups="hr_payroll_community.group_hr_payroll_community_user"/>
+                    <!-- Also available once confirmed: closing no longer
+                         recomputes, so payroll needs an explicit way to
+                         refresh a slip after the batch is closed. -->
                     <button string="Compute Sheet" name="action_compute_sheet"
-                            type="object" invisible="state != 'draft'"
+                            type="object" invisible="state not in ('draft', 'done')"
                             class="oe_highlight" groups="hr_payroll_community.group_hr_payroll_community_user"/>
                     <button string="Cancel Payslip" name="action_payslip_cancel"
                             type="object"
