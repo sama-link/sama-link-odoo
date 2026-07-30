@@ -73,9 +73,9 @@ class HrPayslipRun(models.Model):
         """Instantly visually sync batch dates to all child payslips in UI.
         Payslips flagged as lock_dates keep their own period."""
         if self.date_start and self.date_end:
-            for slip in self.slip_ids.filtered(lambda s: not s.lock_dates):
-                slip.date_from = self.date_start
-                slip.date_to = self.date_end
+            # Contracts starting/ending mid-period keep their own bounds.
+            self.slip_ids.apply_contract_bounded_period(
+                self.date_start, self.date_end)
 
     @api.depends('date_start', 'date_end')
     def _compute_duration(self):
@@ -208,9 +208,8 @@ class HrPayslipRun(models.Model):
                             
                     # 2. Sync physical dates to match any fresh batch changes
                     #    (skip payslips whose period is locked)
-                    if not slip.lock_dates:
-                        slip.date_from = self.date_start
-                        slip.date_to = self.date_end
+                    slip.apply_contract_bounded_period(
+                        self.date_start, self.date_end)
                     
                     # 3. Regen working days / schedules / generic inputs for the NEW dates
                     slip.onchange_employee()

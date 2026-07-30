@@ -1,6 +1,6 @@
 {
     'name': 'Samalink HR',
-    'version': '1.3.3',
+    'version': '1.4.0',
     'summary': 'HR Module for Samalink',
     'description': 'Custom HR functionalities for Samalink. '
                    'Includes flexible rest day logic, absence entry filtering, '

@@ -52,6 +52,15 @@ class HrPayslipEmployees(models.TransientModel):
             slip_data = (
                 self.env['hr.payslip'].onchange_employee_id(
                     from_date, to_date, employee.id, contract_id=False))
+            # A contract starting/ending mid-batch is only paid for its own
+            # days, so re-derive worked days and inputs over the overlap.
+            slip_from, slip_to = self.env['hr.payslip']._contract_period_bounds(
+                slip_data['value'].get('contract_id'), from_date, to_date)
+            if (slip_from, slip_to) != (from_date, to_date):
+                slip_data = (
+                    self.env['hr.payslip'].onchange_employee_id(
+                        slip_from, slip_to, employee.id,
+                        contract_id=slip_data['value'].get('contract_id')))
             res = {
                 'employee_id': employee.id,
                 'name': slip_data['value'].get('name'),
@@ -63,8 +72,8 @@ class HrPayslipEmployees(models.TransientModel):
                 'worked_days_line_ids': [(0, 0, x) for x in
                                          slip_data['value'].get(
                                              'worked_days_line_ids')],
-                'date_from': from_date,
-                'date_to': to_date,
+                'date_from': slip_from,
+                'date_to': slip_to,
                 'credit_note': run_data.get('credit_note'),
                 'company_id': employee.company_id.id,
             }
