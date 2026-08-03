@@ -111,11 +111,21 @@ class HrLoan(models.Model):
     date_restriction_warning_shown = fields.Boolean(default=False, compute='_compute_check_date')
 
     def check_fully_paid(self):
+        """Close a loan once nothing is owed any more.
+
+        Nothing owed means balance <= 0, not balance == 0: installment
+        amounts are rounded per line (2,500 over 3 months is deducted as
+        834 + 833.33 + 833.34) and can be edited, so the deducted total
+        often lands a few piasters — or a whole adjustment — ABOVE the
+        loan. Testing for exactly zero left those loans stuck in Approved
+        with a negative balance forever: the employee had repaid in full
+        yet the loan module still listed the debt as outstanding.
+        """
         self._compute_total_amount()
         for loan in self:
             precision = loan.currency_id.rounding or 0.01
-            if loan.state == 'approve' and float_is_zero(
-                    loan.balance_amount, precision_rounding=precision):
+            if loan.state == 'approve' and float_compare(
+                    loan.balance_amount, 0.0, precision_rounding=precision) <= 0:
                 loan.write({'state': 'paid'})
                 loan.action_archive()
             elif loan.state == 'paid' and float_compare(
@@ -128,12 +138,14 @@ class HrLoan(models.Model):
 
     def action_batch_mark_as_paid(self):
         """Batch action to mark multiple loans as fully paid from list view.
-        Only works on approved loans with zero balance."""
+        Only works on approved loans with nothing left owed (see
+        check_fully_paid: an over-deducted loan counts as settled)."""
         self._compute_total_amount()
         invalid = self.filtered(
-            lambda l: l.state != 'approve' or not float_is_zero(
-                l.balance_amount, precision_rounding=l.currency_id.rounding or 0.01
-            )
+            lambda l: l.state != 'approve' or float_compare(
+                l.balance_amount, 0.0,
+                precision_rounding=l.currency_id.rounding or 0.01
+            ) > 0
         )
         if invalid:
             names = ', '.join(invalid.mapped('name'))

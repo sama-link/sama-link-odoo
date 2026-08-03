@@ -160,15 +160,36 @@ class HrPayslip(models.Model):
                 if float_compare(inp.amount, total, precision_rounding=prec) == 0:
                     inp.loan_line_ids = loan_lines
 
+    def action_payslip_draft(self):
+        """Release the installments these payslips had settled.
+
+        Confirming a payslip is the only thing that marks its installments
+        paid, so sending one back to draft has to undo that. Otherwise the
+        deduction disappears from payroll while the loan still counts the
+        money as received — the mirror image of the bug where the salary is
+        deducted but the loan shows nothing paid. Only lines stamped with
+        these payslips are released, so manual repayments (Pay Amount) and
+        installments settled by other slips are never touched.
+        """
+        lines = self.env['hr.loan.line'].sudo().search(
+            [('payslip_id', 'in', self.ids), ('paid', '=', True)])
+        res = super().action_payslip_draft()
+        if lines:
+            lines.write({'paid': False, 'payslip_id': False})
+        return res
+
     def action_payslip_done(self):
         """ Compute the loan amount and remaining amount while confirming
             the payslip"""
         self._consolidate_loan_input_lines()
         self._sync_loan_input_line_links()
-        for line in self.input_line_ids:
-            if line.loan_line_ids:
-                line.loan_line_ids.write({'paid': True})
-                line.loan_line_ids.loan_id.check_fully_paid()
+        for slip in self:
+            for inp in slip.input_line_ids:
+                if inp.loan_line_ids:
+                    # Stamp the slip that settles the installment, so drafting
+                    # that slip later releases exactly these lines again.
+                    inp.loan_line_ids.write({'paid': True, 'payslip_id': slip.id})
+                    inp.loan_line_ids.loan_id.check_fully_paid()
         # loan_skip_input_refresh: super() recomputes the sheet after the lines
         # above were marked paid — refreshing there would zero the LO input.
         return super(HrPayslip, self.with_context(
