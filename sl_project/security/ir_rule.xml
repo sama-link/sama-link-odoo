@@ -17,12 +17,15 @@
          every project that is not follower-only. That reach is unreachable
          today because no ACL gives them write, but ir.model.access.csv now
          does, so narrow the core rule to read first or the new access would
-         inherit it and let any employee edit almost every project. -->
-    <record model="ir.rule" id="project.project_public_members_rule">
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
+         inherit it and let any employee edit almost every project.
+
+         A plain record override is silently ignored here: core flags this rule
+         noupdate, so the loader skips it and the widening would ship unnoticed.
+         A function call performs a real write, on install and on every upgrade
+         of this module. -->
+    <function model="ir.rule" name="write"
+              eval="[[ref('project.project_public_members_rule')],
+                     {'perm_write': False, 'perm_create': False, 'perm_unlink': False}]"/>
 
     <!-- A project's own responsible user may manage that project, which is
          what makes the Add Followers button work for them. Write only, and
