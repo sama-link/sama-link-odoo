@@ -107,6 +107,20 @@ class HrAppraisal(models.Model):
         inverse='_inverse_hr_employee_id',
         help="Single-select proxy for employee evaluator.")
 
+    # Stored so list domains can exclude "my own appraisal" WITHOUT walking
+    # through hr.employee. Evaluators are granted the appraisal via
+    # access_user_ids, not the employee record, and hr.employee is limited to
+    # one's own team - so a domain on employee_id.user_id silently drops every
+    # appraisal whose employee the evaluator cannot read, emptying their list.
+    employee_user_id = fields.Many2one(
+        'res.users',
+        string='Employee User',
+        related='employee_id.user_id',
+        store=True,
+        index=True,
+        readonly=True,
+    )
+
     access_user_ids = fields.Many2many(
         'res.users',
         compute='_compute_access_user_ids',
