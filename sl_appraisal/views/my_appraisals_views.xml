@@ -176,7 +176,7 @@
         <field name="name">My Appraisals</field>
         <field name="res_model">hr.appraisal</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+        <field name="domain">[('employee_user_id', '=', uid)]</field>
         <field name="view_ids" eval="[
             (5, 0, 0),
             (0, 0, {'view_mode': 'list', 'view_id': ref('sl_my_appraisals_view_tree')}),

@@ -389,7 +389,7 @@
                         domain="[('state', '=', 'hr_finalization')]"/>
                 <separator/>
                 <filter name="filter_my_appraisals" string="My Appraisals"
-                        domain="[('employee_id.user_id', '=', uid)]"/>
+                        domain="[('employee_user_id', '=', uid)]"/>
                 <filter name="filter_my_team" string="My Team"
                         domain="['|', ('hr_manager_ids.user_id', '=', uid),
                                       ('employee_id.parent_id.user_id', '=', uid)]"/>
@@ -415,7 +415,7 @@
         <field name="view_mode">kanban,list,form</field>
         <!-- One's own appraisal is reachable only via My Appraisals; the
              management list never shows the current user's own record. -->
-        <field name="domain">[('employee_id.user_id', '!=', uid)]</field>
+        <field name="domain">[('employee_user_id', '!=', uid)]</field>
         <field name="search_view_id" ref="sl_hr_appraisal_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -434,7 +434,7 @@
         <field name="name">Appraisals</field>
         <field name="res_model">hr.appraisal</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('employee_id.user_id', '!=', uid)]</field>
+        <field name="domain">[('employee_user_id', '!=', uid)]</field>
         <field name="search_view_id" ref="sl_hr_appraisal_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
