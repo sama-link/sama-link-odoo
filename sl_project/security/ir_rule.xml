@@ -6,4 +6,39 @@
             ('company_ids', 'not in', company_ids)
         ]</field>
     </record>
+
+    <!-- Inviting anyone but yourself to a record needs WRITE on it, and the
+         chatter hides its "Add Followers" control without write access. Since
+         project.project write was reserved for Project Administrators/Mangers,
+         the person actually running a project could not invite a colleague to
+         it - which is the only way into a "Invited internal users" project.
+
+         Core already grants employees write/create/unlink at RULE level for
+         every project that is not follower-only. That reach is unreachable
+         today because no ACL gives them write, but ir.model.access.csv now
+         does, so narrow the core rule to read first or the new access would
+         inherit it and let any employee edit almost every project.
+
+         A plain record override is silently ignored here: core flags this rule
+         noupdate, so the loader skips it and the widening would ship unnoticed.
+         A function call performs a real write, on install and on every upgrade
+         of this module. -->
+    <function model="ir.rule" name="write"
+              eval="[[ref('project.project_public_members_rule')],
+                     {'perm_write': False, 'perm_create': False, 'perm_unlink': False}]"/>
+
+    <!-- A project's own responsible user may manage that project, which is
+         what makes the Add Followers button work for them. Write only, and
+         only on their own projects: every other project stays read-only for
+         them, and creating/deleting projects remains with the managers. -->
+    <record model="ir.rule" id="project_own_project_write_rule">
+        <field name="name">Project: responsible user manages their own project</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="groups" eval="[(4, ref('project.group_project_user'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
 </odoo>

@@ -1,6 +1,6 @@
 {
     'name': 'SamaLink Project',
-    'version': '18.0.1.3.1',
+    'version': '18.0.1.4.1',
     'summary': 'Project management module for Samalink',
     'description': 'A module to manage projects within the Samalink system.',
     'author': 'Your Company Name',
@@ -8,6 +8,7 @@
     'category': 'Project',
     'depends': ['base', 'project', 'hr', 'project_todo'],
     'data': [
+        'security/ir.model.access.csv',
         'security/ir_rule.xml',
         'views/project_project.xml',
         'views/project_task.xml',
