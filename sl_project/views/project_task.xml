@@ -9,10 +9,7 @@
                 <field name="project_company_ids" invisible="1"/>
             </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), '|', '|', ('company_id', 'in', project_company_ids), ('company_id', 'not in', excluded_company_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
-            </field>
-            <field name="tag_ids" position="after">
-                <field name="excluded_company_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), '|', ('company_id', 'in', project_company_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
             </field>
             <!-- Place on its own labeled row after the whole Deadline/recurrence block
                  (not inside the inline flex div, which would render it unlabeled). -->

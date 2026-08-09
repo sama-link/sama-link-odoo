@@ -6,19 +6,19 @@
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.edit_project"/>
             <field name="arch" type="xml">
+                <!-- Published date + multi Company in the form body (under Tags),
+                     not in the header. -->
                 <field name="tag_ids" position="after">
-                    <field name="excluded_company_ids" widget="many2many_tags" options="{'no_create': True}"/>
                     <field name="use_published_date"/>
-                </field>
-                <!-- Replace the single Company widget with multi-select. Keep
-                     company_id in the arch (hidden) for core compute/inverse. -->
-                <xpath expr="//field[@name='company_id']" position="replace">
                     <field name="company_ids"
                            string="Company"
                            widget="many2many_tags"
                            options="{'no_create': True}"
                            groups="base.group_multi_company"/>
-                    <field name="company_id" invisible="1"/>
+                </field>
+                <!-- Hide every core company_id widget (can appear more than once). -->
+                <xpath expr="//field[@name='company_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
                 </xpath>
             </field>
         </record>

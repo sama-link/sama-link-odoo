@@ -21,25 +21,11 @@ ALLOWED_CALENDAR_DATE_FIELDS = [
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
-    # Companies the parent project belongs to (for assignee domain / exclude domain).
+    # Companies the parent project belongs to (for assignee domain).
     project_company_ids = fields.Many2many(
         related='project_id.company_ids',
         string='Project Companies',
         readonly=True,
-    )
-
-    # Named excluded_company_ids (not company_ids) so it does not collide with
-    # Odoo's reserved multi-company field meaning. Relation table kept so
-    # existing exclude data survives the rename.
-    excluded_company_ids = fields.Many2many(
-        'res.company',
-        'project_task_res_company_rel',
-        'project_task_id',
-        'res_company_id',
-        string='Companies (Exclude)',
-        domain="[('id', 'not in', project_company_ids)]",
-        compute='_compute_excluded_company_ids', store=True,
-        readonly=False, recursive=True, copy=True,
     )
 
     published_date = fields.Date(string="Published Date")
@@ -76,16 +62,6 @@ class ProjectTask(models.Model):
                 allowed = self.env['res.users'].browse(team_users.ids) | user
         for task in self:
             task.allowed_assignee_user_ids = allowed
-
-    @api.depends('project_id.excluded_company_ids', 'parent_id.excluded_company_ids')
-    def _compute_excluded_company_ids(self):
-        for task in self:
-            if not task.parent_id and not task.project_id:
-                continue
-            task.excluded_company_ids = (
-                task.project_id.excluded_company_ids
-                or task.parent_id.excluded_company_ids
-            )
 
     # ------------------------------------------------------------------
     # Calendar date field (global setting, admin-controlled)

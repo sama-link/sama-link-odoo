@@ -4,8 +4,7 @@ from odoo import api, fields, models
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
-    # Multi-company membership for the project (what the form "Company" field
-    # edits). Own relation table so it never collides with exclude data.
+    # Multi-select companies for the project; shown instead of core company_id.
     company_ids = fields.Many2many(
         'res.company',
         'sl_project_project_company_rel',
@@ -13,17 +12,6 @@ class ProjectProject(models.Model):
         'company_id',
         string='Company',
         default=lambda self: self.env.company,
-    )
-
-    # Named excluded_company_ids (not company_ids) so it does not collide with
-    # Odoo's reserved multi-company field meaning.
-    excluded_company_ids = fields.Many2many(
-        'res.company',
-        'project_project_res_company_rel',
-        'project_project_id',
-        'res_company_id',
-        string='Companies (Exclude)',
-        domain="[('id', 'not in', company_ids)]",
     )
 
     # When enabled, tasks in this project show a "Published Date" field on their form.
@@ -75,7 +63,6 @@ class ProjectProject(models.Model):
             for project in self:
                 primary = project.company_ids[:1]
                 if project.company_id != primary:
-                    # bypass this write() recursion for the m2m branch
                     super(ProjectProject, project).write({
                         'company_id': primary.id if primary else False,
                     })
@@ -103,7 +90,6 @@ class ProjectProject(models.Model):
     @api.onchange('company_ids')
     def _onchange_company_ids(self):
         self.company_id = self.company_ids[:1]
-        self.excluded_company_ids = self.excluded_company_ids - self.company_ids
 
     @api.onchange('company_id')
     def _onchange_company_id(self):

@@ -5,27 +5,17 @@
     <function model="ir.rule" name="write"
               eval="[[ref('project.project_comp_rule')], {'domain_force': '''['|', '|', ('company_ids', '=', False), ('company_ids', 'in', company_ids), '|', ('company_id', 'in', company_ids), ('company_id', '=', False)]'''}]"/>
 
-    <!-- Exclude is a GROUP rule (not global). Global rules AND for everyone,
-         which blocked admins/managers who were not the project responsible when
-         an excluded company was selected in the switcher (needed to invite
-         followers). Group rules OR with manager "see all" rules instead. -->
+    <!-- Obsolete exclude rules kept inactive so upgrades clear them safely. -->
     <record model="ir.rule" id="project_multi_comp_rule">
-        <field name="name">Project: excluded companies</field>
+        <field name="name">Project: excluded companies (obsolete)</field>
         <field name="model_id" ref="project.model_project_project"/>
-        <field name="groups" eval="[(6, 0, [ref('project.group_project_user')])]"/>
-        <field name="domain_force">[
-            '|', '|',
-            ('message_partner_ids', 'in', [user.partner_id.id]),
-            ('user_id', '=', user.id),
-            ('excluded_company_ids', 'not in', company_ids)
-        ]</field>
+        <field name="active" eval="False"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
     </record>
-
-    <!-- Explicit manager/admin bypass so exclude never locks them out of invites. -->
     <record model="ir.rule" id="project_exclude_manager_bypass_rule">
-        <field name="name">Project: managers ignore company exclude</field>
+        <field name="name">Project: managers ignore company exclude (obsolete)</field>
         <field name="model_id" ref="project.model_project_project"/>
-        <field name="groups" eval="[(4, ref('project.group_project_manager')), (4, ref('base.group_system'))]"/>
+        <field name="active" eval="False"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
