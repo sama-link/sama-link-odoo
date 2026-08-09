@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
         <record id="edit_project" model="ir.ui.view">
@@ -8,6 +9,17 @@
                 <field name="tag_ids" position="after">
                     <field name="excluded_company_ids" widget="many2many_tags" options="{'no_create': True}"/>
                     <field name="use_published_date"/>
+                </field>
+                <!-- Replace single Company with multi-select; keep company_id for core. -->
+                <field name="company_id" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="groups"/>
+                </field>
+                <field name="company_id" position="after">
+                    <field name="company_ids"
+                           widget="many2many_tags"
+                           options="{'no_create': True}"
+                           groups="base.group_multi_company"/>
                 </field>
             </field>
         </record>

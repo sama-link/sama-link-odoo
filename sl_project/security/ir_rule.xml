@@ -1,6 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Widen core multi-company rule so a project shared across company_ids is
+         visible to every selected company, not only company_id (primary). -->
+    <function model="ir.rule" name="write"
+              eval="[[ref('project.project_comp_rule')],
+                     {'domain_force': \"['|', '|', ('company_ids', '=', False), ('company_ids', 'in', company_ids), '|', ('company_id', 'in', company_ids), ('company_id', '=', False)]\"}]"/>
+
+    <!-- Exclude listed companies unless the user is the project responsible or a follower.
+         Responsible/followers keep access when an excluded company is selected in the
+         company switcher (needed to find and invite followers from that company). -->
     <record model="ir.rule" id="project_multi_comp_rule">
-        <field name="name">Project: multi-company</field>
+        <field name="name">Project: excluded companies</field>
         <field name="model_id" ref="model_project_project"/>
         <field name="domain_force">[
             '|', '|',
