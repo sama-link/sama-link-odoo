@@ -3,7 +3,10 @@
         <field name="name">Project: multi-company</field>
         <field name="model_id" ref="model_project_project"/>
         <field name="domain_force">[
-            ('company_ids', 'not in', company_ids)
+            '|', '|',
+            ('message_partner_ids', 'in', [user.partner_id.id]),
+            ('user_id', '=', user.id),
+            ('excluded_company_ids', 'not in', company_ids)
         ]</field>
     </record>
 

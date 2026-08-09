@@ -1,10 +1,16 @@
 from odoo import models, fields
 
+
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
-    company_ids = fields.Many2many(
+    # Named excluded_company_ids (not company_ids) so it does not collide with
+    # Odoo's reserved multi-company field meaning.
+    excluded_company_ids = fields.Many2many(
         'res.company',
+        'project_project_res_company_rel',
+        'project_project_id',
+        'res_company_id',
         string='Companies (Exclude)',
         domain="[('id', '!=', company_id)]",
     )

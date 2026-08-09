@@ -1,6 +1,6 @@
 {
     'name': 'SamaLink Project',
-    'version': '18.0.1.4.1',
+    'version': '18.0.1.4.2',
     'summary': 'Project management module for Samalink',
     'description': 'A module to manage projects within the Samalink system.',
     'author': 'Your Company Name',
