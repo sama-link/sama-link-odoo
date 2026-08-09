@@ -3,8 +3,7 @@
     <!-- Widen core multi-company rule so a project shared across company_ids is
          visible to every selected company, not only company_id (primary). -->
     <function model="ir.rule" name="write"
-              eval="[[ref('project.project_comp_rule')],
-                     {'domain_force': \"['|', '|', ('company_ids', '=', False), ('company_ids', 'in', company_ids), '|', ('company_id', 'in', company_ids), ('company_id', '=', False)]\"}]"/>
+              eval="[[ref('project.project_comp_rule')], {'domain_force': '''['|', '|', ('company_ids', '=', False), ('company_ids', 'in', company_ids), '|', ('company_id', 'in', company_ids), ('company_id', '=', False)]'''}]"/>
 
     <!-- Exclude listed companies unless the user is the project responsible or a follower.
          Responsible/followers keep access when an excluded company is selected in the
