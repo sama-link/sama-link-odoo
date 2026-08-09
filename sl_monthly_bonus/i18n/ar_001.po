@@ -2260,6 +2260,12 @@ msgid "Manual Override"
 msgstr "التعديل اليدوي"
 
 #. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/sl_bonus_batch.py:0
+msgid "Manual adjustment: %s"
+msgstr "تعديل يدوي: %s"
+
+#. module: sl_monthly_bonus
 #: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_line__manual_override_amount
 msgid "Manual Override Amount"
 msgstr "مبلغ التعديل اليدوي"

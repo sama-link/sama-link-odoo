@@ -444,7 +444,16 @@ class SlBonusBatch(models.Model):
             ws.write_number(row, 9, line.computed_amount or 0.0, money)
             ws.write_number(row, 10, line.bonus_amount or 0.0, money)
             ws.write(row, 11, _('Yes') if line.is_excluded else _('No'))
-            ws.write(row, 12, line.exclusion_reason or '')
+            # Reason column carries both the automatic exclusion reason and the
+            # reason typed by HR/Admin when they manually adjusted the amount.
+            reason_parts = []
+            if line.exclusion_reason:
+                reason_parts.append(line.exclusion_reason)
+            if line.manual_override_reason and line.manual_override_reason.strip():
+                reason_parts.append(
+                    _("Manual adjustment: %s") % line.manual_override_reason.strip()
+                )
+            ws.write(row, 12, ' | '.join(reason_parts))
             row += 1
         # Total row (non-excluded bonus).
         ws.write(row + 1, 9, _('Total'), bold)
