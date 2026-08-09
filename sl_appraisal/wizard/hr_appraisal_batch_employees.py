@@ -75,8 +75,7 @@ class HrAppraisalBatchEmployees(models.TransientModel):
         batch = self.batch_id
         if not batch:
             raise UserError(_("No appraisal batch was found."))
-        if batch.state != 'draft':
-            raise UserError(_("Employees can only be added while the batch is in Draft state."))
+        batch._assert_can_generate_appraisals()
         if not self.employee_ids:
             raise UserError(_("You must select at least one employee."))
 

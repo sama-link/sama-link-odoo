@@ -35,10 +35,7 @@ class HrAppraisalBatchContractWarning(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
         batch = self.batch_id
-        if batch.state != 'draft':
-            raise UserError(_(
-                "Employees can only be added while the batch is in Draft state."
-            ))
+        batch._assert_can_generate_appraisals()
         included = self.line_ids.filtered(
             lambda l: l.decision == 'include'
         ).mapped('employee_id')

@@ -62,7 +62,7 @@
                             type="object"
                             class="btn-secondary"
                             groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"
-                            invisible="state != 'draft'"/>
+                            invisible="state == 'hr_finalization'"/>
                     <button name="action_refresh_skills_from_job"
                             string="Refresh Skills"
                             type="object"
