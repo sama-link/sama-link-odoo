@@ -11,7 +11,7 @@ class ProjectProject(models.Model):
         'sl_project_project_company_rel',
         'project_id',
         'company_id',
-        string='Companies',
+        string='Company',
         default=lambda self: self.env.company,
     )
 
