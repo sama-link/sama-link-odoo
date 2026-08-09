@@ -118,11 +118,23 @@ class HrAppraisalBatch(models.Model):
                 raise UserError(_("Only draft appraisal batches can be deleted."))
         return super().unlink()
 
+    def _assert_can_generate_appraisals(self):
+        """Allow adding employees while the batch is Draft, Published, or Submitted."""
+        self.ensure_one()
+        if self.state == 'hr_finalization':
+            raise UserError(_(
+                "Employees cannot be added while the batch is in HR Finalization."
+            ))
+        if self.state not in ('draft', 'published', 'submitted'):
+            raise UserError(_(
+                "Employees can only be added while the batch is in Draft, "
+                "Published, or Submitted state."
+            ))
+
     def action_open_generate_wizard(self):
         self.ensure_one()
         self._check_hr_or_admin_access("generate appraisals in batch")
-        if self.state != 'draft':
-            raise UserError(_("Employees can only be added while the batch is in Draft state."))
+        self._assert_can_generate_appraisals()
         return {
             'name': _('Generate Appraisals'),
             'type': 'ir.actions.act_window',
@@ -138,12 +150,20 @@ class HrAppraisalBatch(models.Model):
         }
 
     def _generate_appraisals_for_employees(self, employees):
-        """Create one draft appraisal per employee in this batch, mirroring
-        the batch period/deadline and defaulting the evaluator to the
-        employee's direct manager. Shared by the generate wizard and the
-        contract-warning wizard so both paths behave identically."""
+        """Create one appraisal per employee in this batch, mirroring the
+        batch period/deadline and defaulting the evaluator to the employee's
+        direct manager. Shared by the generate wizard and the contract-warning
+        wizard so both paths behave identically.
+
+        New appraisals stay Draft when the batch is Draft. When the batch is
+        Published or Submitted they are auto-published so the batch status
+        stays coherent.
+        """
         self.ensure_one()
+        self._assert_can_generate_appraisals()
         appraisal_model = self.env['hr.appraisal'].sudo()
+        auto_publish = self.state in ('published', 'submitted')
+        created = self.env['hr.appraisal']
         for employee in employees:
             vals = {
                 'employee_id': employee.id,
@@ -158,6 +178,25 @@ class HrAppraisalBatch(models.Model):
             appraisal = appraisal_model.create(vals)
             if employee.employee_skill_ids and not appraisal.skills_populated:
                 appraisal.action_populate_skills()
+            created |= appraisal
+
+        if auto_publish:
+            previous_state = self.state
+            for appraisal in created:
+                try:
+                    appraisal.action_publish()
+                except (UserError, AccessError, ValidationError) as exc:
+                    raise UserError(_(
+                        "Could not auto-publish appraisal for %(employee)s: %(error)s"
+                    ) % {
+                        'employee': appraisal.employee_id.name or appraisal.display_name,
+                        'error': exc.args[0] if exc.args else str(exc),
+                    }) from exc
+            # Keep the batch in Published/Submitted. Sync would demote a
+            # Submitted batch to Published when late appraisals are still open.
+            if self.state != previous_state:
+                self.state = previous_state
+
         self.message_post(
             body=_("Generated %s appraisal(s) from the batch wizard.") % len(employees)
         )
