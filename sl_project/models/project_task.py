@@ -36,32 +36,64 @@ class ProjectTask(models.Model):
 
     # Assignment control: regular users may only assign tasks within their own
     # org-chart team (subordinates via parent_id chain, coached employees, and
-    # themselves). Project managers and system admins stay unrestricted.
+    # themselves). Whoever may edit the project runs it, so they assign anyone
+    # in it; project managers and system admins stay unrestricted everywhere.
     allowed_assignee_user_ids = fields.Many2many(
         'res.users', string='Allowed Assignees',
         compute='_compute_allowed_assignee_user_ids')
 
+    @api.depends('project_id')
     @api.depends_context('uid')
     def _compute_allowed_assignee_user_ids(self):
         user = self.env.user
-        if (user.has_group('project.group_project_manager')
-                or user.has_group('base.group_system')):
-            allowed = self.env['res.users'].search(
-                [('share', '=', False), ('active', '=', True)])
-        else:
-            allowed = user
-            employee = user.employee_id
-            if employee:
-                # sudo: the searching user may not be allowed to read the whole
-                # team hierarchy, but may still assign within it.
-                team = self.env['hr.employee'].sudo().search(
-                    ['|', ('id', 'child_of', employee.id),
-                          ('coach_id', '=', employee.id)])
-                team_users = team.mapped('user_id').filtered(
-                    lambda u: u.active and not u.share)
-                allowed = self.env['res.users'].browse(team_users.ids) | user
+        unrestricted_everywhere = (
+            user.has_group('project.group_project_manager')
+            or user.has_group('base.group_system'))
+        everyone = team = None
+        may_manage = {}
         for task in self:
-            task.allowed_assignee_user_ids = allowed
+            if unrestricted_everywhere or self._may_manage_project(
+                    task.project_id._origin, may_manage):
+                if everyone is None:
+                    everyone = self.env['res.users'].search(
+                        [('share', '=', False), ('active', '=', True)])
+                task.allowed_assignee_user_ids = everyone
+            else:
+                if team is None:
+                    team = self._team_assignee_users()
+                task.allowed_assignee_user_ids = team
+
+    def _may_manage_project(self, project, cache):
+        """Whether the current user runs `project`, i.e. may edit it.
+
+        The manager group carrying project rights is database configuration
+        here, not always `project.group_project_manager`: this database drives
+        its `ir.rule`s off a manually created "Project / Manger" group that has
+        no XML ID, so no group reference in code can recognise it. Write access
+        to the project is the same permission those rules express, and it also
+        covers a plain user who is the project's own responsible, so ask for
+        that instead of naming a group.
+        """
+        if not project:
+            return False
+        if project.id not in cache:
+            cache[project.id] = project.has_access('write')
+        return cache[project.id]
+
+    def _team_assignee_users(self):
+        """Current user plus the org-chart team they may assign work to."""
+        user = self.env.user
+        employee = user.employee_id
+        if not employee:
+            return user
+        # sudo: the searching user may not be allowed to read the whole
+        # team hierarchy, but may still assign within it.
+        team = self.env['hr.employee'].sudo().search(
+            ['|', ('id', 'child_of', employee.id),
+                  ('coach_id', '=', employee.id)])
+        team_users = team.mapped('user_id').filtered(
+            lambda u: u.active and not u.share)
+        return self.env['res.users'].browse(team_users.ids) | user
 
     # ------------------------------------------------------------------
     # Calendar date field (global setting, admin-controlled)
