@@ -6,10 +6,9 @@
         <field name="arch" type="xml">
             <field name="user_ids" position="before">
                 <field name="allowed_assignee_user_ids" invisible="1"/>
-                <field name="project_company_ids" invisible="1"/>
             </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), '|', ('company_id', 'in', project_company_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids)]</attribute>
             </field>
             <!-- Place on its own labeled row after the whole Deadline/recurrence block
                  (not inside the inline flex div, which would render it unlabeled). -->
@@ -29,7 +28,7 @@
                 <field name="allowed_assignee_user_ids" invisible="1"/>
             </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('company_id', '=', company_id), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids)]</attribute>
             </field>
         </field>
     </record>
@@ -44,7 +43,7 @@
                 <field name="allowed_assignee_user_ids" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='user_ids']" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids)]</attribute>
             </xpath>
         </field>
     </record>
@@ -58,7 +57,7 @@
                 <field name="allowed_assignee_user_ids" column_invisible="True"/>
             </xpath>
             <xpath expr="//field[@name='user_ids']" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids)]</attribute>
             </xpath>
         </field>
     </record>
@@ -73,7 +72,7 @@
                 <field name="allowed_assignee_user_ids" column_invisible="True"/>
             </field>
             <field name="user_ids" position="attributes">
-                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids), ('share', '=', False), ('active', '=', True)]</attribute>
+                <attribute name="domain">[('id', 'in', allowed_assignee_user_ids)]</attribute>
             </field>
         </field>
     </record>

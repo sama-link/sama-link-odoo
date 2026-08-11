@@ -21,13 +21,6 @@ ALLOWED_CALENDAR_DATE_FIELDS = [
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
-    # Companies the parent project belongs to (for assignee domain).
-    project_company_ids = fields.Many2many(
-        related='project_id.company_ids',
-        string='Project Companies',
-        readonly=True,
-    )
-
     published_date = fields.Date(string="Published Date")
     # Mirrors the project's toggle; used only to gate visibility of published_date
     # on the task form (dotted paths can't be used in view `invisible` expressions).
@@ -42,26 +35,43 @@ class ProjectTask(models.Model):
         'res.users', string='Allowed Assignees',
         compute='_compute_allowed_assignee_user_ids')
 
-    @api.depends('project_id')
+    @api.depends('project_id', 'project_id.company_ids', 'company_id')
     @api.depends_context('uid')
     def _compute_allowed_assignee_user_ids(self):
         user = self.env.user
         unrestricted_everywhere = (
             user.has_group('project.group_project_manager')
             or user.has_group('base.group_system'))
-        everyone = team = None
+        team = None
         may_manage = {}
+        pools = {}
         for task in self:
+            project = task.project_id._origin
             if unrestricted_everywhere or self._may_manage_project(
-                    task.project_id._origin, may_manage):
-                if everyone is None:
-                    everyone = self.env['res.users'].search(
-                        [('share', '=', False), ('active', '=', True)])
-                task.allowed_assignee_user_ids = everyone
+                    project, may_manage):
+                task.allowed_assignee_user_ids = self._assignee_pool(
+                    project.company_ids | task.company_id, pools)
             else:
                 if team is None:
                     team = self._team_assignee_users()
                 task.allowed_assignee_user_ids = team
+
+    def _assignee_pool(self, companies, cache):
+        """Internal users assignable inside `companies`.
+
+        A project that names no company is not a project anyone is barred from:
+        filtering on an empty company set matches nobody and empties the whole
+        dropdown, so the company narrowing only applies once there is a company
+        to narrow to. Tasks here routinely carry no company of their own, which
+        is why the previous view-side domain selected zero users.
+        """
+        key = tuple(sorted(companies.ids))
+        if key not in cache:
+            domain = [('share', '=', False), ('active', '=', True)]
+            if key:
+                domain.append(('company_id', 'in', list(key)))
+            cache[key] = self.env['res.users'].search(domain)
+        return cache[key]
 
     def _may_manage_project(self, project, cache):
         """Whether the current user runs `project`, i.e. may edit it.
