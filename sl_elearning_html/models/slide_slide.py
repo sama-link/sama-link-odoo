@@ -64,28 +64,41 @@ class SlideSlide(models.Model):
                     and slide._is_html_document()):
                 slide.slide_type = 'html'
 
+    def _html_embed_iframe(self, url):
+        """ Build the viewer iframe markup for `url`.
+
+        The fullscreen player rebuilds the iframe from only the src
+        (``embedUrl = $(embedCode).attr('src')``), so the sandbox is also
+        enforced server-side via a CSP header on the route. The sandbox
+        attribute here still applies on the non-fullscreen detail page, where
+        the raw embed_code is injected as-is. """
+        return Markup(
+            '<iframe src="%s" class="o_wslides_iframe_viewer" '
+            'sandbox="allow-scripts allow-popups allow-forms" '
+            'allowFullScreen="true" height="%s" width="%s" frameborder="0" '
+            'aria-label="%s"></iframe>'
+        ) % (url, 315, 420, _('HTML content'))
+
     @api.depends('slide_category', 'google_drive_id', 'video_source_type', 'youtube_id', 'slide_type')
     def _compute_embed_code(self):
         super()._compute_embed_code()
-        request_base_url = request.httprequest.url_root if request else False
         for slide in self:
             if not (slide.slide_type == 'html'
                     and slide.slide_category == 'document'
                     and slide.source_type == 'local_file'):
                 continue
-            base_url = request_base_url or slide.get_base_url()
-            if base_url and base_url[-1] == '/':
-                base_url = base_url[:-1]
-            slide_url = base_url + self.env['ir.http']._url_for('/slides/slide/%s/html_content' % slide.id)
-            # The fullscreen player rebuilds the iframe from only the src, so the
-            # sandbox is also enforced server-side via a CSP header on the route.
-            # The sandbox attribute here still applies on the non-fullscreen
-            # detail page where the raw embed_code is injected.
-            embed_code = Markup(
-                '<iframe src="%s" class="o_wslides_iframe_viewer" '
-                'sandbox="allow-scripts allow-popups allow-forms" '
-                'allowFullScreen="true" height="%s" width="%s" frameborder="0" '
-                'aria-label="%s"></iframe>'
-            ) % (slide_url, 315, 420, _('HTML content'))
-            slide.embed_code = embed_code
-            slide.embed_code_external = embed_code
+            path = '/slides/slide/%s/html_content' % slide.id
+            if request:
+                path = self.env['ir.http']._url_for(path)
+            # Keep the in-player src ROOT-RELATIVE. Behind a TLS-terminating
+            # proxy, request.httprequest.url_root reports http:// unless Odoo
+            # runs with proxy mode, and an https page refuses to load an http
+            # frame - the lesson renders as an empty panel with only a Mixed
+            # Content console error. A relative src cannot inherit a wrong
+            # scheme or host; core's own infographic branch does the same.
+            slide.embed_code = self._html_embed_iframe(path)
+            # The share snippet is pasted into other sites, so it does need an
+            # absolute URL - take it from the configured base URL rather than
+            # from the proxied request.
+            base_url = (slide.get_base_url() or '').rstrip('/')
+            slide.embed_code_external = self._html_embed_iframe(base_url + path)
