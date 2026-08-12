@@ -21,7 +21,10 @@ class WebsiteSlidesHtml(WebsiteSlides):
         iframe from only the src. """
         if not slide.has_access('read'):
             return request.not_found()
-        html_bytes = base64.b64decode(slide.binary_content or b'')
+        # bin_size=False for the same reason as _is_html_document: under that
+        # context the field yields the file's size string, not the file.
+        content = slide.with_context(bin_size=False).binary_content
+        html_bytes = base64.b64decode(content or b'')
         return request.make_response(html_bytes, headers=[
             ('Content-Type', 'text/html; charset=utf-8'),
             ('Content-Security-Policy', "sandbox allow-scripts allow-popups allow-forms"),

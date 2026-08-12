@@ -23,15 +23,35 @@ class SlideSlide(models.Model):
         """ Sniff whether the uploaded local file is an HTML document.
 
         The model stores no filename, so we inspect the decoded content. Looking
-        at the first bytes is enough for self-contained HTML files. """
+        at the first bytes is enough for self-contained HTML files.
+
+        ``bin_size=False`` is essential, not defensive: under the ``bin_size``
+        context the web client sets on nearly every record read, a binary field
+        returns its human-readable SIZE (b'2.72 Kb') instead of its content, the
+        decode below fails, and this reports "not HTML". Because slide_type is
+        stored, one recompute in such a request permanently demotes the slide to
+        the PDF viewer - the file previews until some unrelated read flips it. """
         self.ensure_one()
-        if not self.binary_content:
+        content = self.with_context(bin_size=False).binary_content
+        if not content:
             return False
         try:
-            head = base64.b64decode(self.binary_content)[:2048].lower()
+            head = base64.b64decode(content)[:2048].lower()
         except Exception:
             return False
         return b'<!doctype html' in head or b'<html' in head or b'<body' in head
+
+    def init(self):
+        """ Heal slides demoted by the bin_size bug described above: they hold
+        an HTML file but a stored slide_type pointing at another viewer. """
+        super().init()
+        stale = self.search([
+            ('slide_category', '=', 'document'),
+            ('source_type', '=', 'local_file'),
+            ('slide_type', '!=', 'html'),
+        ]).filtered(lambda slide: slide._is_html_document())
+        if stale:
+            stale.slide_type = 'html'
 
     @api.depends('slide_category', 'source_type', 'video_source_type', 'binary_content')
     def _compute_slide_type(self):

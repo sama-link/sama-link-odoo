@@ -15,7 +15,7 @@ reach the Odoo session, cookies or storage.
 
 Only single, self-contained HTML files (inline CSS/JS) are supported.
 """,
-    'version': '18.0.1.0.1',
+    'version': '18.0.1.0.2',
     'author': 'Samalink',
     'website': 'https://edara.digital',
     'license': 'LGPL-3',
