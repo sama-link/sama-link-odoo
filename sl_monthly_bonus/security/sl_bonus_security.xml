@@ -87,6 +87,15 @@
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_bonus_hr_manager'))]"/>
         </record>
+        <!-- Sales staging is the sales manager's own subject matter, and the
+             employee rule he also carries would otherwise narrow this to his
+             own rows. New record: noupdate only blocks updates, not creation. -->
+        <record id="rule_edara_sales_manager_all" model="ir.rule">
+            <field name="name">Edara sales staging: sales manager sees all</field>
+            <field name="model_id" ref="model_sl_bonus_edara_staging_sales"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
+        </record>
         <record id="rule_edara_stock_employee_own" model="ir.rule">
             <field name="name">Edara stock staging: employee sees only own</field>
             <field name="model_id" ref="model_sl_bonus_edara_staging_stock"/>

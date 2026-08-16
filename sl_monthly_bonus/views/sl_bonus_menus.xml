@@ -14,7 +14,7 @@
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_lines_main"
                   sequence="5"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <!-- ════════════════════ Batches ════════════════════ -->
         <menuitem id="menu_sl_bonus_batches"
@@ -22,7 +22,7 @@
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_batch"
                   sequence="10"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <!-- Also the Sales Manager's only bonus page: the record rule limits it
              to the Sales category, so the list shows exactly what that role may
@@ -32,7 +32,7 @@
                   parent="menu_sl_bonus_root"
                   action="action_sl_bonus_batch_line"
                   sequence="15"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_open_prev_month"
                   name="Open Previous-Month Batch"
@@ -85,7 +85,7 @@
                   name="🔄 Edara Data"
                   parent="menu_sl_bonus_root"
                   sequence="40"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
         <!-- Restored in v18.0.2.11.x: this menu used to be deactivated by the
              "Phase 1: temporarily hidden menus" block at the end of this file,
              which re-archived it on every upgrade. Administrators now manage
@@ -98,67 +98,78 @@
                   name="Edara Settings"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_settings"
-                  sequence="5"/>
+                  sequence="5"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_sync"
                   name="Sync Log"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_sync"
-                  sequence="10"/>
+                  sequence="10"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_sync_wizard"
                   name="Sync Edara (Proxy)"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_sync_wizard"
-                  sequence="15"/>
+                  sequence="15"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_sync_now"
                   name="Sync Now"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_sync_now_server"
-                  sequence="20"/>
+                  sequence="20"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_import"
                   name="Import Staging Data (CSV)"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_import_wizard"
-                  sequence="30"/>
+                  sequence="30"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_edara_mapping"
                   name="Mapping"
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_mapping"
-                  sequence="40"/>
+                  sequence="40"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_staging_sales"
                   name="Staging — Sales"
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_sales"
-                  sequence="50"/>
+                  sequence="50"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_edara_staging_stock"
                   name="Staging — Stock Purchases"
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_stock"
-                  sequence="60"/>
+                  sequence="60"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_staging_install"
                   name="Staging — Installations"
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_install"
-                  sequence="70"/>
+                  sequence="70"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_staging_target"
                   name="Staging — Sales Targets (raw)"
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_target"
-                  sequence="55"/>
+                  sequence="55"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_staging_branch_profit"
                   name="Staging — Branch Profitability (raw)"
                   parent="menu_sl_bonus_edara"
                   action="action_edara_staging_branch_profit"
-                  sequence="75"/>
+                  sequence="75"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <!-- ════════════════════ Data Import (manual CSV) ════════════════════ -->
         <menuitem id="menu_sl_bonus_data_import"
@@ -192,55 +203,63 @@
                   name="⚙️ Configuration"
                   parent="menu_sl_bonus_root"
                   sequence="60"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_config_settings"
                   name="Bonus Settings"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_settings"
-                  sequence="5"/>
+                  sequence="5"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_service"
                   name="Service Rates"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_service_rate"
-                  sequence="10"/>
+                  sequence="10"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_target"
                   name="Sales Targets &amp; Commissions"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_target"
-                  sequence="20"/>
+                  sequence="20"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_config_eval_exception"
                   name="Evaluation Exceptions"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_evaluation_exception"
-                  sequence="25"/>
+                  sequence="25"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_install"
                   name="Installation Fixed Bonus"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_installation_rate"
-                  sequence="30"/>
+                  sequence="30"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_stock"
                   name="Stock Commission"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_stock_commission_rate"
-                  sequence="40"/>
+                  sequence="40"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_branch_tiers"
                   name="Profitability Tiers"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_branch_profit_tier"
-                  sequence="50"/>
+                  sequence="50"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_config_branch_mgr_rates"
                   name="Branch Manager Rates"
                   parent="menu_sl_bonus_config"
                   action="action_sl_bonus_branch_manager_rate"
-                  sequence="60"/>
+                  sequence="60"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <!-- ════════════════════ Audit ════════════════════ -->
         <menuitem id="menu_sl_bonus_audit"
