@@ -20,7 +20,7 @@ access_target_sales_mgr,bonus.target.sales.mgr,model_sl_bonus_target,group_bonus
 access_target_admin,bonus.target.admin,model_sl_bonus_target,group_bonus_admin,1,1,1,1
 access_target_tier_employee,bonus.target.tier.employee,model_sl_bonus_target_tier,group_bonus_employee,1,0,0,0
 access_target_tier_hr,bonus.target.tier.hr,model_sl_bonus_target_tier,group_bonus_hr_manager,1,1,1,0
-access_target_tier_sales_mgr,bonus.target.tier.sales.mgr,model_sl_bonus_target_tier,group_bonus_manager,1,1,1,0
+access_target_tier_sales_mgr,bonus.target.tier.sales.mgr,model_sl_bonus_target_tier,group_bonus_manager,1,1,1,1
 access_target_tier_admin,bonus.target.tier.admin,model_sl_bonus_target_tier,group_bonus_admin,1,1,1,1
 access_branch_profit_employee,bonus.branch.profit.employee,model_sl_bonus_branch_profit,group_bonus_employee,1,0,0,0
 access_branch_profit_finance,bonus.branch.profit.finance,model_sl_bonus_branch_profit,group_bonus_finance,1,1,1,0
@@ -90,4 +90,5 @@ access_eval_exception_hr,bonus.eval.exception.hr,model_sl_bonus_evaluation_excep
 access_eval_exception_admin,bonus.eval.exception.admin,model_sl_bonus_evaluation_exception,group_bonus_admin,1,1,1,1
 access_sales_tier_employee,bonus.sales.tier.emp,model_sl_bonus_sales_tier,group_bonus_employee,1,0,0,0
 access_sales_tier_hr,bonus.sales.tier.hr,model_sl_bonus_sales_tier,group_bonus_hr_manager,1,1,1,1
+access_sales_tier_sales_mgr,bonus.sales.tier.sales.mgr,model_sl_bonus_sales_tier,group_bonus_manager,1,1,1,1
 access_sales_tier_admin,bonus.sales.tier.admin,model_sl_bonus_sales_tier,group_bonus_admin,1,1,1,1
