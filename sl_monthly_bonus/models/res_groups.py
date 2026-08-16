@@ -11,8 +11,16 @@ SALES_MANAGER_MENUS = [
     'sl_monthly_bonus.menu_sl_bonus_lines_main',
     'sl_monthly_bonus.menu_sl_bonus_batches',
     'sl_monthly_bonus.menu_sl_bonus_edara_staging_sales',
-    'sl_monthly_bonus.menu_sl_bonus_edara_import',
     'sl_monthly_bonus.menu_sl_bonus_config_target',
+]
+
+# Menus taken back from the role. The whitelist below is otherwise only ever
+# added to, so that entries granted by hand survive an upgrade - which means
+# revoking a page has to be stated explicitly. v18.0.2.13.1 granted the CSV
+# import; it is withdrawn here and must be removed from databases that already
+# received it.
+SALES_MANAGER_REVOKED_MENUS = [
+    'sl_monthly_bonus.menu_sl_bonus_edara_import',
 ]
 
 
@@ -37,18 +45,22 @@ class ResGroups(models.Model):
             'sl_monthly_bonus.group_bonus_manager', raise_if_not_found=False)
         if not group:
             return
-        menu_ids = []
+        commands = []
         for xmlid in SALES_MANAGER_MENUS:
             menu = self.env.ref(xmlid, raise_if_not_found=False)
             if menu:
-                menu_ids.append(menu.id)
-        if not menu_ids:
+                commands.append((4, menu.id))
+        for xmlid in SALES_MANAGER_REVOKED_MENUS:
+            menu = self.env.ref(xmlid, raise_if_not_found=False)
+            if menu:
+                commands.append((3, menu.id))
+        if not commands:
             return
-        # Add, never replace: whatever else was granted by hand stays.
-        group.sudo().write(
-            {'whitelisted_menu_ids': [(4, menu_id) for menu_id in menu_ids]})
+        # Add and remove only what this module names: anything else granted by
+        # hand on that group stays untouched.
+        group.sudo().write({'whitelisted_menu_ids': commands})
         # _visible_menu_ids is ormcached per group set.
         self.env.registry.clear_cache()
         _logger.info(
-            "sl_monthly_bonus: whitelisted %d menus for the Sales Manager.",
-            len(menu_ids))
+            "sl_monthly_bonus: synced %d whitelist commands for the Sales "
+            "Manager.", len(commands))

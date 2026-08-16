@@ -127,7 +127,7 @@
                   parent="menu_sl_bonus_edara"
                   action="action_sl_bonus_edara_import_wizard"
                   sequence="30"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <menuitem id="menu_sl_bonus_edara_mapping"
                   name="Mapping"
