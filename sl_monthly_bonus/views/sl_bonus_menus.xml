@@ -314,4 +314,9 @@
             <field name="active" eval="False"/>
         </record>
     </data>
+
+    <!-- menuitems_whitelist gates menus per group on this deployment, so the
+         groups= attributes above are not enough on their own. Runs on install
+         and on every upgrade; no-op when that module is not installed. -->
+    <function model="res.groups" name="_sl_bonus_sync_sales_manager_menus"/>
 </odoo>
