@@ -77,13 +77,9 @@ class SlBonusCsvImportWizard(models.TransientModel):
     _name = 'sl.bonus.csv.import.wizard'
     _description = 'Manual CSV Import'
 
-    import_type = fields.Selection([
-        ('sales', 'Sales'),
-        ('stock_purchasing', 'Stock Purchasing'),
-        ('installations', 'Installations'),
-        ('sales_targets', 'Sales Targets'),
-        ('branch_profitability', 'Branch Profitability'),
-    ], string='Import Type', required=True, default='sales')
+    import_type = fields.Selection(
+        selection='_selection_import_type',
+        string='Import Type', required=True, default='sales')
     month = fields.Date(
         string='Month', required=True,
         default=lambda self: fields.Date.context_today(self).replace(day=1),
@@ -114,15 +110,48 @@ class SlBonusCsvImportWizard(models.TransientModel):
     # NOTE: do NOT name this `_check_access` — that is a core BaseModel method
     # (check_access -> _check_access(operation)) and overriding it breaks every
     # ACL check (e.g. get_view) with a signature mismatch.
+    @api.model
+    def _selection_import_type(self):
+        """Offer each role only the types it may actually run.
+
+        The Sales Manager gets Sales and nothing else; leaving the full list on
+        screen would just hand him a dropdown where every other entry fails on
+        import. HR / Admin / Finance keep the whole list unchanged - Finance is
+        still narrowed to branch profitability by the guard below, as before.
+        """
+        all_types = [
+            ('sales', 'Sales'),
+            ('stock_purchasing', 'Stock Purchasing'),
+            ('installations', 'Installations'),
+            ('sales_targets', 'Sales Targets'),
+            ('branch_profitability', 'Branch Profitability'),
+        ]
+        user = self.env.user
+        if (user.has_group('sl_monthly_bonus.group_bonus_hr_manager')
+                or user.has_group('sl_monthly_bonus.group_bonus_finance')
+                or user.has_group('base.group_system')):
+            return all_types
+        if user.has_group('sl_monthly_bonus.group_bonus_manager'):
+            return [('sales', 'Sales')]
+        return all_types
+
     def _check_import_access(self):
         self.ensure_one()
         is_admin = self.env.user.has_group('base.group_system')
         is_hr = self.env.user.has_group('sl_monthly_bonus.group_bonus_hr_manager')
         is_finance = self.env.user.has_group('sl_monthly_bonus.group_bonus_finance')
+        # HR Manager implies the Sales Manager group, so this is true for HR
+        # too - harmless, since HR passes on its own everywhere below.
+        is_sales_mgr = self.env.user.has_group('sl_monthly_bonus.group_bonus_manager')
         if self.import_type == 'branch_profitability':
             if not (is_finance or is_hr or is_admin):
                 raise UserError(_("Only Finance / HR Manager / Admin can import branch profitability."))
+        elif self.import_type == 'sales':
+            if not (is_sales_mgr or is_hr or is_admin):
+                raise UserError(_("Only Sales Manager / HR Manager / Admin can import sales data."))
         else:
+            # Enforced here and not only in the selection above, so a crafted
+            # RPC cannot set import_type to a category this role may not touch.
             if not (is_hr or is_admin):
                 raise UserError(_("Only HR Manager / Admin can import this data type."))
 
