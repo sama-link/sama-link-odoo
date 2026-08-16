@@ -568,7 +568,10 @@ class SlBonusBatch(models.Model):
         # 2) Compute / refresh per-employee, preserving manual overrides.
         #    The appraisal batch reference (if any) is passed down so the
         #    calculator constrains evaluation lookups to that batch only.
-        appraisal_batch = self.appraisal_batch_id or False
+        # sudo like the rest of this method: the calculator reads the batch's
+        # own fields, and a Sales Manager running a compute has no access to
+        # Appraisal Batches - without this the whole compute dies on it.
+        appraisal_batch = self.appraisal_batch_id.sudo() or False
         existing_lines = {l.employee_id.id: l for l in self.sudo().line_ids}
         seen_emp_ids = set()
         for emp in employees:
