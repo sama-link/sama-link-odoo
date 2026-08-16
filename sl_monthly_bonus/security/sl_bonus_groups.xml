@@ -15,10 +15,10 @@
         </record>
 
         <record id="group_bonus_manager" model="res.groups">
-            <field name="name">Bonus / Team Manager</field>
+            <field name="name">Bonus / Sales Manager</field>
             <field name="category_id" ref="module_category_sl_monthly_bonus"/>
             <field name="implied_ids" eval="[(4, ref('group_bonus_employee'))]"/>
-            <field name="comment">Manager can read bonus lines for their direct reports.</field>
+            <field name="comment">Reads bonus lines of employees in the Sales category only.</field>
         </record>
 
         <record id="group_bonus_finance" model="res.groups">
@@ -46,4 +46,12 @@
             <field name="comment">Full access including locking approved batches and resetting state.</field>
         </record>
     </data>
+
+    <!-- The block above is noupdate="1": on an existing database the loader
+         skips those records, so the rename in <field name="name"> would never
+         arrive. This write does, on install and on every upgrade. -->
+    <function model="res.groups" name="write"
+              eval="[[ref('group_bonus_manager')],
+                     {'name': 'Bonus / Sales Manager',
+                      'comment': 'Reads bonus lines of employees in the Sales category only.'}]"/>
 </odoo>

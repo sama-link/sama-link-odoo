@@ -33,14 +33,14 @@
             ]</field>
             <field name="groups" eval="[(4, ref('group_bonus_employee'))]"/>
         </record>
+        <!-- Sales Manager: bonus lines of the Sales category only. Every other
+             category is invisible to this group - not merely read-only. Rules
+             of different groups are OR-ed, so an HR Manager (who inherits this
+             group) still sees everything through rule_batch_line_hr_all. -->
         <record id="rule_batch_line_manager_team" model="ir.rule">
-            <field name="name">Bonus batch line: team manager sees team</field>
+            <field name="name">Bonus batch line: sales manager sees sales category only</field>
             <field name="model_id" ref="model_sl_bonus_batch_line"/>
-            <field name="domain_force">[
-                '|',
-                ('employee_id.user_id', '=', user.id),
-                ('employee_id.parent_id.user_id', '=', user.id),
-            ]</field>
+            <field name="domain_force">[('category', '=', 'sales')]</field>
             <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
         </record>
         <record id="rule_batch_line_hr_all" model="ir.rule">
@@ -62,13 +62,9 @@
             <field name="groups" eval="[(4, ref('group_bonus_employee'))]"/>
         </record>
         <record id="rule_batch_line_component_manager_team" model="ir.rule">
-            <field name="name">Bonus line component: team manager</field>
+            <field name="name">Bonus line component: sales manager</field>
             <field name="model_id" ref="model_sl_bonus_batch_line_component"/>
-            <field name="domain_force">[
-                '|',
-                ('line_id.employee_id.user_id', '=', user.id),
-                ('line_id.employee_id.parent_id.user_id', '=', user.id),
-            ]</field>
+            <field name="domain_force">[('line_id.category', '=', 'sales')]</field>
             <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
         </record>
         <record id="rule_batch_line_component_hr_all" model="ir.rule">
@@ -167,4 +163,16 @@
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         </record>
     </data>
+
+    <!-- The block above is noupdate="1", so edits to the two rules below would
+         never reach a database that already has them. These writes do, on
+         install and on every upgrade. -->
+    <function model="ir.rule" name="write"
+              eval="[[ref('rule_batch_line_manager_team')],
+                     {'name': 'Bonus batch line: sales manager sees sales category only',
+                      'domain_force': '''[('category', '=', 'sales')]'''}]"/>
+    <function model="ir.rule" name="write"
+              eval="[[ref('rule_batch_line_component_manager_team')],
+                     {'name': 'Bonus line component: sales manager',
+                      'domain_force': '''[('line_id.category', '=', 'sales')]'''}]"/>
 </odoo>
