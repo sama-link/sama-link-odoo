@@ -16,9 +16,11 @@ access_branch_manager_rate_hr,bonus.bm.rate.hr,model_sl_bonus_branch_manager_rat
 access_branch_manager_rate_admin,bonus.bm.rate.admin,model_sl_bonus_branch_manager_rate,group_bonus_admin,1,1,1,1
 access_target_employee,bonus.target.employee,model_sl_bonus_target,group_bonus_employee,1,0,0,0
 access_target_hr,bonus.target.hr,model_sl_bonus_target,group_bonus_hr_manager,1,1,1,0
+access_target_sales_mgr,bonus.target.sales.mgr,model_sl_bonus_target,group_bonus_manager,1,1,1,0
 access_target_admin,bonus.target.admin,model_sl_bonus_target,group_bonus_admin,1,1,1,1
 access_target_tier_employee,bonus.target.tier.employee,model_sl_bonus_target_tier,group_bonus_employee,1,0,0,0
 access_target_tier_hr,bonus.target.tier.hr,model_sl_bonus_target_tier,group_bonus_hr_manager,1,1,1,0
+access_target_tier_sales_mgr,bonus.target.tier.sales.mgr,model_sl_bonus_target_tier,group_bonus_manager,1,1,1,0
 access_target_tier_admin,bonus.target.tier.admin,model_sl_bonus_target_tier,group_bonus_admin,1,1,1,1
 access_branch_profit_employee,bonus.branch.profit.employee,model_sl_bonus_branch_profit,group_bonus_employee,1,0,0,0
 access_branch_profit_finance,bonus.branch.profit.finance,model_sl_bonus_branch_profit,group_bonus_finance,1,1,1,0

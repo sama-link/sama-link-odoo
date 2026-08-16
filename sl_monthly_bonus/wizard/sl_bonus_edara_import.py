@@ -2,7 +2,7 @@ import base64
 import csv
 import io
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 class SlBonusEdaraImportWizard(models.TransientModel):
@@ -20,20 +20,42 @@ class SlBonusEdaraImportWizard(models.TransientModel):
 
     file_data = fields.Binary(string='CSV File', required=True)
     file_name = fields.Char(string='File Name')
-    target_model = fields.Selection([
-        ('sl.bonus.edara.staging.sales', 'Sales'),
-        ('sl.bonus.edara.staging.stock', 'Stock Purchases'),
-        ('sl.bonus.edara.staging.installation', 'Installations'),
-    ], string='Target', required=True, default='sl.bonus.edara.staging.sales')
+    target_model = fields.Selection(
+        selection='_selection_target_model', string='Target', required=True,
+        default='sl.bonus.edara.staging.sales')
     create_sync_run = fields.Boolean(
         string='Create Sync Log', default=True,
         help='Also create a sl.bonus.edara.sync record summarizing this import.',
     )
 
+    @api.model
+    def _selection_target_model(self):
+        """Offer the other staging models to HR upwards only.
+
+        The import writes through sudo(), so this selection is what stops a
+        sales-only role from loading stock or installation data. Bonus / HR
+        Manager implies the Sales Manager group, so testing for HR covers HR
+        and Admin while excluding a plain Sales Manager.
+        """
+        options = [('sl.bonus.edara.staging.sales', 'Sales')]
+        if self.env.user.has_group('sl_monthly_bonus.group_bonus_hr_manager'):
+            options += [
+                ('sl.bonus.edara.staging.stock', 'Stock Purchases'),
+                ('sl.bonus.edara.staging.installation', 'Installations'),
+            ]
+        return options
+
     def action_import(self):
         self.ensure_one()
         if not self.file_data:
             raise UserError(_("Please attach a CSV file."))
+        # Enforced here too: the selection shapes the dropdown, this stops a
+        # crafted RPC that sets target_model directly.
+        if (self.target_model != 'sl.bonus.edara.staging.sales'
+                and not self.env.user.has_group(
+                    'sl_monthly_bonus.group_bonus_hr_manager')):
+            raise AccessError(
+                _("You may only import Sales staging data."))
         Sync = self.env['sl.bonus.edara.sync'].sudo()
         Mapping = self.env['sl.bonus.edara.mapping'].sudo()
         Model = self.env[self.target_model].sudo()

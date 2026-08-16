@@ -89,6 +89,18 @@ class SlBonusBatch(models.Model):
         currency_field='currency_id',
     )
     excluded_count = fields.Integer(compute='_compute_counts', store=True)
+    # What the CURRENT reader is allowed to total up. line_ids is already
+    # narrowed by the record rules, so for HR these equal the stored fields,
+    # while a Sales Manager gets the sales-only figures instead of a
+    # company-wide total covering categories he cannot open. Hiding the stored
+    # fields from his group is not an option: Bonus / HR Manager implies the
+    # Sales Manager group, so such a gate would blank the total for HR too.
+    visible_total_amount = fields.Monetary(
+        string='Total', compute='_compute_visible_counts',
+        currency_field='currency_id',
+    )
+    visible_line_count = fields.Integer(
+        string='Bonus Lines', compute='_compute_visible_counts')
     currency_id = fields.Many2one(
         'res.currency',
         default=lambda self: self.env.company.currency_id,
@@ -129,6 +141,15 @@ class SlBonusBatch(models.Model):
             rec.line_count = len(rec.line_ids)
             rec.total_amount = sum(l.bonus_amount for l in rec.line_ids if not l.is_excluded)
             rec.excluded_count = sum(1 for l in rec.line_ids if l.is_excluded)
+
+    @api.depends('line_ids', 'line_ids.bonus_amount', 'line_ids.is_excluded')
+    @api.depends_context('uid')
+    def _compute_visible_counts(self):
+        for rec in self:
+            lines = rec.line_ids
+            rec.visible_line_count = len(lines)
+            rec.visible_total_amount = sum(
+                line.bonus_amount for line in lines if not line.is_excluded)
 
     @api.constrains('period_start', 'period_end')
     def _check_period(self):
