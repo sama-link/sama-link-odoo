@@ -1,6 +1,6 @@
 import logging
 
-from odoo import models
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ SALES_MANAGER_MENUS = [
 class ResGroups(models.Model):
     _inherit = 'res.groups'
 
+    @api.model
     def _sl_bonus_sync_sales_manager_menus(self):
         """Whitelist the Sales Manager's menus for menuitems_whitelist.
 
