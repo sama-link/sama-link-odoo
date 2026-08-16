@@ -537,14 +537,22 @@ class SlBonusBatch(models.Model):
         Calc = self.env['sl.bonus.calculator'].sudo()
         Line = self.env['sl.bonus.batch.line'].sudo()
         Component = self.env['sl.bonus.batch.line.component'].sudo()
+        # The batch's OWN membership, not the caller's view of it. A record
+        # rule narrows line_ids per reader - the Sales Manager sees only the
+        # Sales ones - and `self.line_ids.sudo()` cannot undo that: the field is
+        # read first, so sudo only re-envs the records that survived the rule.
+        # Reading them off a sudo batch is what actually returns all of them.
+        # Getting this wrong makes step 3 treat every line the caller cannot
+        # see as stale and delete it.
+        batch = self.sudo()
 
         # 1) Determine the employee set for this run. Lines/selections are
         #    kept as-is — archived (departed) employees still compute, since
         #    they keep the bonus for the period they worked.
-        if self.line_ids:
-            employees = self.line_ids.sudo().mapped('employee_id')
-        elif self.employee_ids:
-            employees = self.employee_ids.sudo()
+        if batch.line_ids:
+            employees = batch.line_ids.mapped('employee_id')
+        elif batch.employee_ids:
+            employees = batch.employee_ids
             # Materialize legacy M2M selection into draft lines so subsequent
             # compute runs use line_ids exclusively.
             Line.create([{
