@@ -88,6 +88,8 @@ class SlBonusCsvImportWizard(models.TransientModel):
     )
     file_data = fields.Binary(string='CSV File')
     file_name = fields.Char(string='File Name')
+    template_file = fields.Binary(string='Template File', readonly=True)
+    template_filename = fields.Char(string='Template Filename', readonly=True)
     dry_run = fields.Boolean(string='Dry Run (validate only)', default=True)
     overwrite = fields.Boolean(
         string='Overwrite Existing Rows', default=False,
@@ -433,16 +435,20 @@ class SlBonusCsvImportWizard(models.TransientModel):
         self.ensure_one()
         header, sample = TEMPLATES[self.import_type]
         content = header + '\n' + sample + '\n'
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_template.csv' % self.import_type,
-            'type': 'binary',
-            'datas': base64.b64encode(content.encode('utf-8')),
-            'mimetype': 'text/csv',
-            'res_model': self._name,
-            'res_id': self.id,
+        # Put the file on the wizard instead of creating a standalone
+        # ir.attachment: this deployment restricts attachment creation to a few
+        # officer groups, so the button died with an AccessError for everyone
+        # else - the Sales Manager included. A Binary field is stored by the
+        # ORM, which creates the backing attachment itself, and it is served by
+        # checking access on THIS record, which its own owner can always read.
+        self.write({
+            'template_file': base64.b64encode(content.encode('utf-8')),
+            'template_filename': '%s_template.csv' % self.import_type,
         })
         return {
             'type': 'ir.actions.act_url',
-            'url': '/web/content/%s?download=true' % attachment.id,
+            'url': ('/web/content?model=%s&id=%s&field=template_file'
+                    '&filename_field=template_filename&download=true'
+                    % (self._name, self.id)),
             'target': 'self',
         }
