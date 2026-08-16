@@ -192,6 +192,19 @@ class SlBonusBatch(models.Model):
         if not self._is_hr():
             raise AccessError(_("Only HR Manager / Admin can perform this action."))
 
+    def _ensure_can_compute(self):
+        """Compute is the one batch action the Sales Manager also runs.
+
+        Approving and every other transition stay with HR / Admin. Note the
+        group is tested directly rather than through _is_hr: HR Manager implies
+        the Sales Manager group, so HR passes this on its own.
+        """
+        if self._is_hr() or self.env.user.has_group(
+                'sl_monthly_bonus.group_bonus_manager'):
+            return
+        raise AccessError(
+            _("Only Sales Manager / HR Manager / Admin can compute a batch."))
+
     # ── Workflow actions ──────────────────────────────────────────────
     def action_open_for_previous_month(self):
         """Helper button: create / open the batch covering the previous calendar month."""
@@ -325,17 +338,22 @@ class SlBonusBatch(models.Model):
             rec.line_ids._sync_state_from_batch()
 
     def action_compute(self):
-        self._ensure_hr()
+        self._ensure_can_compute()
         for rec in self:
             if rec.state not in ('data_ready', 'computed', 'hr_review'):
                 raise UserError(_("Compute is allowed only in Data Ready / Computed / HR Review states."))
             rec._compute_lines()
-            rec.write({
+            # sudo for the bookkeeping write, exactly as _compute_lines does and
+            # for the same reason: the permission check above already ran. It
+            # also keeps the Sales Manager on read-only ACL for batches, so
+            # running a compute never turns into general edit rights on them -
+            # and the stamps below still record the real user.
+            rec.sudo().write({
                 'state': 'computed',
                 'last_computed_on': fields.Datetime.now(),
                 'last_computed_by': self.env.user.id,
             })
-            rec.line_ids._sync_state_from_batch()
+            rec.line_ids.sudo()._sync_state_from_batch()
             rec.message_post(body=_("Bonuses recomputed by %s.") % self.env.user.name)
 
     def action_send_to_review(self):
