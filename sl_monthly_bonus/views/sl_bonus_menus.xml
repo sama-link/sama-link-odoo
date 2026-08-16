@@ -176,19 +176,21 @@
                   name="Data Import"
                   parent="menu_sl_bonus_root"
                   sequence="45"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_finance,sl_monthly_bonus.group_bonus_admin"/>
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_csv_import"
                   name="Manual CSV Import"
                   parent="menu_sl_bonus_data_import"
                   action="action_sl_bonus_csv_import_wizard"
-                  sequence="10"/>
+                  sequence="10"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"/>
 
         <menuitem id="menu_sl_bonus_csv_import_log"
                   name="CSV Import Log"
                   parent="menu_sl_bonus_data_import"
                   action="action_sl_bonus_csv_import_log"
-                  sequence="20"/>
+                  sequence="20"
+                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
 
         <!-- ════════════════════ Branch Profitability ════════════════════ -->
         <menuitem id="menu_sl_bonus_branch_profit_root"
@@ -318,5 +320,5 @@
     <!-- menuitems_whitelist gates menus per group on this deployment, so the
          groups= attributes above are not enough on their own. Runs on install
          and on every upgrade; no-op when that module is not installed. -->
-    <function model="res.groups" name="_sl_bonus_sync_sales_manager_menus"/>
+    <function model="res.groups" name="_sl_bonus_sync_menu_whitelist"/>
 </odoo>

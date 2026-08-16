@@ -74,9 +74,11 @@ access_edara_settings_admin,bonus.edara.settings.admin,model_sl_bonus_edara_sett
 access_bonus_settings_hr,bonus.settings.hr,model_sl_bonus_settings,group_bonus_hr_manager,1,1,1,1
 access_bonus_settings_admin,bonus.settings.admin,model_sl_bonus_settings,group_bonus_admin,1,1,1,1
 access_csv_import_wizard_hr,bonus.csv.import.wiz.hr,model_sl_bonus_csv_import_wizard,group_bonus_hr_manager,1,1,1,1
+access_csv_import_wizard_sales_mgr,bonus.csv.import.wiz.sales.mgr,model_sl_bonus_csv_import_wizard,group_bonus_manager,1,1,1,1
 access_csv_import_wizard_finance,bonus.csv.import.wiz.finance,model_sl_bonus_csv_import_wizard,group_bonus_finance,1,1,1,1
 access_csv_import_wizard_admin,bonus.csv.import.wiz.admin,model_sl_bonus_csv_import_wizard,group_bonus_admin,1,1,1,1
 access_csv_import_error_hr,bonus.csv.import.err.hr,model_sl_bonus_csv_import_error_line,group_bonus_hr_manager,1,1,1,1
+access_csv_import_error_sales_mgr,bonus.csv.import.err.sales.mgr,model_sl_bonus_csv_import_error_line,group_bonus_manager,1,1,1,1
 access_csv_import_error_finance,bonus.csv.import.err.finance,model_sl_bonus_csv_import_error_line,group_bonus_finance,1,1,1,1
 access_csv_import_error_admin,bonus.csv.import.err.admin,model_sl_bonus_csv_import_error_line,group_bonus_admin,1,1,1,1
 access_csv_import_log_hr,bonus.csv.import.log.hr,model_sl_bonus_csv_import_log,group_bonus_hr_manager,1,1,1,0
