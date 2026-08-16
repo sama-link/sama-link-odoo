@@ -354,7 +354,13 @@ class SlBonusBatch(models.Model):
                 'last_computed_by': self.env.user.id,
             })
             rec.line_ids.sudo()._sync_state_from_batch()
-            rec.message_post(body=_("Bonuses recomputed by %s.") % self.env.user.name)
+            # sudo for the same reason as the write above - posting to the
+            # chatter needs write on the record, which the Sales Manager does
+            # not have - while author_id keeps the entry attributed to whoever
+            # actually pressed the button rather than to OdooBot.
+            rec.sudo().message_post(
+                body=_("Bonuses recomputed by %s.") % self.env.user.name,
+                author_id=self.env.user.partner_id.id)
 
     def action_send_to_review(self):
         self._ensure_hr()
