@@ -43,7 +43,7 @@
                         <button name="action_compute" type="object" string="🧮 Compute Bonuses"
                                 invisible="state not in ('data_ready','computed','hr_review')"
                                 class="oe_highlight"
-                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager"
+                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager,sl_monthly_bonus.group_bonus_manager_online,sl_monthly_bonus.group_bonus_manager_projects"
                                 confirm="Compute bonuses for all employees in this batch? Existing manual overrides will be preserved."/>
                         <button name="action_approve" type="object" string="✅ Approve"
                                 invisible="state not in ('computed','hr_review')" class="oe_highlight"

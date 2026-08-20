@@ -584,6 +584,16 @@ msgid "Bonus / Sales Manager"
 msgstr "المكافآت / مدير المبيعات"
 
 #. module: sl_monthly_bonus
+#: model:res.groups,name:sl_monthly_bonus.group_bonus_manager_online
+msgid "Bonus / Sales Online Manager"
+msgstr "المكافآت / مدير مبيعات الأونلاين"
+
+#. module: sl_monthly_bonus
+#: model:res.groups,name:sl_monthly_bonus.group_bonus_manager_projects
+msgid "Bonus / Sales Projects Manager"
+msgstr "المكافآت / مدير مبيعات المشاريع"
+
+#. module: sl_monthly_bonus
 #: model:ir.model,name:sl_monthly_bonus.model_sl_bonus_audit_log
 msgid "Bonus Audit Log"
 msgstr "سجل تدقيق المكافآت"
@@ -3357,6 +3367,26 @@ msgstr "خطأ في تسليم SMS"
 #: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__sales
 msgid "Sales"
 msgstr "مبيعات"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__sales_online
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__sales_online
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__sales_online
+msgid "Sales Online"
+msgstr "مبيعات أونلاين"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_job__bonus_category__sales_projects
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_line__category__sales_projects
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_self_estimate__category__sales_projects
+msgid "Sales Projects"
+msgstr "مبيعات مشاريع"
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/wizard/sl_bonus_csv_import.py:0
+msgid "Employee '%(name)s' (code %(code)s) is not in your bonus category - you may only import rows for your own team."
+msgstr "الموظف '%(name)s' (كود %(code)s) ليس ضمن فئة المكافأة الخاصة بك - يمكنك استيراد صفوف فريقك فقط."
 
 #. module: sl_monthly_bonus
 #: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_edara_sync__sales_records

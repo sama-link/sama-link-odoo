@@ -5,6 +5,8 @@ from babel.dates import format_date
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
+from .sl_bonus_category import SALES_CATEGORIES, MANAGER_CATEGORY_GROUPS
+
 _logger = logging.getLogger(__name__)
 
 
@@ -193,14 +195,15 @@ class SlBonusBatch(models.Model):
             raise AccessError(_("Only HR Manager / Admin can perform this action."))
 
     def _ensure_can_compute(self):
-        """Compute is the one batch action the Sales Manager also runs.
+        """Compute is the one batch action the category managers also run.
 
         Approving and every other transition stay with HR / Admin. Note the
-        group is tested directly rather than through _is_hr: HR Manager implies
-        the Sales Manager group, so HR passes this on its own.
+        groups are tested directly rather than through _is_hr: HR Manager
+        implies the manager groups, so HR passes this on its own.
         """
-        if self._is_hr() or self.env.user.has_group(
-                'sl_monthly_bonus.group_bonus_manager'):
+        if self._is_hr() or any(
+                self.env.user.has_group(xmlid)
+                for xmlid in MANAGER_CATEGORY_GROUPS.values()):
             return
         raise AccessError(
             _("Only Sales Manager / HR Manager / Admin can compute a batch."))
@@ -445,6 +448,8 @@ class SlBonusBatch(models.Model):
         category_ar = {
             'service': 'خدمات',
             'sales': 'مبيعات',
+            'sales_online': 'مبيعات أونلاين',
+            'sales_projects': 'مبيعات مشاريع',
             'stock': 'مشتريات المخزون',
             'installation': 'تركيبات',
             'branch_manager': 'مدير فرع / منطقة',
@@ -478,8 +483,8 @@ class SlBonusBatch(models.Model):
             ws.write(row, 3, line.job_id.name or '')
             ws.write(row, 4, _payment_method_label(contract))
             ws.write(row, 5, category_ar.get(line.category, line.category or ''))
-            # Target / Achieved are meaningful for sales lines only.
-            if line.category == 'sales':
+            # Target / Achieved are meaningful for sales-formula lines only.
+            if line.category in SALES_CATEGORIES:
                 ws.write_number(row, 6, line.target_amount or 0.0, money)
                 ws.write_number(row, 7, line.achieved_amount or 0.0, money)
             else:

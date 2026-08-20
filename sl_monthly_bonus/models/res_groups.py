@@ -15,6 +15,22 @@ WHITELIST_GRANTS = {
         'sl_monthly_bonus.menu_sl_bonus_config_target',
         'sl_monthly_bonus.menu_sl_bonus_csv_import',
     ],
+    # The category managers mirror the Sales Manager's menus; the record
+    # rules narrow what each menu shows to their own category.
+    'sl_monthly_bonus.group_bonus_manager_online': [
+        'sl_monthly_bonus.menu_sl_bonus_lines_main',
+        'sl_monthly_bonus.menu_sl_bonus_batches',
+        'sl_monthly_bonus.menu_sl_bonus_edara_staging_sales',
+        'sl_monthly_bonus.menu_sl_bonus_config_target',
+        'sl_monthly_bonus.menu_sl_bonus_csv_import',
+    ],
+    'sl_monthly_bonus.group_bonus_manager_projects': [
+        'sl_monthly_bonus.menu_sl_bonus_lines_main',
+        'sl_monthly_bonus.menu_sl_bonus_batches',
+        'sl_monthly_bonus.menu_sl_bonus_edara_staging_sales',
+        'sl_monthly_bonus.menu_sl_bonus_config_target',
+        'sl_monthly_bonus.menu_sl_bonus_csv_import',
+    ],
     # Manual CSV Import is whitelisted for HR on the deployed databases but not
     # for Bonus / Administrator, which is why an admin could not see it however
     # the menuitem was declared. Listing it for both is idempotent.

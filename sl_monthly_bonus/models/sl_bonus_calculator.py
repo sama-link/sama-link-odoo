@@ -369,6 +369,12 @@ class SlBonusCalculator(models.AbstractModel):
             {'sequence': 100, 'label': _('Result'), 'value': f"{amount:,.2f}"},
         ])
 
+    # Sales Online / Sales Projects pay exactly like Sales: same targets,
+    # same commission tiers, same collected-sales staging source. Only the
+    # category (and therefore which manager group sees the line) differs.
+    _calc_sales_online = _calc_sales
+    _calc_sales_projects = _calc_sales
+
     def _calc_stock(self, employee, period_start, period_end, evaluation_pct, result):
         # The imported stock value IS the commission base — no commission %
         # factor anymore (removed by policy): bonus = stock_sales × evaluation%.

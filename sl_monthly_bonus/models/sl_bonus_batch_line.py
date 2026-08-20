@@ -118,6 +118,8 @@ class SlBonusBatchLine(models.Model):
     category = fields.Selection([
         ('service', 'Service'),
         ('sales', 'Sales'),
+        ('sales_online', 'Sales Online'),
+        ('sales_projects', 'Sales Projects'),
         ('stock', 'Stock Purchasing'),
         ('installation', 'Installation'),
         ('branch_manager', 'Branch / Area Manager'),

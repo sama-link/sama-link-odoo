@@ -23,6 +23,8 @@ import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
+from ..models.sl_bonus_category import managed_bonus_categories
+
 _logger = logging.getLogger(__name__)
 
 # Per-type required columns (header validation).
@@ -133,7 +135,7 @@ class SlBonusCsvImportWizard(models.TransientModel):
                 or user.has_group('sl_monthly_bonus.group_bonus_finance')
                 or user.has_group('base.group_system')):
             return all_types
-        if user.has_group('sl_monthly_bonus.group_bonus_manager'):
+        if managed_bonus_categories(user):
             return [('sales', 'Sales')]
         return all_types
 
@@ -142,9 +144,9 @@ class SlBonusCsvImportWizard(models.TransientModel):
         is_admin = self.env.user.has_group('base.group_system')
         is_hr = self.env.user.has_group('sl_monthly_bonus.group_bonus_hr_manager')
         is_finance = self.env.user.has_group('sl_monthly_bonus.group_bonus_finance')
-        # HR Manager implies the Sales Manager group, so this is true for HR
-        # too - harmless, since HR passes on its own everywhere below.
-        is_sales_mgr = self.env.user.has_group('sl_monthly_bonus.group_bonus_manager')
+        # HR Manager implies all three category-manager groups, so this is true
+        # for HR too - harmless, since HR passes on its own everywhere below.
+        is_sales_mgr = bool(managed_bonus_categories(self.env.user))
         if self.import_type == 'branch_profitability':
             if not (is_finance or is_hr or is_admin):
                 raise UserError(_("Only Finance / HR Manager / Admin can import branch profitability."))
@@ -156,6 +158,21 @@ class SlBonusCsvImportWizard(models.TransientModel):
             # RPC cannot set import_type to a category this role may not touch.
             if not (is_hr or is_admin):
                 raise UserError(_("Only HR Manager / Admin can import this data type."))
+
+    def _importer_categories(self):
+        """Bonus categories this importer may touch, or None for no limit.
+
+        HR / Finance / Admin import for everyone. A category manager (Sales,
+        Sales Online, Sales Projects) only for employees whose job carries one
+        of their categories - checked per row so a wrong-team row becomes an
+        error line instead of silently landing in another manager's data.
+        """
+        user = self.env.user
+        if (user.has_group('sl_monthly_bonus.group_bonus_hr_manager')
+                or user.has_group('sl_monthly_bonus.group_bonus_finance')
+                or user.has_group('base.group_system')):
+            return None
+        return managed_bonus_categories(user) or None
 
     # ── parsing helpers ─────────────────────────────────────────────────
     def _parse_month(self, raw):
@@ -223,6 +240,17 @@ class SlBonusCsvImportWizard(models.TransientModel):
             mapped = bool(emp)
             reason = False if mapped else _("No employee matches code '%s'.") % (code or '?')
             identifier = code
+            # A category manager may only feed rows of their own team. Raised
+            # (not just flagged) so the row lands as an error line and is
+            # never written - the upsert path runs with sudo, so the record
+            # rules cannot enforce this for us.
+            allowed = self._importer_categories()
+            if allowed is not None and mapped and \
+                    (emp.job_id.bonus_category or 'none') not in allowed:
+                raise ValueError(_(
+                    "Employee '%(name)s' (code %(code)s) is not in your bonus "
+                    "category - you may only import rows for your own team."
+                ) % {'name': emp.name, 'code': code})
             if t == 'sales':
                 model = 'sl.bonus.edara.staging.sales'
                 vals = {
