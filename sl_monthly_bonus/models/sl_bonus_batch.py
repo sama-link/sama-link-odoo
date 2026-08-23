@@ -307,6 +307,52 @@ class SlBonusBatch(models.Model):
             rec._add_employees_to_lines(employees)
         return True
 
+    # ── Period issues (contract starts/ends in period, no contract) ──
+    def _review_scope_employees(self):
+        """Employees the Add Employees wizard should consider for this batch:
+        bonus-eligible, in the batch's company (or none), not yet in the
+        batch — active ones plus departed ones who held a contract during
+        the period (see ``hr.employee._period_review_scope``)."""
+        self.ensure_one()
+        scope = self.env['hr.employee']._period_review_scope(
+            self.company_id, self.period_start, self.period_end,
+            [('bonus_eligible', '=', True)])
+        return scope - self.line_ids.mapped('employee_id')
+
+    def _employee_period_issues(self, employees):
+        """``{employee_id: {'boundary', 'summary', ...}}`` for the employees
+        whose contract starts or ends INSIDE the bonus period (hired,
+        departed or renewed mid-month). Only that is a bonus problem: a job
+        change is not (unlike appraisal batches), and an employee with no
+        contract overlapping the period is not flagged either — departed
+        employees keep their bonus rights and the calculator already falls
+        back to their last contract."""
+        self.ensure_one()
+        issues = employees._period_contract_issues(self.period_start, self.period_end)
+        return {
+            emp_id: issue for emp_id, issue in issues.items() if issue['boundary']
+        }
+
+    def _open_review_wizard(self, flagged_employees, ok_employees=None):
+        """Open the review wizard for employees with contract issues.
+        ``ok_employees`` (no issues) are carried along and added when the
+        wizard is confirmed."""
+        self.ensure_one()
+        Review = self.env['sl.bonus.batch.review']
+        wizard = Review.create({
+            'batch_id': self.id,
+            'ok_employee_ids': [(6, 0, (ok_employees or self.env['hr.employee']).ids)],
+            'line_ids': Review._prepare_line_commands(self, flagged_employees),
+        })
+        return {
+            'name': _('Employees Needing Review'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'sl.bonus.batch.review',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
     def action_open_add_employees_wizard(self):
         """Open the Add Employees wizard (UI entry point — replaces the
         direct Add-All-Active-Employees button)."""

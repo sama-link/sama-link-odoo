@@ -166,28 +166,14 @@ class HrAppraisalBatch(models.Model):
     # ── Period issues (job change / contract boundary / no contract) ──
     def _review_scope_employees(self):
         """Employees the generate wizard should consider for this batch:
-        eligible, in the batch's company (or none), not yet in the batch —
-        active ones, plus departed (archived) ones who still held a contract
-        during the period. Ex-employees who left before the period are not
-        scanned, otherwise every past employee would be flagged as
-        'no contract'."""
+        eligible, in the batch's company (or none), not yet in the batch
+        (see ``hr.employee._period_review_scope`` for the active/departed
+        rule)."""
         self.ensure_one()
-        Employee = self.env['hr.employee']
-        base = [
-            ('appraisal_eligible', '=', True),
-            ('company_id', 'in', [self.company_id.id, False]),
-        ]
-        active = Employee.search(base)
-        contract_emp_ids = self.env['hr.contract'].sudo().with_context(
-            active_test=False,
-        ).search([
-            ('state', 'in', ('open', 'close')),
-            ('date_start', '<=', self.date_to),
-            '|', ('date_end', '=', False), ('date_end', '>=', self.date_from),
-        ]).mapped('employee_id').ids
-        departed = Employee.with_context(active_test=False).search(
-            base + [('active', '=', False), ('id', 'in', contract_emp_ids)])
-        return (active | departed) - self.appraisal_ids.mapped('employee_id')
+        scope = self.env['hr.employee']._period_review_scope(
+            self.company_id, self.date_from, self.date_to,
+            [('appraisal_eligible', '=', True)])
+        return scope - self.appraisal_ids.mapped('employee_id')
 
     def _employee_period_issues(self, employees):
         """Detect, for each employee, what needs HR review before an appraisal
@@ -200,6 +186,7 @@ class HrAppraisalBatch(models.Model):
           plus the job of every contract overlapping the period.
         - ``contract_boundary``: a contract starts or ends inside the period.
         - ``no_contract``: no running/closed contract overlaps the period.
+          (both from ``hr.employee._period_contract_issues``)
 
         Returns ``{employee_id: {'jobs', 'job_changes', 'contract_boundary',
         'no_contract', 'summary'}}`` — only for employees with at least one
@@ -211,7 +198,9 @@ class HrAppraisalBatch(models.Model):
             return {}
         Job = self.env['hr.job'].sudo()
         Contract = self.env['hr.contract'].sudo().with_context(active_test=False)
+        contract_issues = employees._period_contract_issues(date_from, date_to)
 
+        # Contracts overlapping the period (for their job positions).
         contracts_by_emp = defaultdict(lambda: Contract.browse())
         for contract in Contract.search([
             ('employee_id', 'in', employees.ids),
@@ -256,12 +245,9 @@ class HrAppraisalBatch(models.Model):
             job_ids.extend(contracts.mapped('job_id').ids)
             jobs = Job.browse(list(dict.fromkeys(j for j in job_ids if j))).exists()
 
-            boundary = contracts.filtered(
-                lambda c: c.date_start > date_from
-                or (c.date_end and c.date_end < date_to))
             job_change = len(jobs) > 1
-            no_contract = not contracts
-            if not (job_change or boundary or no_contract):
+            contract_issue = contract_issues.get(employee.id)
+            if not (job_change or contract_issue):
                 continue
 
             summary = []
@@ -272,19 +258,14 @@ class HrAppraisalBatch(models.Model):
                 if not in_period:
                     parts = jobs.mapped('name')
                 summary.append(_("Job changed: %s") % " → ".join(parts))
-            for contract in boundary:
-                if contract.date_start > date_from:
-                    summary.append(_("Contract starts %s") % contract.date_start)
-                if contract.date_end and contract.date_end < date_to:
-                    summary.append(_("Contract ends %s") % contract.date_end)
-            if no_contract:
-                summary.append(_("No active contract in the period"))
+            if contract_issue:
+                summary.append(contract_issue['summary'])
 
             issues[employee.id] = {
                 'jobs': jobs,
                 'job_changes': in_period,
-                'contract_boundary': bool(boundary),
-                'no_contract': no_contract,
+                'contract_boundary': bool(contract_issue and contract_issue['boundary']),
+                'no_contract': bool(contract_issue and contract_issue['no_contract']),
                 'summary': "; ".join(summary),
             }
         return issues

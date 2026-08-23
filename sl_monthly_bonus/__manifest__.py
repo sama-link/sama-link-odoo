@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Monthly Bonus',
-    'version': '18.0.2.19.0',
+    'version': '18.0.2.20.0',
     'summary': 'Monthly Bonus Calculation & Payment Module for Samalink',
     'description': """
         Monthly bonus calculation, review, approval and audit module for Samalink.
@@ -50,6 +50,7 @@
         'wizard/sl_bonus_csv_import_views.xml',
         'wizard/sl_bonus_add_employees_views.xml',
         'wizard/sl_bonus_add_from_appraisal_views.xml',
+        'wizard/sl_bonus_batch_review_views.xml',
         'views/sl_bonus_menus.xml',
         'report/sl_bonus_receipt_report.xml',
         'report/sl_bonus_batch_report.xml',

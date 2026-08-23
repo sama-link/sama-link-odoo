@@ -6,3 +6,4 @@ from . import sl_bonus_settings
 from . import sl_bonus_csv_import
 from . import sl_bonus_add_employees
 from . import sl_bonus_add_from_appraisal
+from . import sl_bonus_batch_review

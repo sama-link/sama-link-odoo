@@ -60,6 +60,34 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
         return self.appraisal_batch_id.sudo().appraisal_ids.mapped(
             'employee_id').filtered('bonus_eligible')
 
+    def _bind_appraisal_batch(self):
+        """Make the selected appraisal batch the bonus batch's official
+        evaluation reference (subsequent compute runs use only the
+        appraisals inside it — see sl.bonus.calculator). sudo: HR users may
+        not have direct write on every bonus batch field, but they did just
+        run the wizard, which already enforces HR/Admin via
+        action_open_add_from_appraisal_wizard."""
+        self.ensure_one()
+        if not self.batch_id.appraisal_batch_id:
+            self.batch_id.sudo().write({
+                'appraisal_batch_id': self.appraisal_batch_id.id,
+            })
+            self.batch_id.message_post(body=_(
+                "تم ربط دفعة المكافآت بدفعة التقييم: <b>%s</b>"
+            ) % self.appraisal_batch_id.name)
+        elif self.batch_id.appraisal_batch_id != self.appraisal_batch_id:
+            # A different appraisal batch is already bound — refuse to
+            # silently overwrite; HR clears the link first (draft/data_ready)
+            # or opens the right one.
+            raise UserError(_(
+                "This bonus batch is already linked to a different appraisal "
+                "batch ('%(old)s'). Clear that link first if you want to "
+                "rebind it to '%(new)s'."
+            ) % {
+                'old': self.batch_id.appraisal_batch_id.name,
+                'new': self.appraisal_batch_id.name,
+            })
+
     def action_confirm(self):
         self.ensure_one()
         if not self.batch_id:
@@ -74,33 +102,15 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
             raise UserError(_(
                 "Appraisal batch '%s' has no appraisals — nothing to add."
             ) % self.appraisal_batch_id.name)
+        self._bind_appraisal_batch()
+        # Employees with a contract starting/ending in the bonus period (or
+        # none at all) are decided one by one in the review wizard; the
+        # others are carried along and added when it is confirmed.
+        issues = self.batch_id._employee_period_issues(employees)
+        flagged = employees.filtered(lambda e: e.id in issues)
+        if flagged:
+            return self.batch_id._open_review_wizard(flagged, employees - flagged)
         created = self.batch_id._add_employees_to_lines(employees)
-        # Bind the selected appraisal batch as the bonus batch's official
-        # evaluation reference. Subsequent compute runs will use only the
-        # appraisals inside this batch (see sl.bonus.calculator). We do this
-        # via .sudo() because HR users may not have direct write on every
-        # bonus batch field, but they DID just successfully run the wizard
-        # which already enforces HR/Admin via action_open_add_from_appraisal_wizard.
-        if not self.batch_id.appraisal_batch_id:
-            self.batch_id.sudo().write({
-                'appraisal_batch_id': self.appraisal_batch_id.id,
-            })
-            self.batch_id.message_post(body=_(
-                "تم ربط دفعة المكافآت بدفعة التقييم: <b>%s</b>"
-            ) % self.appraisal_batch_id.name)
-        elif self.batch_id.appraisal_batch_id != self.appraisal_batch_id:
-            # If a different appraisal batch was already bound, refuse to
-            # silently overwrite — surface a clear error so HR explicitly
-            # clears the existing binding first (in draft/data_ready) or
-            # opens the right one.
-            raise UserError(_(
-                "This bonus batch is already linked to a different appraisal "
-                "batch ('%(old)s'). Clear that link first if you want to "
-                "rebind it to '%(new)s'."
-            ) % {
-                'old': self.batch_id.appraisal_batch_id.name,
-                'new': self.appraisal_batch_id.name,
-            })
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

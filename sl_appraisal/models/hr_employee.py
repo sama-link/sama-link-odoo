@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 APPRAISAL_ADMIN_SCORE_MODES = [
     ('scored', 'Has administrative score'),
@@ -64,6 +64,76 @@ class HrEmployee(models.Model):
             ('date_start', '<=', date_to),
             '|', ('date_end', '=', False), ('date_end', '>=', date_from),
         ]))
+
+    @api.model
+    def _period_review_scope(self, company, date_from, date_to, extra_domain=None):
+        """Employees a batch wizard should scan for period issues: active
+        ones matching ``extra_domain`` in ``company`` (or no company), plus
+        departed (archived) ones who still held a contract during the
+        period. Ex-employees who left before the period are not included,
+        otherwise every past employee would be flagged as 'no contract'."""
+        base = list(extra_domain or []) + [
+            ('company_id', 'in', [company.id, False]),
+        ]
+        active = self.search(base)
+        contract_emp_ids = self.env['hr.contract'].sudo().with_context(
+            active_test=False,
+        ).search([
+            ('state', 'in', ('open', 'close')),
+            ('date_start', '<=', date_to),
+            '|', ('date_end', '=', False), ('date_end', '>=', date_from),
+        ]).mapped('employee_id').ids
+        departed = self.with_context(active_test=False).search(
+            base + [('active', '=', False), ('id', 'in', contract_emp_ids)])
+        return active | departed
+
+    def _period_contract_issues(self, date_from, date_to):
+        """Contract problems of these employees inside [date_from, date_to].
+
+        Returns ``{employee_id: {'contracts', 'boundary', 'no_contract',
+        'summary'}}`` — only for employees with a problem:
+        - ``boundary``: contracts (recordset) that start or end inside the
+          period (hired / departed / renewed mid-period);
+        - ``no_contract``: no running/closed contract overlaps the period.
+        Shared by the appraisal and bonus batch review wizards.
+        """
+        if not self or not date_from or not date_to:
+            return {}
+        Contract = self.env['hr.contract'].sudo().with_context(active_test=False)
+        contracts_by_emp = {}
+        for contract in Contract.search([
+            ('employee_id', 'in', self.ids),
+            ('state', 'in', ('open', 'close')),
+            ('date_start', '<=', date_to),
+            '|', ('date_end', '=', False), ('date_end', '>=', date_from),
+        ]):
+            contracts_by_emp.setdefault(contract.employee_id.id, Contract.browse())
+            contracts_by_emp[contract.employee_id.id] |= contract
+
+        issues = {}
+        for employee in self:
+            contracts = contracts_by_emp.get(employee.id, Contract.browse())
+            boundary = contracts.filtered(
+                lambda c: c.date_start > date_from
+                or (c.date_end and c.date_end < date_to))
+            no_contract = not contracts
+            if not (boundary or no_contract):
+                continue
+            summary = []
+            for contract in boundary:
+                if contract.date_start > date_from:
+                    summary.append(_("Contract starts %s") % contract.date_start)
+                if contract.date_end and contract.date_end < date_to:
+                    summary.append(_("Contract ends %s") % contract.date_end)
+            if no_contract:
+                summary.append(_("No active contract in the period"))
+            issues[employee.id] = {
+                'contracts': contracts,
+                'boundary': boundary,
+                'no_contract': no_contract,
+                'summary': "; ".join(summary),
+            }
+        return issues
 
     @api.depends('appraisal_ids')
     def _compute_appraisal_count(self):

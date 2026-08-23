@@ -4500,3 +4500,77 @@ msgstr "«ثابت» يضيف الموظف إلى المكافآت ← الإع�
 #: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_hr_employee_form_appraisal_bonus_tab
 msgid "This employee cannot be added to a bonus batch."
 msgstr "لا يمكن إضافة هذا الموظف إلى دفعة مكافآت."
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/sl_bonus_batch.py:0
+msgid "Employees Needing Review"
+msgstr "موظفون بحاجة إلى مراجعة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_review__ok_employee_ids
+msgid "Employees Without Issues"
+msgstr "موظفون بدون مشاكل"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_review__line_ids
+msgid "Employees With Issues"
+msgstr "موظفون لديهم مشاكل"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_review_line__issue_summary
+msgid "Issue"
+msgstr "المشكلة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_sl_bonus_batch_review_line__decision
+msgid "Decision"
+msgstr "القرار"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__sl_bonus_batch_review_line__decision__exclude
+msgid "Don't Add"
+msgstr "عدم الإضافة"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_add_employees_wizard_form
+msgid "Review employees with issues"
+msgstr "مراجعة الموظفين الذين لديهم مشاكل"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_add_employees_wizard_form
+msgid "employee(s) have a contract starting or ending inside this period.\n                                They are not listed below — review them one by one."
+msgstr "موظف(ين) لديهم عقد يبدأ أو ينتهي داخل هذه الفترة.\n                                لا يظهرون في القائمة أدناه — راجعهم واحدًا واحدًا."
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_review_form
+msgid "No employee currently needs review for this period."
+msgstr "لا يوجد موظف يحتاج إلى مراجعة لهذه الفترة حاليًا."
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_review_form
+msgid "Choose for each one whether to still add them to the bonus batch.\n                        Other selected employees are added normally."
+msgstr "اختر لكل واحد منهم ما إذا كان سيُضاف إلى دفعة المكافآت.\n                        يُضاف باقي الموظفين المحددين بشكل طبيعي."
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_review_form
+msgid "Confirm"
+msgstr "تأكيد"
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/wizard/sl_bonus_batch_review.py:0
+msgid "No employees left to add — everyone was either excluded or already has a line in this batch."
+msgstr "لا يوجد موظفون متبقون للإضافة — تم استبعاد الجميع أو لديهم سطر في هذه الدفعة بالفعل."
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/wizard/sl_bonus_batch_review.py:0
+msgid "Skipped %(count)s employee(s) after review of the period %(period_start)s → %(period_end)s: %(names)s"
+msgstr "تم تخطي %(count)s موظف(ين) بعد مراجعة الفترة %(period_start)s ← %(period_end)s: %(names)s"
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/wizard/sl_bonus_batch_review.py:0
+msgid "Added %(new)s new bonus line(s); %(skipped)s skipped after review."
+msgstr "تمت إضافة %(new)s سطر مكافأة جديد؛ تم تخطي %(skipped)s بعد المراجعة."

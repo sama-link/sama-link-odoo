@@ -10,6 +10,19 @@
                         <div class="oe_title">
                             <h2>Add Employees to <field name="batch_id" readonly="1" class="oe_inline"/></h2>
                         </div>
+                        <field name="issue_employee_ids" invisible="1"/>
+                        <div class="alert alert-warning d-flex align-items-center justify-content-between"
+                             role="alert" invisible="not issue_count">
+                            <span>
+                                ⚠ <field name="issue_count" readonly="1" class="oe_inline fw-bold"/>
+                                employee(s) have a contract starting or ending inside this period.
+                                They are not listed below — review them one by one.
+                            </span>
+                            <button name="action_open_review_wizard"
+                                    string="Review employees with issues"
+                                    type="object"
+                                    class="btn-warning ms-2"/>
+                        </div>
                         <group>
                             <field name="mode" widget="radio"/>
                             <field name="company_id" invisible="1"/>
@@ -17,6 +30,7 @@
                         <group string="Employees" invisible="mode != 'specific'">
                             <field name="employee_ids" nolabel="1" widget="many2many_tags"
                                    context="{'active_test': False}"
+                                   domain="[('company_id', 'in', [company_id, False]), ('bonus_eligible', '=', True), ('id', 'not in', issue_employee_ids)]"
                                    options="{'no_create': True, 'no_create_edit': True}"/>
                         </group>
                         <group string="Departments" invisible="mode != 'by_department'">
@@ -25,7 +39,7 @@
                         </group>
                         <group invisible="mode != 'all'">
                             <div class="text-muted">
-                                All active employees in <field name="company_id" readonly="1" class="oe_inline"/> will be added (excluding any already in the batch).
+                                All active employees in <field name="company_id" readonly="1" class="oe_inline"/> will be added (excluding any already in the batch and any needing review).
                             </div>
                         </group>
                         <div class="alert alert-info" role="alert" invisible="preview_count &lt;= 0">

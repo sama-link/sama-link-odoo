@@ -108,3 +108,7 @@ access_sales_tier_sales_mgr,bonus.sales.tier.sales.mgr,model_sl_bonus_sales_tier
 access_sales_tier_online_mgr,bonus.sales.tier.online.mgr,model_sl_bonus_sales_tier,group_bonus_manager_online,1,1,1,1
 access_sales_tier_projects_mgr,bonus.sales.tier.projects.mgr,model_sl_bonus_sales_tier,group_bonus_manager_projects,1,1,1,1
 access_sales_tier_admin,bonus.sales.tier.admin,model_sl_bonus_sales_tier,group_bonus_admin,1,1,1,1
+access_batch_review_wiz_hr,bonus.batch.review.wiz.hr,model_sl_bonus_batch_review,group_bonus_hr_manager,1,1,1,1
+access_batch_review_wiz_admin,bonus.batch.review.wiz.admin,model_sl_bonus_batch_review,group_bonus_admin,1,1,1,1
+access_batch_review_line_hr,bonus.batch.review.line.hr,model_sl_bonus_batch_review_line,group_bonus_hr_manager,1,1,1,1
+access_batch_review_line_admin,bonus.batch.review.line.admin,model_sl_bonus_batch_review_line,group_bonus_admin,1,1,1,1
