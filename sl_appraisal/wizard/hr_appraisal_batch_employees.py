@@ -26,10 +26,36 @@ class HrAppraisalBatchEmployees(models.TransientModel):
         string='Employees',
         # Without active_test=False, archived (departed) employees silently
         # vanish when the M2M is read back — they must stay selectable so
-        # the contract-warning wizard can decide about them explicitly.
+        # the review wizard can decide about them explicitly.
         context={'active_test': False},
-        domain="[('appraisal_eligible', '=', True)]",
+        domain="[('appraisal_eligible', '=', True), ('id', 'not in', issue_employee_ids)]",
     )
+    # Employees with a job change / contract issue in the batch period. They
+    # are hidden from the picker above and handled one by one in the review
+    # wizard (button "Review employees with issues").
+    issue_employee_ids = fields.Many2many(
+        'hr.employee',
+        'hr_appraisal_batch_employee_issue_rel',
+        'wizard_id',
+        'employee_id',
+        string='Employees With Issues',
+        compute='_compute_issue_employees',
+        context={'active_test': False},
+    )
+    issue_count = fields.Integer(compute='_compute_issue_employees')
+
+    @api.depends('batch_id')
+    def _compute_issue_employees(self):
+        for wizard in self:
+            batch = wizard.batch_id
+            if not batch:
+                wizard.issue_employee_ids = [(5, 0, 0)]
+                wizard.issue_count = 0
+                continue
+            scope = batch._review_scope_employees()
+            issues = batch._employee_period_issues(scope)
+            wizard.issue_employee_ids = [(6, 0, list(issues))]
+            wizard.issue_count = len(issues)
 
     @api.onchange('company_id', 'department_id', 'job_id', 'work_location_id', 'manager_id', 'employee_search')
     def _onchange_employee_filters(self):
@@ -38,8 +64,12 @@ class HrAppraisalBatchEmployees(models.TransientModel):
     def _get_employee_domain(self):
         self.ensure_one()
         # Employee card → Appraisal & Bonus tab → "Appraisal" unchecked
-        # means the employee cannot take appraisals at all.
-        domain = [('appraisal_eligible', '=', True)]
+        # means the employee cannot take appraisals at all. Employees with
+        # period issues go through the review wizard instead.
+        domain = [
+            ('appraisal_eligible', '=', True),
+            ('id', 'not in', self.issue_employee_ids.ids),
+        ]
         if self.company_id:
             domain.append(('company_id', '=', self.company_id.id))
         if self.department_id:
@@ -73,6 +103,18 @@ class HrAppraisalBatchEmployees(models.TransientModel):
             'context': dict(self.env.context),
         }
 
+    def action_open_review_wizard(self):
+        """Review every employee with a period issue (hidden from the picker)."""
+        self.ensure_one()
+        batch = self.batch_id
+        if not batch:
+            raise UserError(_("No appraisal batch was found."))
+        batch._assert_can_generate_appraisals()
+        flagged = self.issue_employee_ids - batch.appraisal_ids.mapped('employee_id')
+        if not flagged:
+            raise UserError(_("No employee currently needs review for this period."))
+        return batch._open_review_wizard(flagged)
+
     def action_generate_appraisals(self):
         self.ensure_one()
         batch = self.batch_id
@@ -89,28 +131,13 @@ class HrAppraisalBatchEmployees(models.TransientModel):
                 "These employees already exist in this batch:\n%s"
             ) % "\n".join(duplicates.mapped('name')))
 
-        # Employees with no contract overlapping the batch period are not
-        # generated silently — HR decides per employee in a warning wizard.
-        no_contract = self.employee_ids.filtered(
-            lambda e: not e._has_active_contract_in_period(
-                batch.date_from, batch.date_to)
-        )
-        if no_contract:
-            warning_wizard = self.env['hr.appraisal.batch.contract.warning'].create({
-                'batch_id': batch.id,
-                'ok_employee_ids': [(6, 0, (self.employee_ids - no_contract).ids)],
-                'line_ids': [
-                    (0, 0, {'employee_id': emp.id}) for emp in no_contract
-                ],
-            })
-            return {
-                'name': _('Employees Without Active Contract'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'hr.appraisal.batch.contract.warning',
-                'res_id': warning_wizard.id,
-                'view_mode': 'form',
-                'target': 'new',
-            }
+        # Defensive re-check on the actual selection: anyone with a job
+        # change / contract issue in the period is decided in the review
+        # wizard, never generated silently.
+        issues = batch._employee_period_issues(self.employee_ids)
+        flagged = self.employee_ids.filtered(lambda e: e.id in issues)
+        if flagged:
+            return batch._open_review_wizard(flagged, self.employee_ids - flagged)
 
         batch._generate_appraisals_for_employees(self.employee_ids)
         return {'type': 'ir.actions.act_window_close'}

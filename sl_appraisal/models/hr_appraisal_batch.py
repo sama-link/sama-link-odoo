@@ -1,3 +1,6 @@
+from collections import defaultdict
+from datetime import datetime, time
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
@@ -52,6 +55,17 @@ class HrAppraisalBatch(models.Model):
     )
     is_appraisal_admin = fields.Boolean(
         compute='_compute_is_appraisal_admin',
+    )
+    copied_from_batch_id = fields.Many2one(
+        'hr.appraisal.batch',
+        string='Copied From',
+        readonly=True,
+        copy=False,
+        index=True,
+        help="Source batch this one was copied from. Only the settings were "
+             "copied; when employees are generated here, the evaluator "
+             "(manager / employee) assigned to them in the source batch is "
+             "reused.",
     )
 
     @api.depends('appraisal_ids')
@@ -149,11 +163,163 @@ class HrAppraisalBatch(models.Model):
             },
         }
 
-    def _generate_appraisals_for_employees(self, employees):
+    # ── Period issues (job change / contract boundary / no contract) ──
+    def _review_scope_employees(self):
+        """Employees the generate wizard should consider for this batch:
+        eligible, in the batch's company (or none), not yet in the batch —
+        active ones, plus departed (archived) ones who still held a contract
+        during the period. Ex-employees who left before the period are not
+        scanned, otherwise every past employee would be flagged as
+        'no contract'."""
+        self.ensure_one()
+        Employee = self.env['hr.employee']
+        base = [
+            ('appraisal_eligible', '=', True),
+            ('company_id', 'in', [self.company_id.id, False]),
+        ]
+        active = Employee.search(base)
+        contract_emp_ids = self.env['hr.contract'].sudo().with_context(
+            active_test=False,
+        ).search([
+            ('state', 'in', ('open', 'close')),
+            ('date_start', '<=', self.date_to),
+            '|', ('date_end', '=', False), ('date_end', '>=', self.date_from),
+        ]).mapped('employee_id').ids
+        departed = Employee.with_context(active_test=False).search(
+            base + [('active', '=', False), ('id', 'in', contract_emp_ids)])
+        return (active | departed) - self.appraisal_ids.mapped('employee_id')
+
+    def _employee_period_issues(self, employees):
+        """Detect, for each employee, what needs HR review before an appraisal
+        is generated for this batch's period:
+
+        - ``jobs``: hr.job recordset held during the period, in order. More
+          than one means the employee changed job position in the period and
+          HR must pick which position the appraisal is for. Sources: the
+          employee card's job history (mail tracking on hr.employee.job_id)
+          plus the job of every contract overlapping the period.
+        - ``contract_boundary``: a contract starts or ends inside the period.
+        - ``no_contract``: no running/closed contract overlaps the period.
+
+        Returns ``{employee_id: {'jobs', 'job_changes', 'contract_boundary',
+        'no_contract', 'summary'}}`` — only for employees with at least one
+        issue. ``job_changes`` is ``[(date, old_job, new_job)]``.
+        """
+        self.ensure_one()
+        date_from, date_to = self.date_from, self.date_to
+        if not employees or not date_from or not date_to:
+            return {}
+        Job = self.env['hr.job'].sudo()
+        Contract = self.env['hr.contract'].sudo().with_context(active_test=False)
+
+        contracts_by_emp = defaultdict(lambda: Contract.browse())
+        for contract in Contract.search([
+            ('employee_id', 'in', employees.ids),
+            ('state', 'in', ('open', 'close')),
+            ('date_start', '<=', date_to),
+            '|', ('date_end', '=', False), ('date_end', '>=', date_from),
+        ]):
+            contracts_by_emp[contract.employee_id.id] |= contract
+
+        # Job history: every change since the period started, so the job at
+        # the END of the period is known even if it changed again later.
+        job_field = self.env['ir.model.fields']._get('hr.employee', 'job_id')
+        changes_by_emp = defaultdict(list)
+        trackings = self.env['mail.tracking.value'].sudo().search([
+            ('field_id', '=', job_field.id),
+            ('mail_message_id.model', '=', 'hr.employee'),
+            ('mail_message_id.res_id', 'in', employees.ids),
+            ('mail_message_id.date', '>=', datetime.combine(date_from, time.min)),
+        ])
+        for tracking in trackings:
+            message = tracking.mail_message_id
+            changes_by_emp[message.res_id].append((
+                message.date.date(),
+                Job.browse(tracking.old_value_integer or 0).exists(),
+                Job.browse(tracking.new_value_integer or 0).exists(),
+            ))
+
+        issues = {}
+        for employee in employees:
+            changes = sorted(changes_by_emp.get(employee.id, []), key=lambda c: c[0])
+            in_period = [c for c in changes if c[0] <= date_to]
+            after = [c for c in changes if c[0] > date_to]
+            contracts = contracts_by_emp.get(employee.id, Contract.browse())
+            # Ordered, de-duplicated list of job ids held in the period:
+            # job at period start, then each new job, then contract jobs.
+            job_ids = []
+            if in_period:
+                job_ids.append(in_period[0][1].id)
+                job_ids.extend(new.id for _date, _old, new in in_period)
+            else:
+                job_ids.append((after[0][1] if after else employee.job_id).id)
+            job_ids.extend(contracts.mapped('job_id').ids)
+            jobs = Job.browse(list(dict.fromkeys(j for j in job_ids if j))).exists()
+
+            boundary = contracts.filtered(
+                lambda c: c.date_start > date_from
+                or (c.date_end and c.date_end < date_to))
+            job_change = len(jobs) > 1
+            no_contract = not contracts
+            if not (job_change or boundary or no_contract):
+                continue
+
+            summary = []
+            if job_change:
+                parts = [jobs[0].name]
+                for change_date, _old, new in in_period:
+                    parts.append("%s (%s)" % (new.name or "?", change_date))
+                if not in_period:
+                    parts = jobs.mapped('name')
+                summary.append(_("Job changed: %s") % " → ".join(parts))
+            for contract in boundary:
+                if contract.date_start > date_from:
+                    summary.append(_("Contract starts %s") % contract.date_start)
+                if contract.date_end and contract.date_end < date_to:
+                    summary.append(_("Contract ends %s") % contract.date_end)
+            if no_contract:
+                summary.append(_("No active contract in the period"))
+
+            issues[employee.id] = {
+                'jobs': jobs,
+                'job_changes': in_period,
+                'contract_boundary': bool(boundary),
+                'no_contract': no_contract,
+                'summary': "; ".join(summary),
+            }
+        return issues
+
+    def _open_review_wizard(self, flagged_employees, ok_employees=None):
+        """Open the review wizard for employees with period issues.
+        ``ok_employees`` (no issues) are carried along and generated when the
+        wizard is confirmed."""
+        self.ensure_one()
+        Review = self.env['hr.appraisal.batch.review']
+        wizard = Review.create({
+            'batch_id': self.id,
+            'ok_employee_ids': [(6, 0, (ok_employees or self.env['hr.employee']).ids)],
+            'line_ids': Review._prepare_line_commands(self, flagged_employees),
+        })
+        return {
+            'name': _('Employees Needing Review'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.appraisal.batch.review',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def _generate_appraisals_for_employees(self, employees, job_by_employee=None):
         """Create one appraisal per employee in this batch, mirroring the
-        batch period/deadline and defaulting the evaluator to the employee's
-        direct manager. Shared by the generate wizard and the contract-warning
+        batch period/deadline. Shared by the generate wizard and the review
         wizard so both paths behave identically.
+
+        Evaluator: when this batch was copied from another one, the
+        manager/employee assigned to the employee in the source batch is
+        reused; otherwise the employee's direct manager.
+
+        ``job_by_employee`` ({employee_id: job_id}) pins the appraisal's Job
+        Position for employees who changed job during the period.
 
         New appraisals stay Draft when the batch is Draft. When the batch is
         Published or Submitted they are auto-published so the batch status
@@ -167,6 +333,11 @@ class HrAppraisalBatch(models.Model):
                 "These employees are not eligible for appraisals (the "
                 "'Appraisal' box is unchecked on their employee card):\n%s"
             ) % "\n".join(ineligible.mapped('name')))
+        job_by_employee = job_by_employee or {}
+        source_by_employee = {}
+        if self.copied_from_batch_id:
+            for src in self.copied_from_batch_id.sudo().appraisal_ids:
+                source_by_employee.setdefault(src.employee_id.id, src)
         appraisal_model = self.env['hr.appraisal'].sudo()
         auto_publish = self.state in ('published', 'submitted')
         created = self.env['hr.appraisal']
@@ -179,7 +350,15 @@ class HrAppraisalBatch(models.Model):
                 'date_to': self.date_to,
                 'appraisal_batch_id': self.id,
             }
-            if employee.parent_id.user_id:
+            if job_by_employee.get(employee.id):
+                vals['job_id'] = job_by_employee[employee.id]
+            source = source_by_employee.get(employee.id)
+            source_managers = source.hr_manager_ids.filtered('active') if source else None
+            source_employees = source.hr_employee_ids.filtered('active') if source else None
+            if source_managers or source_employees:
+                vals['hr_manager_ids'] = [(6, 0, source_managers.ids)]
+                vals['hr_employee_ids'] = [(6, 0, source_employees.ids)]
+            elif employee.parent_id.user_id:
                 vals['hr_manager_ids'] = [(6, 0, employee.parent_id.ids)]
             appraisal = appraisal_model.create(vals)
             if employee.employee_skill_ids and not appraisal.skills_populated:
@@ -274,11 +453,12 @@ class HrAppraisalBatch(models.Model):
         self._run_bulk_state_change('action_reset_to_draft', 'draft', _("Reset to Draft"))
 
     def action_duplicate_batch(self):
-        """Duplicate selected batch(es): a fresh draft batch per source, with one
-        draft appraisal per employee carrying the same manager assignment and
-        freshly populated skills."""
+        """Copy selected batch(es): a fresh draft batch per source with the
+        same settings and a link to the source. NO appraisals are created —
+        employees are added through Generate Appraisals, so job/contract
+        issues are reviewed for the new period, and each employee's evaluator
+        (manager or employee) is taken from the source batch."""
         self._check_hr_or_admin_access("duplicate appraisal batches")
-        appraisal_model = self.env['hr.appraisal']
         new_batches = self.env['hr.appraisal.batch']
         for batch in self:
             new_batch = self.env['hr.appraisal.batch'].create({
@@ -287,40 +467,16 @@ class HrAppraisalBatch(models.Model):
                 'date_deadline': batch.date_deadline,
                 'date_from': batch.date_from,
                 'date_to': batch.date_to,
+                'copied_from_batch_id': batch.id,
             })
-            # Employees whose "Appraisal" box was unchecked since the source
-            # batch was built cannot take new appraisals — skip them and say so.
-            skipped = batch.appraisal_ids.filtered(
-                lambda a: not a.employee_id.appraisal_eligible)
-            for appraisal in batch.appraisal_ids - skipped:
-                vals = {
-                    'employee_id': appraisal.employee_id.id,
-                    'company_id': appraisal.company_id.id or new_batch.company_id.id,
-                    'appraisal_deadline': new_batch.date_deadline,
-                    'date_from': new_batch.date_from,
-                    'date_to': new_batch.date_to,
-                    'appraisal_batch_id': new_batch.id,
-                    # preserve the exact evaluator assignment (manager or employee)
-                    'hr_manager_ids': [(6, 0, appraisal.hr_manager_ids.ids)],
-                    'hr_employee_ids': [(6, 0, appraisal.hr_employee_ids.ids)],
-                }
-                # appraisal_batch_sync=True skips the past-deadline constraint so an
-                # old batch can still be duplicated (same trick the batch date-sync uses)
-                new_appraisal = appraisal_model.with_context(
-                    appraisal_batch_sync=True,
-                ).create(vals)
-                if new_appraisal.employee_id.employee_skill_ids and not new_appraisal.skills_populated:
-                    new_appraisal.action_populate_skills()
-            new_batch.message_post(
-                body=_("Duplicated from batch %s with %s appraisal(s).",
-                       batch.name, len(batch.appraisal_ids - skipped)))
-            if skipped:
-                new_batch.message_post(body=_(
-                    "Skipped %s employee(s) no longer eligible for appraisals "
-                    "('Appraisal' unchecked on the employee card): %s",
-                    len(skipped),
-                    ", ".join(skipped.mapped('employee_id.name')),
-                ))
+            new_batch.message_post(body=_(
+                "Copied from batch %(name)s: settings and the evaluator "
+                "assignment of %(count)s employee(s). No appraisals were "
+                "created — use Generate Appraisals to add employees; the "
+                "manager/employee who appraised them in the source batch "
+                "will be assigned automatically.",
+                name=batch.name, count=len(batch.appraisal_ids),
+            ))
             new_batches |= new_batch
 
         action = self.env['ir.actions.actions']._for_xml_id(

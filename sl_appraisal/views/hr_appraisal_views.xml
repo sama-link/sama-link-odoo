@@ -85,7 +85,10 @@
                                    options="{'no_create': True}"/>
                         </h1>
                         <h2>
-                            <field name="job_id" readonly="1"/>
+                            <field name="job_id"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Job Position"/>
                         </h2>
                     </div>
 

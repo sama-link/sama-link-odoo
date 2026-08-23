@@ -31,9 +31,12 @@ class HrAppraisal(models.Model):
     job_id = fields.Many2one(
         'hr.job',
         string='Job Position',
-        related='employee_id.job_id',
+        compute='_compute_job_id',
         store=True,
-        readonly=True,
+        readonly=False,
+        help="Defaults to the employee's current job position. For an "
+             "employee who changed position during the appraisal period, "
+             "the batch review wizard sets the position this appraisal is for.",
     )
     work_location_id = fields.Many2one(
         'hr.work.location',
@@ -1034,6 +1037,14 @@ class HrAppraisal(models.Model):
             raise AccessError(
                 _("Only HR Officers and Administrators can %s.",
                   action_name))
+
+    @api.depends('employee_id')
+    def _compute_job_id(self):
+        """Job Position follows the employee unless it was set explicitly
+        (e.g. by the batch review wizard for an employee who changed job in
+        the period — values given on create/write are kept)."""
+        for rec in self:
+            rec.job_id = rec.employee_id.job_id
 
     @api.depends('employee_id', 'date_from', 'date_to')
     def _compute_has_active_contract_in_period(self):
