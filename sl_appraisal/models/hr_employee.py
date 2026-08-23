@@ -1,5 +1,10 @@
 from odoo import api, fields, models
 
+APPRAISAL_ADMIN_SCORE_MODES = [
+    ('scored', 'Has administrative score'),
+    ('exempt', 'No administrative score (always 100%)'),
+]
+
 
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
@@ -23,6 +28,23 @@ class HrEmployee(models.Model):
         'employee_id',
         string='Skill Timeline',
         help="Timeline of skill changes approved from appraisals.")
+
+    # ── Appraisal eligibility (employee card → "Appraisal & Bonus" tab) ──
+    appraisal_eligible = fields.Boolean(
+        string='Appraisal',
+        default=True,
+        help="Uncheck to exclude this employee from appraisals: they can no "
+             "longer be selected when creating appraisals or appraisal batches.",
+    )
+    appraisal_admin_score_mode = fields.Selection(
+        APPRAISAL_ADMIN_SCORE_MODES,
+        string='Administrative Score',
+        default='scored',
+        help="'No administrative score' puts the employee on the Administrative "
+             "Exclude list (Appraisals → Configuration): their administration "
+             "score is always 100%, regardless of absences, lateness or "
+             "penalties. The two stay in sync both ways.",
+    )
 
     def _has_active_contract_in_period(self, date_from, date_to):
         """True when the employee holds a running or closed contract that
@@ -65,6 +87,66 @@ class HrEmployee(models.Model):
             ).sorted('date_to', reverse=True)
             employee.last_appraisal_date = (
                 finalized[0].date_to if finalized else False)
+
+    # ── Appraisal eligibility ⇄ Administrative Exclude list sync ──────
+    @api.onchange('appraisal_eligible')
+    def _onchange_appraisal_eligible(self):
+        if not self.appraisal_eligible:
+            self.appraisal_admin_score_mode = 'scored'
+
+    @api.model
+    def _normalize_appraisal_eligibility_vals(self, vals):
+        """An employee who cannot take appraisals has no administrative-score
+        setting either: reset it so re-enabling starts from the default."""
+        if 'appraisal_eligible' in vals and not vals['appraisal_eligible']:
+            vals['appraisal_admin_score_mode'] = 'scored'
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._normalize_appraisal_eligibility_vals(vals)
+        employees = super().create(vals_list)
+        employees._sync_admin_score_exclude()
+        return employees
+
+    def write(self, vals):
+        self._normalize_appraisal_eligibility_vals(vals)
+        res = super().write(vals)
+        if 'appraisal_eligible' in vals or 'appraisal_admin_score_mode' in vals:
+            self._sync_admin_score_exclude()
+        return res
+
+    def _sync_admin_score_exclude(self):
+        """Mirror the employee-card setting into the Administrative Exclude
+        list. ``appraisal.admin.score.exclude`` does the reverse sync on
+        create/write/unlink; the context flag stops the two from
+        ping-ponging. sudo: HR officers may edit the card without holding
+        write access on the configuration list itself."""
+        if self.env.context.get('skip_admin_exclude_sync'):
+            return
+        Exclude = self.env['appraisal.admin.score.exclude'].sudo().with_context(
+            skip_admin_exclude_sync=True)
+        listed = {
+            rec.employee_id.id: rec
+            for rec in Exclude.search([('employee_id', 'in', self.ids)])
+        }
+        to_create = []
+        to_unlink = Exclude.browse()
+        for employee in self:
+            should_be_listed = (
+                employee.appraisal_eligible
+                and employee.appraisal_admin_score_mode == 'exempt'
+            )
+            entry = listed.get(employee.id)
+            if should_be_listed and not entry:
+                to_create.append({'employee_id': employee.id})
+            elif entry and not should_be_listed:
+                to_unlink |= entry
+        if to_create:
+            Exclude.create(to_create)
+        if to_unlink:
+            to_unlink.unlink()
 
     def action_open_appraisals(self):
         """Open appraisals list for this employee."""

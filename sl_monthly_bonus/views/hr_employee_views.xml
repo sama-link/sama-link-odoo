@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Bonus half of the "Appraisal & Bonus" tab that sl_appraisal adds
+             to the employee form. Inherits sl_appraisal's view directly so the
+             page is guaranteed to exist when this xpath runs. -->
+        <record id="view_hr_employee_form_appraisal_bonus_tab" model="ir.ui.view">
+            <field name="name">hr.employee.form.appraisal.bonus.tab</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="sl_appraisal.sl_view_employee_form_appraisal"/>
+            <field name="arch" type="xml">
+                <!-- Widen the tab to bonus managers: each inner group keeps
+                     its own module's groups, so each side only sees its part. -->
+                <xpath expr="//page[@name='appraisal_bonus']" position="attributes">
+                    <attribute name="groups">sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,base.group_system</attribute>
+                </xpath>
+                <xpath expr="//page[@name='appraisal_bonus']/group[@name='appraisal_eligibility']" position="after">
+                    <group name="bonus_eligibility" string="Bonus"
+                           groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin">
+                        <field name="bonus_eligible"/>
+                        <field name="bonus_evaluation_mode"
+                               invisible="not bonus_eligible"
+                               required="bonus_eligible"/>
+                        <div colspan="2" class="text-muted" invisible="not bonus_eligible">"Fixed" adds the employee to Bonus → Configuration → Evaluation Exceptions (appraisal % skipped, treated as 100%). The two stay in sync.</div>
+                        <div colspan="2" class="text-muted" invisible="bonus_eligible">This employee cannot be added to a bonus batch.</div>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
         <record id="view_hr_employee_form_bonus" model="ir.ui.view">
             <field name="name">hr.employee.form.bonus</field>
             <field name="model">hr.employee</field>

@@ -4447,3 +4447,56 @@ msgstr "🧮 احتساب المكافآت"
 #: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_sl_bonus_batch_line_form
 msgid "🧹 Clear Override"
 msgstr "🧹 إلغاء التعديل"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,field_description:sl_monthly_bonus.field_hr_employee__bonus_evaluation_mode
+msgid "Bonus Evaluation"
+msgstr "تقييم المكافأة"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_employee__bonus_evaluation_mode__appraisal
+msgid "Depends on appraisal"
+msgstr "يعتمد على التقييم"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields.selection,name:sl_monthly_bonus.selection__hr_employee__bonus_evaluation_mode__fixed
+msgid "Fixed (skip appraisal %)"
+msgstr "ثابت (تجاوز نسبة التقييم)"
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,help:sl_monthly_bonus.field_hr_employee__bonus_eligible
+msgid "Uncheck to exclude this employee from monthly bonuses: they can no longer be added to a bonus batch and compute to 0 if already in one."
+msgstr "ألغِ التحديد لاستبعاد هذا الموظف من المكافآت الشهرية: لن يمكن إضافته إلى دفعة مكافآت، وتُحسب مكافأته صفرًا إن كان مضافًا بالفعل."
+
+#. module: sl_monthly_bonus
+#: model:ir.model.fields,help:sl_monthly_bonus.field_hr_employee__bonus_evaluation_mode
+msgid "'Fixed' puts the employee on the Evaluation Exceptions list (Bonus → Configuration): the appraisal % is skipped (treated as 100%) in their bonus formula. The two stay in sync both ways."
+msgstr "«ثابت» يضيف الموظف إلى قائمة استثناءات التقييم (المكافآت ← الإعدادات): تُتجاوز نسبة التقييم (تُعامل كـ 100%) في معادلة مكافأته. القائمة وبطاقة الموظف متزامنتان في الاتجاهين."
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/sl_bonus_calculator.py:0
+msgid "Not eligible for bonus ('Bonus' unchecked on the employee card)."
+msgstr "غير مؤهل للمكافأة (خانة «المكافأة» غير محددة في بطاقة الموظف)."
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/sl_bonus_batch.py:0
+msgid "These employees are not eligible for bonus (the 'Bonus' box is unchecked on their employee card):\n%s"
+msgstr "هؤلاء الموظفون غير مؤهلين للمكافأة (خانة «المكافأة» غير محددة في بطاقة الموظف):\n%s"
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/hr_employee.py:0
+msgid "Fixed bonus (set on the employee card)"
+msgstr "مكافأة ثابتة (محددة في بطاقة الموظف)"
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_hr_employee_form_appraisal_bonus_tab
+msgid "\"Fixed\" adds the employee to Bonus → Configuration → Evaluation Exceptions (appraisal % skipped, treated as 100%). The two stay in sync."
+msgstr "«ثابت» يضيف الموظف إلى المكافآت ← الإعدادات ← استثناءات التقييم (تُتجاوز نسبة التقييم وتُعامل كـ 100%). الاثنان متزامنان."
+
+#. module: sl_monthly_bonus
+#: model_terms:ir.ui.view,arch_db:sl_monthly_bonus.view_hr_employee_form_appraisal_bonus_tab
+msgid "This employee cannot be added to a bonus batch."
+msgstr "لا يمكن إضافة هذا الموظف إلى دفعة مكافآت."

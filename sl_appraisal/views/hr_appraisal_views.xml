@@ -81,6 +81,7 @@
                             <field name="employee_id" class="oe_inline"
                                    placeholder="Employee's Name"
                                    readonly="state != 'draft'"
+                                   domain="[('appraisal_eligible', '=', True)]"
                                    options="{'no_create': True}"/>
                         </h1>
                         <h2>

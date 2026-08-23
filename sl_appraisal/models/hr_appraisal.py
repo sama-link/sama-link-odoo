@@ -577,6 +577,20 @@ class HrAppraisal(models.Model):
                     _("Appraisal deadline cannot be in the past.")
                 )
 
+    @api.constrains('employee_id')
+    def _check_employee_appraisal_eligible(self):
+        """Employees with the "Appraisal" box unchecked on their employee
+        card (Appraisal & Bonus tab) cannot take appraisals. The pickers
+        already hide them; this is the server-side guard."""
+        for appraisal in self:
+            employee = appraisal.employee_id
+            if employee and not employee.appraisal_eligible:
+                raise ValidationError(_(
+                    "%s is not eligible for appraisals: the 'Appraisal' box is "
+                    "unchecked on the employee card (Appraisal & Bonus tab).",
+                    employee.name,
+                ))
+
     @api.model
     def create(self, vals):
         """Only HR Officers and Administrators can create appraisals."""

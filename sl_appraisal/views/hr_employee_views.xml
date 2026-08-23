@@ -28,6 +28,24 @@
                 <field name="last_appraisal_date" readonly="1"
                        groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system"/>
             </field>
+
+            <!-- "Appraisal & Bonus" tab: eligibility checkboxes + their
+                 dependent selects. sl_monthly_bonus injects the Bonus
+                 group into this same page (and widens its groups). -->
+            <notebook position="inside">
+                <page string="Appraisal &amp; Bonus" name="appraisal_bonus"
+                      groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
+                    <group name="appraisal_eligibility" string="Appraisal"
+                           groups="sl_appraisal.group_appraisal_hr,sl_appraisal.group_appraisal_administrator,base.group_system">
+                        <field name="appraisal_eligible"/>
+                        <field name="appraisal_admin_score_mode"
+                               invisible="not appraisal_eligible"
+                               required="appraisal_eligible"/>
+                        <div colspan="2" class="text-muted" invisible="not appraisal_eligible">"No administrative score" adds the employee to Appraisals → Configuration → Administrative Exclude (administration score always 100%). The two stay in sync.</div>
+                        <div colspan="2" class="text-muted" invisible="appraisal_eligible">This employee cannot be selected for appraisals.</div>
+                    </group>
+                </page>
+            </notebook>
         </field>
     </record>
 

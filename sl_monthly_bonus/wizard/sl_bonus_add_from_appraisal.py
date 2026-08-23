@@ -55,7 +55,10 @@ class SlBonusAddFromAppraisalWizard(models.TransientModel):
         self.ensure_one()
         if not self.appraisal_batch_id:
             return self.env['hr.employee']
-        return self.appraisal_batch_id.sudo().appraisal_ids.mapped('employee_id')
+        # Appraised employees whose "Bonus" box is unchecked on the employee
+        # card (Appraisal & Bonus tab) cannot take a bonus — leave them out.
+        return self.appraisal_batch_id.sudo().appraisal_ids.mapped(
+            'employee_id').filtered('bonus_eligible')
 
     def action_confirm(self):
         self.ensure_one()

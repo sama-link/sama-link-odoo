@@ -27,7 +27,8 @@
                             class="btn-secondary"/>
                 </div>
 
-                <field name="employee_ids" widget="many2many">
+                <field name="employee_ids" widget="many2many"
+                       domain="[('appraisal_eligible', '=', True)]">
                     <list>
                         <field name="name"/>
                         <field name="job_id"/>

@@ -272,6 +272,12 @@ class SlBonusBatch(models.Model):
                 "Employees can only be added while the batch is in Draft "
                 "or Data Ready."
             ))
+        ineligible = employees.sudo().filtered(lambda e: not e.bonus_eligible)
+        if ineligible:
+            raise UserError(_(
+                "These employees are not eligible for bonus (the 'Bonus' box "
+                "is unchecked on their employee card):\n%s"
+            ) % "\n".join(ineligible.mapped('name')))
         Line = self.env['sl.bonus.batch.line'].sudo()
         existing_ids = set(self.line_ids.mapped('employee_id.id'))
         new_employees = employees.sudo().filtered(
@@ -296,6 +302,7 @@ class SlBonusBatch(models.Model):
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [rec.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
             rec._add_employees_to_lines(employees)
         return True
@@ -573,6 +580,7 @@ class SlBonusBatch(models.Model):
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [self.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
             Line.create([{
                 'batch_id': self.id, 'employee_id': emp.id, 'state': 'draft',

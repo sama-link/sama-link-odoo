@@ -161,6 +161,12 @@ class HrAppraisalBatch(models.Model):
         """
         self.ensure_one()
         self._assert_can_generate_appraisals()
+        ineligible = employees.filtered(lambda e: not e.appraisal_eligible)
+        if ineligible:
+            raise UserError(_(
+                "These employees are not eligible for appraisals (the "
+                "'Appraisal' box is unchecked on their employee card):\n%s"
+            ) % "\n".join(ineligible.mapped('name')))
         appraisal_model = self.env['hr.appraisal'].sudo()
         auto_publish = self.state in ('published', 'submitted')
         created = self.env['hr.appraisal']
@@ -282,7 +288,11 @@ class HrAppraisalBatch(models.Model):
                 'date_from': batch.date_from,
                 'date_to': batch.date_to,
             })
-            for appraisal in batch.appraisal_ids:
+            # Employees whose "Appraisal" box was unchecked since the source
+            # batch was built cannot take new appraisals — skip them and say so.
+            skipped = batch.appraisal_ids.filtered(
+                lambda a: not a.employee_id.appraisal_eligible)
+            for appraisal in batch.appraisal_ids - skipped:
                 vals = {
                     'employee_id': appraisal.employee_id.id,
                     'company_id': appraisal.company_id.id or new_batch.company_id.id,
@@ -303,7 +313,14 @@ class HrAppraisalBatch(models.Model):
                     new_appraisal.action_populate_skills()
             new_batch.message_post(
                 body=_("Duplicated from batch %s with %s appraisal(s).",
-                       batch.name, len(batch.appraisal_ids)))
+                       batch.name, len(batch.appraisal_ids - skipped)))
+            if skipped:
+                new_batch.message_post(body=_(
+                    "Skipped %s employee(s) no longer eligible for appraisals "
+                    "('Appraisal' unchecked on the employee card): %s",
+                    len(skipped),
+                    ", ".join(skipped.mapped('employee_id.name')),
+                ))
             new_batches |= new_batch
 
         action = self.env['ir.actions.actions']._for_xml_id(

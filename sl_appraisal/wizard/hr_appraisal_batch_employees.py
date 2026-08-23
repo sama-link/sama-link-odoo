@@ -28,6 +28,7 @@ class HrAppraisalBatchEmployees(models.TransientModel):
         # vanish when the M2M is read back — they must stay selectable so
         # the contract-warning wizard can decide about them explicitly.
         context={'active_test': False},
+        domain="[('appraisal_eligible', '=', True)]",
     )
 
     @api.onchange('company_id', 'department_id', 'job_id', 'work_location_id', 'manager_id', 'employee_search')
@@ -36,7 +37,9 @@ class HrAppraisalBatchEmployees(models.TransientModel):
 
     def _get_employee_domain(self):
         self.ensure_one()
-        domain = []
+        # Employee card → Appraisal & Bonus tab → "Appraisal" unchecked
+        # means the employee cannot take appraisals at all.
+        domain = [('appraisal_eligible', '=', True)]
         if self.company_id:
             domain.append(('company_id', '=', self.company_id.id))
         if self.department_id:

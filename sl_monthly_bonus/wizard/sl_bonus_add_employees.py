@@ -35,7 +35,7 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
         'hr.employee', 'sl_bonus_add_emp_wiz_emp_rel',
         'wizard_id', 'employee_id',
         string='Employees',
-        domain="[('company_id', 'in', [company_id, False])]",
+        domain="[('company_id', 'in', [company_id, False]), ('bonus_eligible', '=', True)]",
         # active_test=False so archived (departed) employees survive the
         # M2M read-back — otherwise they are silently dropped on confirm.
         context={'active_test': False},
@@ -68,10 +68,13 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
     def _candidate_employees(self):
         """Resolve the candidate ``hr.employee`` recordset for the chosen mode."""
         self.ensure_one()
+        # Employee card → Appraisal & Bonus tab → "Bonus" unchecked means
+        # the employee cannot take a bonus: never a candidate, in any mode.
         if self.mode == 'all':
             return self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [self.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
         if self.mode == 'by_department':
             if not self.department_ids:
@@ -80,9 +83,10 @@ class SlBonusAddEmployeesWizard(models.TransientModel):
                 ('department_id', 'in', self.department_ids.ids),
                 ('company_id', 'in', [self.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
         # specific
-        return self.employee_ids
+        return self.employee_ids.filtered('bonus_eligible')
 
     def action_confirm(self):
         """Create the lines and close the wizard."""

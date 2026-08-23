@@ -191,6 +191,11 @@ class SlBonusCalculator(models.AbstractModel):
         return (employee.job_id and employee.job_id.bonus_category) or 'none'
 
     def _compute_exclusion(self, employee, period_end):
+        # Employee card → Appraisal & Bonus tab → "Bonus" unchecked. Lines
+        # that already exist for such an employee compute to 0 with a reason
+        # rather than vanishing silently.
+        if not employee.bonus_eligible:
+            return True, _("Not eligible for bonus ('Bonus' unchecked on the employee card).")
         if employee.bonus_quarterly_exclusion:
             return True, _("Quarterly bonus track (excluded from monthly).")
         if employee._bonus_is_in_probation(period_end):
