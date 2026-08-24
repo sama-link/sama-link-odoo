@@ -33,10 +33,6 @@
                                 string="➕ Add Employees"
                                 invisible="state not in ('draft','data_ready')"
                                 groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
-                        <button name="action_open_add_from_appraisal_wizard" type="object"
-                                string="📋 Add From Appraisal Batch"
-                                invisible="state not in ('draft','data_ready')"
-                                groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
                         <button name="action_mark_data_ready" type="object" string="📥 Mark Data Ready"
                                 invisible="state != 'draft'" class="oe_highlight"
                                 groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>

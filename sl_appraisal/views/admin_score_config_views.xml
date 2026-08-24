@@ -35,41 +35,4 @@
         <field name="code">action = model.action_open_config()</field>
     </record>
 
-    <!-- ============================================================
-         ADMINISTRATIVE EXCLUDE — employees always scored 100%
-         ============================================================ -->
-    <record id="view_admin_score_exclude_list" model="ir.ui.view">
-        <field name="name">appraisal.admin.score.exclude.list</field>
-        <field name="model">appraisal.admin.score.exclude</field>
-        <field name="arch" type="xml">
-            <list string="Administrative Exclude" editable="bottom">
-                <field name="employee_id"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_admin_score_exclude_form" model="ir.ui.view">
-        <field name="name">appraisal.admin.score.exclude.form</field>
-        <field name="model">appraisal.admin.score.exclude</field>
-        <field name="arch" type="xml">
-            <form string="Administrative Exclude">
-                <sheet>
-                    <group>
-                        <field name="employee_id"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_open_admin_score_exclude" model="ir.actions.act_window">
-        <field name="name">Administrative Exclude</field>
-        <field name="res_model">appraisal.admin.score.exclude</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Add an employee to the administrative exclusion list</p>
-            <p>Employees added here always receive a 100% administration score,
-               regardless of absences, lateness or penalties.</p>
-        </field>
-    </record>
 </odoo>

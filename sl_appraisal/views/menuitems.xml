@@ -35,13 +35,6 @@
               sequence="40"
               groups="sl_appraisal.group_appraisal_administrator,base.group_system"/>
 
-    <menuitem id="sl_menu_admin_exclude"
-              name="Administrative Exclude"
-              parent="sl_menu_appraisal_config"
-              action="sl_appraisal.action_open_admin_score_exclude"
-              sequence="10"
-              groups="sl_appraisal.group_appraisal_administrator,base.group_system"/>
-
     <menuitem id="sl_menu_admin_score_config"
               name="Administration Score Configuration"
               parent="sl_menu_appraisal_config"
@@ -83,15 +76,13 @@
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
             (4, ref('sl_appraisal.sl_menu_appraisal_batches')),
-            (4, ref('sl_appraisal.sl_menu_admin_score_config')),
-            (4, ref('sl_appraisal.sl_menu_admin_exclude'))
+            (4, ref('sl_appraisal.sl_menu_admin_score_config'))
         ]"/>
         <field name="menu_access" eval="[
             (4, ref('oh_appraisal.hr_appraisal_menu_root')),
             (4, ref('oh_appraisal.hr_appraisal_menu')),
             (4, ref('sl_appraisal.sl_menu_appraisal_batches')),
-            (4, ref('sl_appraisal.sl_menu_admin_score_config')),
-            (4, ref('sl_appraisal.sl_menu_admin_exclude'))
+            (4, ref('sl_appraisal.sl_menu_admin_score_config'))
         ]"/>
     </record>
 

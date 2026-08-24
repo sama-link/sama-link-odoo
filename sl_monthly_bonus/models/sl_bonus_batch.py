@@ -369,22 +369,6 @@ class SlBonusBatch(models.Model):
             },
         }
 
-    def action_open_add_from_appraisal_wizard(self):
-        """Open the Add From Appraisal Batch wizard — adds every employee
-        referenced by an appraisal in the selected appraisal batch."""
-        self.ensure_one()
-        self._ensure_hr()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Add From Appraisal Batch'),
-            'res_model': 'sl.bonus.add.from.appraisal.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_batch_id': self.id,
-            },
-        }
-
     def action_mark_data_ready(self):
         self._ensure_hr()
         for rec in self:

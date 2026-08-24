@@ -214,9 +214,10 @@ class HrAppraisal(models.Model):
     admin_score_exempt = fields.Boolean(
         string='Administration Score Exempt',
         compute='_compute_administration_scores',
-        help="Employee is in the administrative exclusion list and always "
-             "receives a 100% administration score, regardless of absences, "
-             "lateness or penalties.",
+        help="The employee card (Appraisal & Bonus tab) says 'No "
+             "administrative score': the employee always receives a 100% "
+             "administration score, regardless of absences, lateness or "
+             "penalties.",
     )
     weighted_skill_score = fields.Float(
         string='Weighted Skills (70%)',
@@ -296,16 +297,13 @@ class HrAppraisal(models.Model):
         raw = self.base_score + (self.manual_score or 0.0)
         return min(100.0, max(0.0, raw))
 
-    @api.depends('employee_id', 'date_from', 'date_to')
+    @api.depends('employee_id', 'employee_id.appraisal_admin_score_mode',
+                 'date_from', 'date_to')
     def _compute_administration_scores(self):
         incentive_model = self.env['hr.incentive'].sudo()
         absence_model = self.env['hr.absent.entry'].sudo()
         attendance_model = self.env['hr.attendance'].sudo()
         config = self.env['appraisal.admin.score.config'].sudo().get_config()
-        exempt_employee_ids = set(
-            self.env['appraisal.admin.score.exclude'].sudo()
-            .search([]).employee_id.ids
-        )
         for rec in self:
             rec.admin_score_exempt = False
             rec.absence_count = 0
@@ -323,8 +321,9 @@ class HrAppraisal(models.Model):
             if not rec.employee_id or not rec.date_from or not rec.date_to:
                 continue
 
-            # Excluded employees always score 100% — skip all deductions.
-            if rec.employee_id.id in exempt_employee_ids:
+            # Employee card → Appraisal & Bonus tab → "No administrative
+            # score": always 100% — skip all deductions.
+            if rec.employee_id.appraisal_admin_score_mode == 'exempt':
                 rec.admin_score_exempt = True
                 rec.admin_score = 100.0
                 continue

@@ -7,7 +7,6 @@ from . import sl_bonus_branch_manager_rate
 from . import sl_bonus_target
 from . import sl_bonus_sales_tier
 from . import sl_bonus_branch_profit
-from . import sl_bonus_evaluation_exception
 from . import sl_bonus_edara_mapping
 from . import sl_bonus_edara_staging
 from . import sl_bonus_edara_staging_target

@@ -52,10 +52,11 @@ class SlBonusCalculator(models.AbstractModel):
             })
             return result
 
-        # Employees on the evaluation-exception list have no appraisal by design,
-        # so they must NOT be excluded for a "missing appraisal" — they compute
-        # normally with evaluation treated as 100% (handled in _get_evaluation_percent).
-        is_eval_exempt = self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee)
+        # Employees whose card (Appraisal & Bonus tab) says the bonus is
+        # Fixed have no appraisal by design, so they must NOT be excluded for
+        # a "missing appraisal" — they compute normally with evaluation
+        # treated as 100% (handled in _get_evaluation_percent).
+        is_eval_exempt = employee.bonus_evaluation_mode == 'fixed'
 
         # Eligibility gate: when the batch is bound to a specific appraisal
         # batch, every employee must have an appraisal in it — EXCEPT exempt ones.
@@ -243,12 +244,13 @@ class SlBonusCalculator(models.AbstractModel):
         2. Else, look for the latest hr_finalization appraisal up to period_end.
         3. Else, return 0% and an explanatory source.
 
-        Exception: employees on the evaluation-exception list have no appraisal,
-        so the evaluation factor is skipped (treated as 100%) instead of zeroing
-        their bonus. Only the % fed into the formulas changes — the formulas do not.
+        Exception: employees whose card (Appraisal & Bonus tab) says the bonus
+        is Fixed have no appraisal, so the evaluation factor is skipped
+        (treated as 100%) instead of zeroing their bonus. Only the % fed into
+        the formulas changes — the formulas do not.
         """
-        if self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee):
-            return 100.0, _("Evaluation skipped (exception list)")
+        if employee.bonus_evaluation_mode == 'fixed':
+            return 100.0, _("Evaluation skipped (fixed bonus on the employee card)")
         Appraisal = self.env['hr.appraisal'].sudo()
 
         if appraisal_batch:

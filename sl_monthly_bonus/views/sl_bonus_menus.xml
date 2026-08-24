@@ -228,13 +228,6 @@
                   sequence="20"
                   groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin,sl_monthly_bonus.group_bonus_manager,sl_monthly_bonus.group_bonus_manager_online,sl_monthly_bonus.group_bonus_manager_projects"/>
 
-        <menuitem id="menu_sl_bonus_config_eval_exception"
-                  name="Evaluation Exceptions"
-                  parent="menu_sl_bonus_config"
-                  action="action_sl_bonus_evaluation_exception"
-                  sequence="25"
-                  groups="sl_monthly_bonus.group_bonus_hr_manager,sl_monthly_bonus.group_bonus_admin"/>
-
         <menuitem id="menu_sl_bonus_config_install"
                   name="Installation Fixed Bonus"
                   parent="menu_sl_bonus_config"

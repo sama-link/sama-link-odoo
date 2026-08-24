@@ -1,10 +1,12 @@
-"""Employee card "Appraisal & Bonus" tab: eligibility checkboxes and their
-two-way sync with the configuration exception lists.
+"""Employee card "Appraisal & Bonus" tab: eligibility checkboxes and the
+two selects, now the single source of truth (the legacy Administrative
+Exclude / Evaluation Exceptions configuration lists were removed).
 
 Covers:
-  * Bonus Evaluation = Fixed  ⇄  sl.bonus.evaluation.exception (both ways)
-  * Administrative Score = No administrative score  ⇄  appraisal.admin.score.exclude
-  * unchecking a box resets its select and drops the list entry
+  * defaults: eligible + 'scored' / 'appraisal'
+  * Bonus Evaluation = Fixed → calculator treats the evaluation as 100%
+  * Administrative Score = 'exempt' → appraisal admin score forced to 100%
+  * unchecking a box resets its select
   * ineligible employees are refused by the batch / wizards and excluded by
     the calculator with a clear reason
   * ineligible employees are refused on hr.appraisal
@@ -23,8 +25,6 @@ class TestEmployeeEligibility(TransactionCase):
         super().setUpClass()
         cls.period_start = date(2026, 3, 1)
         cls.period_end = date(2026, 3, 31)
-        cls.BonusException = cls.env['sl.bonus.evaluation.exception']
-        cls.AdminExclude = cls.env['appraisal.admin.score.exclude']
 
     def _employee(self, name='Eligibility Emp'):
         emp = self.env['hr.employee'].create({'name': name})
@@ -48,66 +48,50 @@ class TestEmployeeEligibility(TransactionCase):
         self.assertTrue(emp.bonus_eligible)
         self.assertEqual(emp.appraisal_admin_score_mode, 'scored')
         self.assertEqual(emp.bonus_evaluation_mode, 'appraisal')
-        self.assertFalse(self.BonusException.search([('employee_id', '=', emp.id)]))
-        self.assertFalse(self.AdminExclude.search([('employee_id', '=', emp.id)]))
 
-    # ── bonus: card → list ───────────────────────────────────────────
-    def test_bonus_fixed_creates_exception_and_back(self):
+    # ── bonus evaluation mode drives the calculator directly ────────
+    def test_bonus_fixed_skips_evaluation(self):
         emp = self._employee()
+        Calc = self.env['sl.bonus.calculator']
+        percent, source = Calc._get_evaluation_percent(emp, self.period_start, self.period_end)
+        self.assertEqual(percent, 0.0)  # no appraisal at all
+
         emp.bonus_evaluation_mode = 'fixed'
-        entry = self.BonusException.search([('employee_id', '=', emp.id)])
-        self.assertEqual(len(entry), 1)
-        self.assertTrue(self.BonusException.is_exempt(emp))
+        percent, source = Calc._get_evaluation_percent(emp, self.period_start, self.period_end)
+        self.assertEqual(percent, 100.0)
+        self.assertIn('fixed bonus', source.lower())
 
         emp.bonus_evaluation_mode = 'appraisal'
-        self.assertFalse(self.BonusException.search([('employee_id', '=', emp.id)]))
-        self.assertFalse(self.BonusException.is_exempt(emp))
+        percent, _source = Calc._get_evaluation_percent(emp, self.period_start, self.period_end)
+        self.assertEqual(percent, 0.0)
 
-    def test_bonus_uncheck_resets_mode_and_drops_exception(self):
+    def test_bonus_uncheck_resets_mode(self):
         emp = self._employee()
         emp.bonus_evaluation_mode = 'fixed'
         emp.bonus_eligible = False
         self.assertEqual(emp.bonus_evaluation_mode, 'appraisal')
-        self.assertFalse(self.BonusException.search([('employee_id', '=', emp.id)]))
 
-    # ── bonus: list → card ───────────────────────────────────────────
-    def test_bonus_exception_list_updates_card(self):
+    # ── admin score mode drives the appraisal scores directly ───────
+    def test_admin_score_exempt_forces_100(self):
         emp = self._employee()
-        entry = self.BonusException.create({'employee_id': emp.id})
-        self.assertTrue(emp.bonus_eligible)
-        self.assertEqual(emp.bonus_evaluation_mode, 'fixed')
-
-        entry.unlink()
-        self.assertEqual(emp.bonus_evaluation_mode, 'appraisal')
-
-    def test_bonus_exception_reassign_moves_flag(self):
-        emp_a = self._employee('A')
-        emp_b = self._employee('B')
-        entry = self.BonusException.create({'employee_id': emp_a.id})
-        entry.employee_id = emp_b
-        self.assertEqual(emp_a.bonus_evaluation_mode, 'appraisal')
-        self.assertEqual(emp_b.bonus_evaluation_mode, 'fixed')
-
-    # ── appraisal: card ⇄ list ───────────────────────────────────────
-    def test_admin_score_exempt_syncs_both_ways(self):
-        emp = self._employee()
+        appraisal = self.env['hr.appraisal'].create({
+            'employee_id': emp.id,
+            'date_from': self.period_start,
+            'date_to': self.period_end,
+            'appraisal_deadline': date(2099, 12, 31),
+        })
         emp.appraisal_admin_score_mode = 'exempt'
-        self.assertEqual(len(self.AdminExclude.search([('employee_id', '=', emp.id)])), 1)
+        self.assertTrue(appraisal.admin_score_exempt)
+        self.assertEqual(appraisal.admin_score, 100.0)
 
         emp.appraisal_admin_score_mode = 'scored'
-        self.assertFalse(self.AdminExclude.search([('employee_id', '=', emp.id)]))
+        self.assertFalse(appraisal.admin_score_exempt)
 
-        entry = self.AdminExclude.create({'employee_id': emp.id})
-        self.assertEqual(emp.appraisal_admin_score_mode, 'exempt')
-        entry.unlink()
-        self.assertEqual(emp.appraisal_admin_score_mode, 'scored')
-
-    def test_appraisal_uncheck_resets_mode_and_drops_exclude(self):
+    def test_appraisal_uncheck_resets_mode(self):
         emp = self._employee()
         emp.appraisal_admin_score_mode = 'exempt'
         emp.appraisal_eligible = False
         self.assertEqual(emp.appraisal_admin_score_mode, 'scored')
-        self.assertFalse(self.AdminExclude.search([('employee_id', '=', emp.id)]))
 
     # ── enforcement: bonus ───────────────────────────────────────────
     def test_ineligible_employee_refused_by_batch(self):

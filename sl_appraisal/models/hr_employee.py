@@ -40,10 +40,9 @@ class HrEmployee(models.Model):
         APPRAISAL_ADMIN_SCORE_MODES,
         string='Administrative Score',
         default='scored',
-        help="'No administrative score' puts the employee on the Administrative "
-             "Exclude list (Appraisals → Configuration): their administration "
-             "score is always 100%, regardless of absences, lateness or "
-             "penalties. The two stay in sync both ways.",
+        help="'No administrative score': the employee's appraisals always "
+             "receive a 100% administration score, regardless of absences, "
+             "lateness or penalties.",
     )
 
     def _has_active_contract_in_period(self, date_from, date_to):
@@ -158,7 +157,10 @@ class HrEmployee(models.Model):
             employee.last_appraisal_date = (
                 finalized[0].date_to if finalized else False)
 
-    # ── Appraisal eligibility ⇄ Administrative Exclude list sync ──────
+    # ── Appraisal eligibility normalization ──────────────────────────
+    # The card is the single source of truth: hr.appraisal's administration
+    # scores depend directly on appraisal_admin_score_mode, so changing the
+    # select recomputes the related appraisal scores through the ORM.
     @api.onchange('appraisal_eligible')
     def _onchange_appraisal_eligible(self):
         if not self.appraisal_eligible:
@@ -176,47 +178,11 @@ class HrEmployee(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             self._normalize_appraisal_eligibility_vals(vals)
-        employees = super().create(vals_list)
-        employees._sync_admin_score_exclude()
-        return employees
+        return super().create(vals_list)
 
     def write(self, vals):
         self._normalize_appraisal_eligibility_vals(vals)
-        res = super().write(vals)
-        if 'appraisal_eligible' in vals or 'appraisal_admin_score_mode' in vals:
-            self._sync_admin_score_exclude()
-        return res
-
-    def _sync_admin_score_exclude(self):
-        """Mirror the employee-card setting into the Administrative Exclude
-        list. ``appraisal.admin.score.exclude`` does the reverse sync on
-        create/write/unlink; the context flag stops the two from
-        ping-ponging. sudo: HR officers may edit the card without holding
-        write access on the configuration list itself."""
-        if self.env.context.get('skip_admin_exclude_sync'):
-            return
-        Exclude = self.env['appraisal.admin.score.exclude'].sudo().with_context(
-            skip_admin_exclude_sync=True)
-        listed = {
-            rec.employee_id.id: rec
-            for rec in Exclude.search([('employee_id', 'in', self.ids)])
-        }
-        to_create = []
-        to_unlink = Exclude.browse()
-        for employee in self:
-            should_be_listed = (
-                employee.appraisal_eligible
-                and employee.appraisal_admin_score_mode == 'exempt'
-            )
-            entry = listed.get(employee.id)
-            if should_be_listed and not entry:
-                to_create.append({'employee_id': employee.id})
-            elif entry and not should_be_listed:
-                to_unlink |= entry
-        if to_create:
-            Exclude.create(to_create)
-        if to_unlink:
-            to_unlink.unlink()
+        return super().write(vals)
 
     def action_open_appraisals(self):
         """Open appraisals list for this employee."""

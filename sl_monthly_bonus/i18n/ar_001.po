@@ -4574,3 +4574,9 @@ msgstr "تم تخطي %(count)s موظف(ين) بعد مراجعة الفترة 
 #: code:addons/sl_monthly_bonus/wizard/sl_bonus_batch_review.py:0
 msgid "Added %(new)s new bonus line(s); %(skipped)s skipped after review."
 msgstr "تمت إضافة %(new)s سطر مكافأة جديد؛ تم تخطي %(skipped)s بعد المراجعة."
+
+#. module: sl_monthly_bonus
+#. odoo-python
+#: code:addons/sl_monthly_bonus/models/sl_bonus_calculator.py:0
+msgid "Evaluation skipped (fixed bonus on the employee card)"
+msgstr "تم تجاوز التقييم (مكافأة ثابتة في بطاقة الموظف)"

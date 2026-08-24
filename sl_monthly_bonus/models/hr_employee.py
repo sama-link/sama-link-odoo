@@ -31,12 +31,14 @@ class HrEmployee(models.Model):
         BONUS_EVALUATION_MODES,
         string='Bonus Evaluation',
         default='appraisal',
-        help="'Fixed' puts the employee on the Evaluation Exceptions list "
-             "(Bonus → Configuration): the appraisal % is skipped (treated as "
-             "100%) in their bonus formula. The two stay in sync both ways.",
+        help="'Fixed': the appraisal % is skipped (treated as 100%) in this "
+             "employee's bonus formula — use it for employees who never "
+             "receive an appraisal.",
     )
 
-    # ── Bonus eligibility ⇄ Evaluation Exceptions list sync ──────────
+    # ── Bonus eligibility normalization ──────────────────────────────
+    # The card is the single source of truth: the bonus calculator reads
+    # bonus_evaluation_mode directly.
     @api.onchange('bonus_eligible')
     def _onchange_bonus_eligible(self):
         if not self.bonus_eligible:
@@ -54,50 +56,11 @@ class HrEmployee(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             self._normalize_bonus_eligibility_vals(vals)
-        employees = super().create(vals_list)
-        employees._sync_bonus_evaluation_exception()
-        return employees
+        return super().create(vals_list)
 
     def write(self, vals):
         self._normalize_bonus_eligibility_vals(vals)
-        res = super().write(vals)
-        if 'bonus_eligible' in vals or 'bonus_evaluation_mode' in vals:
-            self._sync_bonus_evaluation_exception()
-        return res
-
-    def _sync_bonus_evaluation_exception(self):
-        """Mirror the employee-card setting into the Evaluation Exceptions
-        list. ``sl.bonus.evaluation.exception`` does the reverse sync on
-        create/write/unlink; the context flag stops the two from
-        ping-ponging. sudo: the card may be edited by users without write
-        access on the configuration list itself."""
-        if self.env.context.get('skip_bonus_exception_sync'):
-            return
-        Exception_ = self.env['sl.bonus.evaluation.exception'].sudo().with_context(
-            skip_bonus_exception_sync=True)
-        listed = {
-            rec.employee_id.id: rec
-            for rec in Exception_.search([('employee_id', 'in', self.ids)])
-        }
-        to_create = []
-        to_unlink = Exception_.browse()
-        for employee in self:
-            should_be_listed = (
-                employee.bonus_eligible
-                and employee.bonus_evaluation_mode == 'fixed'
-            )
-            entry = listed.get(employee.id)
-            if should_be_listed and not entry:
-                to_create.append({
-                    'employee_id': employee.id,
-                    'reason': _('Fixed bonus (set on the employee card)'),
-                })
-            elif entry and not should_be_listed:
-                to_unlink |= entry
-        if to_create:
-            Exception_.create(to_create)
-        if to_unlink:
-            to_unlink.unlink()
+        return super().write(vals)
 
     def _bonus_get_active_contract(self, on_date=None):
         """Return the hr.contract in force for this employee on a given date
