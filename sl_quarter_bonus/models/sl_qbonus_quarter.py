@@ -107,7 +107,9 @@ class SlQbonusQuarter(models.Model):
         return quarter
 
     def _check_admin(self):
-        if not self.env.su and not self.env.user.has_group('sl_quarter_bonus.group_qbonus_admin'):
+        user = self.env.user
+        if not (self.env.su or user.has_group('sl_quarter_bonus.group_qbonus_admin')
+                or user.has_group('base.group_system')):
             raise AccessError(_('Only a Project Admin can do this.'))
 
     # ------------------------------------------------------------------
@@ -140,7 +142,18 @@ class SlQbonusQuarter(models.Model):
             q.rate_per_point = (q.pool_amount / total) if total > 0 else 0.0
             q.distributed_points = distributed
             q.undistributed_points = total - distributed
-            q.total_amount = distributed * q.rate_per_point
+            q.total_amount = q._amount_for_points(distributed, total)
+
+    def _amount_for_points(self, points, total_points=None):
+        """EGP for ``points`` from this quarter's pool, using the unrounded
+        pool/points ratio so the distributed amounts add up to the pool
+        instead of drifting by the rounding of the displayed rate."""
+        self.ensure_one()
+        total = self.total_points if total_points is None else total_points
+        if not total or total <= 0 or not self.pool_amount:
+            return 0.0
+        amount = points * self.pool_amount / total
+        return self.currency_id.round(amount) if self.currency_id else round(amount, 2)
 
     def _compute_counts(self):
         for q in self:

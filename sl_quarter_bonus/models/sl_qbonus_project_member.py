@@ -48,11 +48,12 @@ class SlQbonusProjectMember(models.Model):
          'An employee can only appear once in a project team.'),
     ]
 
-    @api.depends('points', 'project_id.bonus_quarter_id.rate_per_point')
+    @api.depends('points', 'project_id.bonus_quarter_id.rate_per_point',
+                 'project_id.bonus_quarter_id.pool_amount', 'project_id.bonus_quarter_id.total_points')
     def _compute_amount(self):
         for line in self:
-            rate = line.project_id.sudo().bonus_quarter_id.rate_per_point or 0.0
-            line.amount = line.points * rate
+            quarter = line.project_id.sudo().bonus_quarter_id
+            line.amount = quarter._amount_for_points(line.points) if quarter else 0.0
 
     @api.depends('employee_id', 'project_id.date_received', 'project_id.date_end')
     def _compute_basic_salary(self):

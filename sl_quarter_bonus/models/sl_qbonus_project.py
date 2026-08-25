@@ -118,7 +118,9 @@ class SlQbonusProject(models.Model):
             'sl_quarter_bonus.late_penalty_pct', 10.0) or 0.0)
 
     def _is_admin(self):
-        return self.env.su or self.env.user.has_group('sl_quarter_bonus.group_qbonus_admin')
+        user = self.env.user
+        return (self.env.su or user.has_group('sl_quarter_bonus.group_qbonus_admin')
+                or user.has_group('base.group_system'))
 
     def _check_admin(self):
         if not self._is_admin():

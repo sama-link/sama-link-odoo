@@ -55,7 +55,8 @@ class SlQbonusTask(models.Model):
                 ) % (task.assignee_id.name, project.name))
 
     def _check_project_open(self):
-        if self.env.su or self.env.user.has_group('sl_quarter_bonus.group_qbonus_admin'):
+        user = self.env.user
+        if self.env.su or user.has_group('sl_quarter_bonus.group_qbonus_admin') or user.has_group('base.group_system'):
             return
         locked = self.filtered(lambda t: t.project_id.state in ('received', 'cancelled'))
         if locked:
