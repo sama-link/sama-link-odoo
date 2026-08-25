@@ -26,6 +26,12 @@ def post_init_hook(cr, registry):
 
     _logger.info("=== Syncing existing manager fields to security groups ===")
 
+    # HR Officers keep only their own group: the manager-type groups are for
+    # line managers (same rule as data/server_action.xml).
+    hr_officer_group = env.ref(
+        'samalink_security_groups.group_samalink_hr_officer', raise_if_not_found=False)
+    hr_officer_user_ids = set(hr_officer_group.users.ids) if hr_officer_group else set()
+
     for field_name, (group_xmlid, field_type) in MANAGER_FIELD_TO_GROUP.items():
         try:
             group = env.ref(group_xmlid)
@@ -46,6 +52,8 @@ def post_init_hook(cr, registry):
             else:
                 user = manager_val.user_id  # hr.employee → user
 
+            if user and user.id in hr_officer_user_ids:
+                continue
             if user and user.exists() and user.id not in group.users.ids:
                 _logger.info(
                     "Sync: Adding user '%s' to group '%s' (from employee '%s' field %s)",

@@ -15,36 +15,52 @@ group_sl_coach_manager = env.ref('samalink_security_groups.group_sl_coach_manage
 group_sl_timeoff_manager = env.ref('samalink_security_groups.group_sl_timeoff_manager', raise_if_not_found=False)
 group_sl_attendance_manager = env.ref('samalink_security_groups.group_sl_attendance_manager', raise_if_not_found=False)
 group_sl_administrative_manager = env.ref('samalink_security_groups.group_sl_administrative_manager', raise_if_not_found=False)
+group_sl_hr_officer = env.ref('samalink_security_groups.group_samalink_hr_officer', raise_if_not_found=False)
 
-if not all([group_sl_general_manager, group_sl_coach_manager, group_sl_timeoff_manager, group_sl_attendance_manager, group_sl_administrative_manager]):
+if not all([group_sl_general_manager, group_sl_coach_manager, group_sl_timeoff_manager, group_sl_attendance_manager, group_sl_administrative_manager, group_sl_hr_officer]):
     raise UserError("One or more Manager Groups could not be found.")
 
+# HR Officers already have full HR access through their own group. The
+# manager-type groups are meant for line managers only, so never add them
+# to an HR Officer (they used to be re-added on every sync and then had to
+# be removed by hand every month).
+hr_officer_user_ids = set(group_sl_hr_officer.users.ids)
+
 count = 0
+skipped_hr_user_ids = set()
 # Process only the selected records in the tree/form view
 for employee in records:
-    # 1. General Manager (via parent_id)
-    if employee.parent_id and employee.parent_id.user_id:
-        group_sl_general_manager.sudo().write({'users': [(4, employee.parent_id.user_id.id)]})
-
-    # 2. Coach Manager (via coach_id)
-    if employee.coach_id and employee.coach_id.user_id:
-        group_sl_coach_manager.sudo().write({'users': [(4, employee.coach_id.user_id.id)]})
-
-    # 3. Time Off Manager (via leave_manager_id)
-    if employee.leave_manager_id:
-        group_sl_timeoff_manager.sudo().write({'users': [(4, employee.leave_manager_id.id)]})
-
-    # 4. Attendance Manager (via attendance_manager_id)
-    if employee.attendance_manager_id:
-        group_sl_attendance_manager.sudo().write({'users': [(4, employee.attendance_manager_id.id)]})
-        
+    candidates = [
+        # 1. General Manager (via parent_id)
+        (group_sl_general_manager, employee.parent_id.user_id.id),
+        # 2. Coach Manager (via coach_id)
+        (group_sl_coach_manager, employee.coach_id.user_id.id),
+        # 3. Time Off Manager (via leave_manager_id)
+        (group_sl_timeoff_manager, employee.leave_manager_id.id),
+        # 4. Attendance Manager (via attendance_manager_id)
+        (group_sl_attendance_manager, employee.attendance_manager_id.id),
+    ]
     # 5. Administrative Manager (via administrative_manager_id)
-    if 'administrative_manager_id' in employee._fields and employee.administrative_manager_id and employee.administrative_manager_id.user_id:
-        group_sl_administrative_manager.sudo().write({'users': [(4, employee.administrative_manager_id.user_id.id)]})
-    
+    if 'administrative_manager_id' in employee._fields:
+        candidates.append((group_sl_administrative_manager, employee.administrative_manager_id.user_id.id))
+
+    for group, user_id in candidates:
+        if not user_id:
+            continue
+        if user_id in hr_officer_user_ids:
+            skipped_hr_user_ids.add(user_id)
+            continue
+        # Only write when the user is actually missing: every res.groups
+        # write flushes the registry cache.
+        if user_id not in group.users.ids:
+            group.sudo().write({'users': [(4, user_id)]})
+
     count += 1
 
-log("Successfully synchronized manager groups for %s employees." % count)
+message = "Successfully synchronized manager groups for %s employees." % count
+if skipped_hr_user_ids:
+    message += " Skipped %s HR Officer user(s): HR Officers keep only their own group." % len(skipped_hr_user_ids)
+log(message)
             ]]></field>
         </record>
     </data>
