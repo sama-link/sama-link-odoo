@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sl_qbonus_project_employee,sl.qbonus.project.employee,model_sl_qbonus_project,group_qbonus_employee,1,0,0,0
+access_sl_qbonus_project_owner,sl.qbonus.project.owner,model_sl_qbonus_project,group_qbonus_owner,1,1,1,0
+access_sl_qbonus_project_admin,sl.qbonus.project.admin,model_sl_qbonus_project,group_qbonus_admin,1,1,1,1
+access_sl_qbonus_task_employee,sl.qbonus.task.employee,model_sl_qbonus_task,group_qbonus_employee,1,0,0,0
+access_sl_qbonus_task_owner,sl.qbonus.task.owner,model_sl_qbonus_task,group_qbonus_owner,1,1,1,0
+access_sl_qbonus_task_admin,sl.qbonus.task.admin,model_sl_qbonus_task,group_qbonus_admin,1,1,1,1
+access_sl_qbonus_project_member_employee,sl.qbonus.project.member.employee,model_sl_qbonus_project_member,group_qbonus_employee,1,0,0,0
+access_sl_qbonus_project_member_owner,sl.qbonus.project.member.owner,model_sl_qbonus_project_member,group_qbonus_owner,1,1,1,1
+access_sl_qbonus_project_member_admin,sl.qbonus.project.member.admin,model_sl_qbonus_project_member,group_qbonus_admin,1,1,1,1
+access_sl_qbonus_quarter_owner,sl.qbonus.quarter.owner,model_sl_qbonus_quarter,group_qbonus_owner,1,0,0,0
+access_sl_qbonus_quarter_admin,sl.qbonus.quarter.admin,model_sl_qbonus_quarter,group_qbonus_admin,1,1,1,1
+access_sl_qbonus_line_employee,sl.qbonus.line.employee,model_sl_qbonus_line,group_qbonus_employee,1,0,0,0
+access_sl_qbonus_line_admin,sl.qbonus.line.admin,model_sl_qbonus_line,group_qbonus_admin,1,1,1,1

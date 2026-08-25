@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_sl_qbonus_quarter_form" model="ir.ui.view">
+            <field name="name">sl.qbonus.quarter.form</field>
+            <field name="model">sl.qbonus.quarter</field>
+            <field name="arch" type="xml">
+                <form string="Quarter">
+                    <header>
+                        <button name="action_compute" string="Compute Bonus Lines" type="object" class="btn-primary"
+                                invisible="state != 'open'" groups="sl_quarter_bonus.group_qbonus_admin"/>
+                        <button name="action_close" string="Close Quarter" type="object"
+                                invisible="state != 'open'" groups="sl_quarter_bonus.group_qbonus_admin"
+                                confirm="Closing recomputes the bonus lines and locks every project paid from this quarter. Continue?"/>
+                        <button name="action_reopen" string="Reopen" type="object"
+                                invisible="state != 'closed'" groups="sl_quarter_bonus.group_qbonus_admin"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_projects" type="object" class="oe_stat_button" icon="fa-folder-open">
+                                <field name="project_count" widget="statinfo" string="Projects"/>
+                            </button>
+                            <button name="action_view_lines" type="object" class="oe_stat_button" icon="fa-users"
+                                    groups="sl_quarter_bonus.group_qbonus_admin">
+                                <field name="line_count" widget="statinfo" string="Employees"/>
+                            </button>
+                        </div>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group string="Period">
+                                <field name="company_id" options="{'no_create': True}" readonly="state != 'open'"/>
+                                <field name="year" readonly="state != 'open'"/>
+                                <field name="quarter" readonly="state != 'open'"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                            <group string="Pool &amp; Rate">
+                                <field name="pool_amount" readonly="state != 'open'"/>
+                                <field name="total_points"/>
+                                <field name="rate_per_point" class="fw-bold"/>
+                                <field name="distributed_points"/>
+                                <field name="undistributed_points" decoration-danger="undistributed_points > 0"/>
+                                <field name="total_amount"/>
+                                <field name="baseline_pct" readonly="state != 'open'"/>
+                                <field name="late_project_count" decoration-danger="late_project_count > 0"/>
+                                <field name="beat_count"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Projects Received" name="projects">
+                                <field name="project_ids" readonly="1">
+                                    <list decoration-danger="is_late">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="owner_id"/>
+                                        <field name="quarter_id" string="Target"/>
+                                        <field name="date_received"/>
+                                        <field name="points_approved" sum="Approved"/>
+                                        <field name="kpi_achievement_pct"/>
+                                        <field name="points_late_penalty"/>
+                                        <field name="points_earned" sum="Earned"/>
+                                        <field name="points_undistributed"/>
+                                        <field name="is_late" column_invisible="True"/>
+                                        <field name="state" column_invisible="True"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Employee Bonus" name="lines" groups="sl_quarter_bonus.group_qbonus_admin">
+                                <field name="line_ids" readonly="1">
+                                    <list decoration-success="beats_monthly" decoration-danger="not beats_monthly">
+                                        <field name="employee_id"/>
+                                        <field name="department_id" optional="show"/>
+                                        <field name="project_count"/>
+                                        <field name="points" sum="Points"/>
+                                        <field name="amount" sum="Quarter bonus"/>
+                                        <field name="basic_salary" optional="hide"/>
+                                        <field name="project_months"/>
+                                        <field name="monthly_equivalent" sum="Monthly method"/>
+                                        <field name="diff"/>
+                                        <field name="diff_pct"/>
+                                        <field name="trend" string=""/>
+                                        <field name="beats_monthly" column_invisible="True"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Projects Targeted" name="targeted">
+                                <field name="target_project_ids" readonly="1">
+                                    <list decoration-danger="is_late" decoration-muted="state == 'cancelled'">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="owner_id"/>
+                                        <field name="date_end"/>
+                                        <field name="points_approved"/>
+                                        <field name="bonus_quarter_id"/>
+                                        <field name="is_late" column_invisible="True"/>
+                                        <field name="state" widget="badge"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notes" name="notes">
+                                <field name="note"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_quarter_list" model="ir.ui.view">
+            <field name="name">sl.qbonus.quarter.list</field>
+            <field name="model">sl.qbonus.quarter</field>
+            <field name="arch" type="xml">
+                <list string="Quarters" decoration-muted="state == 'closed'">
+                    <field name="name"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="pool_amount" sum="Pool"/>
+                    <field name="total_points"/>
+                    <field name="rate_per_point"/>
+                    <field name="undistributed_points"/>
+                    <field name="total_amount" sum="Distributed"/>
+                    <field name="state" widget="badge" decoration-success="state == 'closed'" decoration-info="state == 'open'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_quarter_search" model="ir.ui.view">
+            <field name="name">sl.qbonus.quarter.search</field>
+            <field name="model">sl.qbonus.quarter</field>
+            <field name="arch" type="xml">
+                <search string="Quarters">
+                    <field name="name"/>
+                    <field name="year"/>
+                    <filter name="open" string="Open" domain="[('state', '=', 'open')]"/>
+                    <filter name="closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                        <filter name="group_year" string="Year" context="{'group_by': 'year'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sl_qbonus_quarter" model="ir.actions.act_window">
+            <field name="name">Quarters</field>
+            <field name="res_model">sl.qbonus.quarter</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_sl_qbonus_quarter_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">No quarter yet</p>
+                <p>
+                    Quarters are created automatically when a project targets them. Set the bonus pool,
+                    receive the finished projects, let owners distribute their points, then close the quarter.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

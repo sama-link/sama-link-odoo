@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_sl_quarter_bonus" model="ir.module.category">
+            <field name="name">Samalink Quarterly Bonus</field>
+            <field name="description">Access levels for the Quarterly Project Bonus module.</field>
+            <field name="sequence">26</field>
+        </record>
+
+        <record id="group_qbonus_employee" model="res.groups">
+            <field name="name">Quarterly Bonus / Project Employee</field>
+            <field name="category_id" ref="module_category_sl_quarter_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Reads the projects and tasks they are assigned to and their own bonus lines.</field>
+        </record>
+
+        <record id="group_qbonus_owner" model="res.groups">
+            <field name="name">Quarterly Bonus / Project Owner</field>
+            <field name="category_id" ref="module_category_sl_quarter_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('group_qbonus_employee'))]"/>
+            <field name="comment">Creates and edits their own projects and tasks, assigns the team, submits the project and distributes its points.</field>
+        </record>
+
+        <record id="group_qbonus_admin" model="res.groups">
+            <field name="name">Quarterly Bonus / Project Admin</field>
+            <field name="category_id" ref="module_category_sl_quarter_bonus"/>
+            <field name="implied_ids" eval="[(4, ref('group_qbonus_owner'))]"/>
+            <field name="comment">Approves points and KPI, receives finished projects, sets the quarterly pool, closes quarters and reads the dashboard.</field>
+        </record>
+    </data>
+</odoo>

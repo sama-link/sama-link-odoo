@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_qbonus" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.sl_quarter_bonus</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="60"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app data-string="Quarterly Bonus" string="Quarterly Bonus" name="sl_quarter_bonus"
+                         groups="sl_quarter_bonus.group_qbonus_admin">
+                        <block title="Comparison &amp; Penalties" name="qbonus_rules">
+                            <setting string="Monthly baseline %"
+                                     help="Monthly-method equivalent = baseline % × basic salary × project months. New quarters copy this value; it can be changed per quarter.">
+                                <field name="qbonus_baseline_pct"/>
+                            </setting>
+                            <setting string="Default late penalty %"
+                                     help="Suggested deduction, as a % of the approved points, when a project is submitted after its target quarter. The admin can change it before receiving the project.">
+                                <field name="qbonus_late_penalty_pct"/>
+                            </setting>
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="action_sl_qbonus_config_settings" model="ir.actions.act_window">
+            <field name="name">Settings</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{'module': 'sl_quarter_bonus', 'bin_size': False}</field>
+        </record>
+    </data>
+</odoo>

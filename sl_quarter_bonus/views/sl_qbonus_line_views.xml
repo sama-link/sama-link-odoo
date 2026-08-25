@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════════ Employee bonus lines (per quarter) ════════════════════ -->
+        <record id="view_sl_qbonus_line_list" model="ir.ui.view">
+            <field name="name">sl.qbonus.line.list</field>
+            <field name="model">sl.qbonus.line</field>
+            <field name="arch" type="xml">
+                <list string="Employee Bonus" decoration-success="beats_monthly" decoration-danger="not beats_monthly"
+                      create="false" edit="false">
+                    <field name="quarter_id"/>
+                    <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                    <field name="employee_id"/>
+                    <field name="department_id" optional="show"/>
+                    <field name="job_id" optional="hide"/>
+                    <field name="project_count"/>
+                    <field name="points" sum="Points"/>
+                    <field name="amount" sum="Quarter bonus"/>
+                    <field name="basic_salary" optional="hide"/>
+                    <field name="project_months" optional="show"/>
+                    <field name="monthly_equivalent" sum="Monthly method"/>
+                    <field name="calendar_equivalent" optional="hide" sum="Monthly (3 months)"/>
+                    <field name="diff" sum="Difference"/>
+                    <field name="diff_pct"/>
+                    <field name="trend" string=""/>
+                    <field name="beats_monthly" column_invisible="True"/>
+                    <field name="beats_calendar" optional="hide" widget="boolean_toggle" readonly="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_line_form" model="ir.ui.view">
+            <field name="name">sl.qbonus.line.form</field>
+            <field name="model">sl.qbonus.line</field>
+            <field name="arch" type="xml">
+                <form string="Employee Bonus" create="false" edit="false">
+                    <sheet>
+                        <div class="oe_title"><h1><field name="employee_id"/></h1></div>
+                        <group>
+                            <group>
+                                <field name="quarter_id"/>
+                                <field name="department_id"/>
+                                <field name="project_ids" widget="many2many_tags"/>
+                                <field name="points"/>
+                                <field name="amount"/>
+                            </group>
+                            <group>
+                                <field name="basic_salary"/>
+                                <field name="project_months"/>
+                                <field name="monthly_equivalent"/>
+                                <field name="calendar_equivalent"/>
+                                <field name="diff"/>
+                                <field name="diff_pct"/>
+                                <field name="trend"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_line_graph" model="ir.ui.view">
+            <field name="name">sl.qbonus.line.graph</field>
+            <field name="model">sl.qbonus.line</field>
+            <field name="arch" type="xml">
+                <graph string="Quarter Bonus vs Monthly Method" type="bar" stacked="0">
+                    <field name="employee_id"/>
+                    <field name="amount" type="measure"/>
+                    <field name="monthly_equivalent" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_line_pivot" model="ir.ui.view">
+            <field name="name">sl.qbonus.line.pivot</field>
+            <field name="model">sl.qbonus.line</field>
+            <field name="arch" type="xml">
+                <pivot string="Quarter Bonus Analysis">
+                    <field name="quarter_id" type="col"/>
+                    <field name="employee_id" type="row"/>
+                    <field name="amount" type="measure"/>
+                    <field name="monthly_equivalent" type="measure"/>
+                    <field name="diff" type="measure"/>
+                    <field name="points" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_line_search" model="ir.ui.view">
+            <field name="name">sl.qbonus.line.search</field>
+            <field name="model">sl.qbonus.line</field>
+            <field name="arch" type="xml">
+                <search string="Employee Bonus">
+                    <field name="employee_id"/>
+                    <field name="quarter_id"/>
+                    <field name="department_id"/>
+                    <filter name="beats" string="▲ Beats Monthly" domain="[('beats_monthly', '=', True)]"/>
+                    <filter name="below" string="▼ Below Monthly" domain="[('beats_monthly', '=', False)]"/>
+                    <separator/>
+                    <filter name="closed" string="Closed Quarters" domain="[('quarter_state', '=', 'closed')]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_quarter" string="Quarter" context="{'group_by': 'quarter_id'}"/>
+                        <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                        <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                        <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sl_qbonus_line" model="ir.actions.act_window">
+            <field name="name">Employee Bonus</field>
+            <field name="res_model">sl.qbonus.line</field>
+            <field name="view_mode">list,pivot,graph,form</field>
+            <field name="search_view_id" ref="view_sl_qbonus_line_search"/>
+            <field name="context">{'search_default_group_quarter': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">No bonus lines yet</p>
+                <p>Open a quarter and click <b>Compute Bonus Lines</b>: one row per employee with the quarter bonus and the monthly-method comparison.</p>
+            </field>
+        </record>
+
+        <record id="action_sl_qbonus_dashboard" model="ir.actions.act_window">
+            <field name="name">Dashboard</field>
+            <field name="res_model">sl.qbonus.line</field>
+            <field name="view_mode">graph,pivot,list</field>
+            <field name="search_view_id" ref="view_sl_qbonus_line_search"/>
+            <field name="context">{}</field>
+        </record>
+
+        <record id="action_sl_qbonus_my_bonus" model="ir.actions.act_window">
+            <field name="name">My Quarter Bonus</field>
+            <field name="res_model">sl.qbonus.line</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_sl_qbonus_line_search"/>
+            <field name="domain">[('user_id', '=', uid)]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Nothing here yet</p>
+                <p>Your quarter bonus appears here once the Project Admin closes the quarter.</p>
+            </field>
+        </record>
+
+        <!-- ════════════════════ Project points (per employee per project) ════════════════════ -->
+        <record id="view_sl_qbonus_project_member_list" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.member.list</field>
+            <field name="model">sl.qbonus.project.member</field>
+            <field name="arch" type="xml">
+                <list string="Project Points" decoration-success="beats_monthly" decoration-danger="not beats_monthly"
+                      create="false">
+                    <field name="bonus_quarter_id"/>
+                    <field name="project_id"/>
+                    <field name="employee_id"/>
+                    <field name="department_id" optional="hide"/>
+                    <field name="role"/>
+                    <field name="duration_months" optional="show"/>
+                    <field name="points" sum="Points"/>
+                    <field name="amount" sum="Amount"/>
+                    <field name="basic_salary" optional="hide"/>
+                    <field name="monthly_equivalent" sum="Monthly method"/>
+                    <field name="diff"/>
+                    <field name="trend" string=""/>
+                    <field name="beats_monthly" column_invisible="True"/>
+                    <field name="project_state" widget="badge" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_project_member_graph" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.member.graph</field>
+            <field name="model">sl.qbonus.project.member</field>
+            <field name="arch" type="xml">
+                <graph string="Project Points" type="bar" stacked="1">
+                    <field name="project_id"/>
+                    <field name="amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_project_member_pivot" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.member.pivot</field>
+            <field name="model">sl.qbonus.project.member</field>
+            <field name="arch" type="xml">
+                <pivot string="Project Points">
+                    <field name="project_id" type="row"/>
+                    <field name="employee_id" type="col"/>
+                    <field name="points" type="measure"/>
+                    <field name="amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="view_sl_qbonus_project_member_search" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.member.search</field>
+            <field name="model">sl.qbonus.project.member</field>
+            <field name="arch" type="xml">
+                <search string="Project Points">
+                    <field name="project_id"/>
+                    <field name="employee_id"/>
+                    <field name="bonus_quarter_id"/>
+                    <filter name="received" string="Received Projects" domain="[('project_state', '=', 'received')]"/>
+                    <filter name="beats" string="▲ Beats Monthly" domain="[('beats_monthly', '=', True)]"/>
+                    <filter name="below" string="▼ Below Monthly" domain="[('beats_monthly', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_quarter" string="Bonus Quarter" context="{'group_by': 'bonus_quarter_id'}"/>
+                        <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sl_qbonus_project_member" model="ir.actions.act_window">
+            <field name="name">Project Points</field>
+            <field name="res_model">sl.qbonus.project.member</field>
+            <field name="view_mode">list,pivot,graph</field>
+            <field name="search_view_id" ref="view_sl_qbonus_project_member_search"/>
+            <field name="context">{'search_default_received': 1, 'search_default_group_quarter': 1}</field>
+        </record>
+
+    </data>
+</odoo>

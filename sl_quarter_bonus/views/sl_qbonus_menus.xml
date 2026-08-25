@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_sl_qbonus_root"
+                  name="Quarterly Bonus"
+                  sequence="57"
+                  web_icon="sl_quarter_bonus,static/description/icon.png"
+                  groups="sl_quarter_bonus.group_qbonus_employee"/>
+
+        <menuitem id="menu_sl_qbonus_projects"
+                  name="Projects"
+                  parent="menu_sl_qbonus_root"
+                  action="action_sl_qbonus_project"
+                  sequence="10"
+                  groups="sl_quarter_bonus.group_qbonus_employee"/>
+
+        <menuitem id="menu_sl_qbonus_tasks"
+                  name="Tasks"
+                  parent="menu_sl_qbonus_root"
+                  action="action_sl_qbonus_task"
+                  sequence="20"
+                  groups="sl_quarter_bonus.group_qbonus_employee"/>
+
+        <menuitem id="menu_sl_qbonus_my_bonus"
+                  name="My Quarter Bonus"
+                  parent="menu_sl_qbonus_root"
+                  action="action_sl_qbonus_my_bonus"
+                  sequence="30"
+                  groups="sl_quarter_bonus.group_qbonus_employee"/>
+
+        <menuitem id="menu_sl_qbonus_quarters"
+                  name="Quarters"
+                  parent="menu_sl_qbonus_root"
+                  action="action_sl_qbonus_quarter"
+                  sequence="40"
+                  groups="sl_quarter_bonus.group_qbonus_owner"/>
+
+        <menuitem id="menu_sl_qbonus_analysis"
+                  name="Analysis"
+                  parent="menu_sl_qbonus_root"
+                  sequence="50"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+        <menuitem id="menu_sl_qbonus_dashboard"
+                  name="Dashboard"
+                  parent="menu_sl_qbonus_analysis"
+                  action="action_sl_qbonus_dashboard"
+                  sequence="10"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+        <menuitem id="menu_sl_qbonus_lines"
+                  name="Employee Bonus"
+                  parent="menu_sl_qbonus_analysis"
+                  action="action_sl_qbonus_line"
+                  sequence="20"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+        <menuitem id="menu_sl_qbonus_project_points"
+                  name="Project Points"
+                  parent="menu_sl_qbonus_analysis"
+                  action="action_sl_qbonus_project_member"
+                  sequence="30"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+        <menuitem id="menu_sl_qbonus_config"
+                  name="Configuration"
+                  parent="menu_sl_qbonus_root"
+                  sequence="90"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+        <menuitem id="menu_sl_qbonus_settings"
+                  name="Settings"
+                  parent="menu_sl_qbonus_config"
+                  action="action_sl_qbonus_config_settings"
+                  sequence="10"
+                  groups="sl_quarter_bonus.group_qbonus_admin"/>
+
+    </data>
+</odoo>

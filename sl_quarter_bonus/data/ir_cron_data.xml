@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_qbonus_late_alerts" model="ir.cron">
+            <field name="name">Quarterly Bonus: Late Project Alerts</field>
+            <field name="model_id" ref="model_sl_qbonus_project"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_late_alerts()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

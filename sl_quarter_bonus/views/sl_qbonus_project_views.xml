@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ════════════════════ Form ════════════════════ -->
+        <record id="view_sl_qbonus_project_form" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.form</field>
+            <field name="model">sl.qbonus.project</field>
+            <field name="arch" type="xml">
+                <form string="Project">
+                    <header>
+                        <button name="action_approve" string="Approve" type="object" class="btn-primary"
+                                invisible="state != 'draft'" groups="sl_quarter_bonus.group_qbonus_admin"
+                                help="Fix the approved points, KPI and target quarter."/>
+                        <button name="action_start" string="Start" type="object" class="btn-primary"
+                                invisible="state != 'approved'"/>
+                        <button name="action_submit" string="Submit as Done" type="object" class="btn-primary"
+                                invisible="state != 'in_progress'"
+                                confirm="All tasks must be closed. Submit this project to the Project Admin for reception?"/>
+                        <button name="action_receive" string="Receive" type="object" class="btn-primary"
+                                invisible="state != 'submitted'" groups="sl_quarter_bonus.group_qbonus_admin"
+                                confirm="Receiving fixes the KPI achieved % and the late penalty, and books the project into the current quarter's pool. Continue?"/>
+                        <button name="action_return" string="Return to Owner" type="object"
+                                invisible="state != 'submitted'" groups="sl_quarter_bonus.group_qbonus_admin"/>
+                        <button name="action_distribute" string="Distribute Points" type="object" class="btn-primary"
+                                invisible="state != 'received' or bonus_quarter_state == 'closed'"/>
+                        <button name="action_cancel" string="Cancel" type="object"
+                                invisible="state in ('received', 'cancelled')" groups="sl_quarter_bonus.group_qbonus_admin"/>
+                        <button name="action_reset_draft" string="Reset to Draft" type="object"
+                                invisible="state not in ('received', 'cancelled')" groups="sl_quarter_bonus.group_qbonus_admin"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,approved,in_progress,submitted,received"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                                <field name="task_count" widget="statinfo" string="Tasks"/>
+                            </button>
+                        </div>
+                        <widget name="web_ribbon" title="Late" bg_color="text-bg-danger" invisible="not is_late"/>
+                        <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-secondary" invisible="state != 'cancelled'"/>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" placeholder="e.g. ERP rollout — Cairo branch"
+                                       readonly="state in ('received', 'cancelled')"/></h1>
+                            <field name="code" readonly="1" class="text-muted"/>
+                        </div>
+                        <group>
+                            <group string="Ownership &amp; Time Frame" name="ownership">
+                                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="owner_id" domain="[('company_id', '=', company_id)]"
+                                       readonly="state in ('received', 'cancelled')"/>
+                                <field name="owner_user_id" invisible="1"/>
+                                <field name="date_start" readonly="state in ('received', 'cancelled')"/>
+                                <field name="date_end" readonly="state in ('received', 'cancelled')"/>
+                                <field name="duration_months"/>
+                                <field name="is_late" invisible="1"/>
+                                <field name="bonus_quarter_state" invisible="1"/>
+                            </group>
+                            <group string="Points &amp; Quarter" name="points">
+                                <field name="quarter_id" options="{'no_create': True, 'no_open': True}"
+                                       domain="[('company_id', '=', company_id)]"
+                                       readonly="state not in ('draft', 'approved')"/>
+                                <field name="points_approved" readonly="state not in ('draft', 'approved')"/>
+                                <field name="kpi_achievement_pct" invisible="state not in ('submitted', 'received')"
+                                       readonly="state != 'submitted'"/>
+                                <field name="points_late_penalty" invisible="state not in ('submitted', 'received')"
+                                       readonly="state != 'submitted'"/>
+                                <field name="points_earned"/>
+                                <field name="date_received" invisible="not date_received"/>
+                                <field name="bonus_quarter_id" invisible="not bonus_quarter_id" options="{'no_open': True}"/>
+                            </group>
+                        </group>
+                        <div class="alert alert-danger" role="alert" invisible="not is_late or state == 'received'">
+                            <strong>Late.</strong> This project was not received by the end of its target quarter.
+                            A late penalty will be suggested at submission and the bonus will be paid from the quarter in which it is received.
+                        </div>
+                        <div class="alert alert-info" role="alert" invisible="state != 'submitted'"
+                             groups="sl_quarter_bonus.group_qbonus_admin">
+                            Record the <strong>KPI achieved %</strong> and check the <strong>late penalty</strong>, then click <strong>Receive</strong>.
+                            Points earned = approved × KPI % − penalty.
+                        </div>
+                        <notebook>
+                            <page string="KPI" name="kpi">
+                                <field name="kpi_description" placeholder="What must be true for this project to count as delivered? e.g. Go-live with ≤ 5 open issues"
+                                       readonly="state not in ('draft', 'approved')"/>
+                            </page>
+                            <page string="Team &amp; Points" name="team">
+                                <group>
+                                    <group>
+                                        <field name="split_method" readonly="bonus_quarter_state == 'closed'"/>
+                                        <field name="owner_share_pct" readonly="bonus_quarter_state == 'closed'"/>
+                                    </group>
+                                    <group>
+                                        <field name="points_distributed"/>
+                                        <field name="points_undistributed"/>
+                                    </group>
+                                </group>
+                                <field name="member_line_ids" readonly="state == 'cancelled' or bonus_quarter_state == 'closed'">
+                                    <list editable="bottom" decoration-info="role == 'owner'">
+                                        <field name="employee_id" domain="[('company_id', '=', parent.company_id)]"
+                                               options="{'no_create': True}"/>
+                                        <field name="role" readonly="1"/>
+                                        <field name="ratio_pct" column_invisible="parent.split_method != 'ratio'"/>
+                                        <field name="points" readonly="parent.state != 'received'" sum="Total points"/>
+                                        <field name="amount" sum="Total"/>
+                                        <field name="monthly_equivalent" optional="show"/>
+                                        <field name="diff" optional="show" decoration-success="beats_monthly" decoration-danger="not beats_monthly"/>
+                                        <field name="trend" string="" decoration-success="beats_monthly" decoration-danger="not beats_monthly"/>
+                                        <field name="beats_monthly" column_invisible="True"/>
+                                    </list>
+                                </field>
+                                <p class="text-muted mt-2">
+                                    Add the team while the project runs. After reception, choose how the earned points are shared
+                                    (owner share first, the rest equally or by ratio) and click <b>Distribute Points</b>, or type the points by hand.
+                                    The total can never exceed the points earned.
+                                </p>
+                            </page>
+                            <page string="Tasks" name="tasks">
+                                <field name="task_ids" context="{'default_project_id': id}"
+                                       readonly="state in ('received', 'cancelled')">
+                                    <list editable="bottom" decoration-success="stage == 'done'" decoration-muted="stage == 'cancelled'"
+                                          decoration-danger="is_overdue">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="assignee_id" domain="[('id', 'in', parent.member_employee_ids)]"
+                                               options="{'no_create': True}"/>
+                                        <field name="date_start" optional="hide"/>
+                                        <field name="date_deadline"/>
+                                        <field name="priority" widget="priority" optional="show"/>
+                                        <field name="stage"/>
+                                        <field name="is_overdue" column_invisible="True"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Description" name="description">
+                                <field name="description"/>
+                            </page>
+                        </notebook>
+                        <field name="member_employee_ids" invisible="1"/>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- ════════════════════ List ════════════════════ -->
+        <record id="view_sl_qbonus_project_list" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.list</field>
+            <field name="model">sl.qbonus.project</field>
+            <field name="arch" type="xml">
+                <list string="Projects" decoration-danger="is_late" decoration-muted="state == 'cancelled'"
+                      decoration-success="state == 'received' and not is_late">
+                    <field name="code" optional="show"/>
+                    <field name="name"/>
+                    <field name="owner_id"/>
+                    <field name="company_id" groups="base.group_multi_company" optional="show"/>
+                    <field name="date_start" optional="hide"/>
+                    <field name="date_end"/>
+                    <field name="duration_months" optional="hide"/>
+                    <field name="quarter_id"/>
+                    <field name="bonus_quarter_id" optional="show"/>
+                    <field name="points_approved" sum="Approved"/>
+                    <field name="kpi_achievement_pct" optional="show"/>
+                    <field name="points_earned" sum="Earned"/>
+                    <field name="points_undistributed" optional="hide"/>
+                    <field name="is_late" widget="boolean_toggle" readonly="1" optional="show"/>
+                    <field name="state" widget="badge"
+                           decoration-info="state in ('approved', 'in_progress')"
+                           decoration-warning="state == 'submitted'"
+                           decoration-success="state == 'received'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ════════════════════ Kanban ════════════════════ -->
+        <record id="view_sl_qbonus_project_kanban" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.kanban</field>
+            <field name="model">sl.qbonus.project</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="state" quick_create="false" records_draggable="false"
+                        class="o_kanban_small_column">
+                    <field name="color"/>
+                    <field name="state"/>
+                    <field name="is_late"/>
+                    <field name="points_earned"/>
+                    <field name="points_approved"/>
+                    <field name="owner_id"/>
+                    <field name="date_end"/>
+                    <field name="quarter_id"/>
+                    <field name="task_count"/>
+                    <field name="open_task_count"/>
+                    <templates>
+                        <t t-name="card">
+                            <div t-attf-class="ps-2 #{record.is_late.raw_value ? 'border-start border-danger border-3' : ''}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <field name="name" class="fw-bold fs-5"/>
+                                    <span t-if="record.is_late.raw_value" class="badge text-bg-danger">Late</span>
+                                </div>
+                                <div class="text-muted"><field name="owner_id"/></div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="text-muted"><i class="fa fa-calendar-o me-1"/><field name="date_end"/></span>
+                                    <span class="badge rounded-pill text-bg-warning">
+                                        <field name="points_earned"/> / <field name="points_approved"/> pts
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span class="text-muted small"><field name="quarter_id"/></span>
+                                    <span class="text-muted small" t-if="record.task_count.raw_value">
+                                        <i class="fa fa-tasks me-1"/><t t-out="record.task_count.raw_value - record.open_task_count.raw_value"/>/<t t-out="record.task_count.raw_value"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- ════════════════════ Calendar ════════════════════ -->
+        <record id="view_sl_qbonus_project_calendar" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.calendar</field>
+            <field name="model">sl.qbonus.project</field>
+            <field name="arch" type="xml">
+                <calendar string="Projects" date_start="date_start" date_stop="date_end"
+                          color="owner_id" mode="month" quick_create="0" event_open_popup="1">
+                    <field name="name"/>
+                    <field name="owner_id"/>
+                    <field name="quarter_id"/>
+                    <field name="points_earned"/>
+                    <field name="state"/>
+                    <field name="is_late"/>
+                </calendar>
+            </field>
+        </record>
+
+        <!-- ════════════════════ Search ════════════════════ -->
+        <record id="view_sl_qbonus_project_search" model="ir.ui.view">
+            <field name="name">sl.qbonus.project.search</field>
+            <field name="model">sl.qbonus.project</field>
+            <field name="arch" type="xml">
+                <search string="Projects">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="owner_id"/>
+                    <field name="quarter_id"/>
+                    <field name="member_employee_ids" string="Team member"/>
+                    <filter name="my_projects" string="My Projects" domain="[('owner_user_id', '=', uid)]"/>
+                    <filter name="member" string="I'm on the Team" domain="[('member_user_ids', 'in', [uid])]"/>
+                    <separator/>
+                    <filter name="late" string="Late" domain="[('is_late', '=', True)]"/>
+                    <filter name="open" string="Open" domain="[('state', 'not in', ('received', 'cancelled'))]"/>
+                    <filter name="submitted" string="To Receive" domain="[('state', '=', 'submitted')]"/>
+                    <filter name="received" string="Received" domain="[('state', '=', 'received')]"/>
+                    <filter name="undistributed" string="Points to Distribute"
+                            domain="[('state', '=', 'received'), ('member_line_ids.points', '=', 0)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                        <filter name="group_quarter" string="Target Quarter" context="{'group_by': 'quarter_id'}"/>
+                        <filter name="group_bonus_quarter" string="Bonus Quarter" context="{'group_by': 'bonus_quarter_id'}"/>
+                        <filter name="group_owner" string="Owner" context="{'group_by': 'owner_id'}"/>
+                        <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ════════════════════ Action ════════════════════ -->
+        <record id="action_sl_qbonus_project" model="ir.actions.act_window">
+            <field name="name">Projects</field>
+            <field name="res_model">sl.qbonus.project</field>
+            <field name="view_mode">kanban,list,calendar,form</field>
+            <field name="search_view_id" ref="view_sl_qbonus_project_search"/>
+            <field name="context">{'search_default_open': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create a project</p>
+                <p>
+                    A project has an owner, a time frame, a KPI and tasks. The Project Admin approves its points
+                    and target quarter; once it is received as done, its points are paid from the quarter's pool.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
