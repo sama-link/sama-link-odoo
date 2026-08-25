@@ -28,4 +28,11 @@
             <field name="comment">Approves points and KPI, receives finished projects, sets the quarterly pool, closes quarters and reads the dashboard.</field>
         </record>
     </data>
+
+    <!-- Settings administrators manage every app; give them the Project Admin
+         role so the Odoo administrator can configure quarters without a manual
+         group grant. Outside noupdate so it also applies on upgrade. -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_qbonus_admin'))]"/>
+    </record>
 </odoo>

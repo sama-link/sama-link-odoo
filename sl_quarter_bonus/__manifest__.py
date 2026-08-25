@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Quarterly Project Bonus',
-    'version': '18.0.1.0.1',
+    'version': '18.0.1.0.2',
     'summary': 'Points-based quarterly project bonus: projects earn points, '
                'a quarterly pool sets the EGP per point, owners share it with the team',
     'description': """
