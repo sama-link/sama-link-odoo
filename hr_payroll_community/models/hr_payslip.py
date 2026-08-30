@@ -273,20 +273,26 @@ class HrPayslip(models.Model):
         return date_from, date_to
 
     def apply_contract_bounded_period(self, period_from=None, period_to=None):
-        """Set each payslip's period to the batch period clamped to its contract.
+        """Clamp each payslip's period to its contract.
 
-        The BATCH period is the reference, never the slip's current (already
-        clamped) dates — otherwise recomputing a slip whose contract started
-        mid-period would keep shrinking it, and widening the batch dates would
-        never widen the slip back. Payslips flagged lock_dates keep their own
-        period.
+        With an explicit period (the BATCH period changed): every unlocked
+        payslip is re-derived as period ∩ contract. The batch is the
+        reference there, so widening the batch widens the slips back too.
+
+        Without a period (a recompute): each payslip keeps its OWN dates,
+        merely clamped to its contract (idempotent, never widened). A period
+        set by hand on one payslip therefore survives Compute Sheet and the
+        batch's Compute Payslips instead of snapping back to the batch dates.
+
+        Payslips flagged lock_dates are never touched.
         """
         for payslip in self:
             if payslip.lock_dates:
                 continue
-            run = payslip.payslip_run_id
-            base_from = period_from or (run.date_start if run else payslip.date_from)
-            base_to = period_to or (run.date_end if run else payslip.date_to)
+            if period_from and period_to:
+                base_from, base_to = period_from, period_to
+            else:
+                base_from, base_to = payslip.date_from, payslip.date_to
             new_from, new_to = self._contract_period_bounds(
                 payslip.contract_id, base_from, base_to)
             if new_from and new_to and (new_from != payslip.date_from or

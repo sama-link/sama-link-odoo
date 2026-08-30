@@ -78,6 +78,22 @@ class HrPayslipRun(models.Model):
             self.slip_ids.apply_contract_bounded_period(
                 self.date_start, self.date_end)
 
+    def write(self, vals):
+        """A batch period change propagates to every unlocked payslip of the
+        batch, server-side, whichever view or RPC the change came through.
+        Only an actual change triggers it, so saving a batch with unchanged
+        dates never resets a period set by hand on one payslip."""
+        before = {}
+        if 'date_start' in vals or 'date_end' in vals:
+            before = {run.id: (run.date_start, run.date_end) for run in self}
+        res = super().write(vals)
+        for run in self:
+            if run.id in before and before[run.id] != (run.date_start,
+                                                       run.date_end):
+                run.slip_ids.apply_contract_bounded_period(
+                    run.date_start, run.date_end)
+        return res
+
     @api.depends('date_start', 'date_end')
     def _compute_duration(self):
         for record in self:
@@ -252,10 +268,10 @@ class HrPayslipRun(models.Model):
                                 entry['loan_line_ids'] = list(il.loan_line_ids.ids)
                             saved_inputs.append(entry)
                             
-                    # 2. Sync physical dates to match any fresh batch changes
-                    #    (skip payslips whose period is locked)
-                    slip.apply_contract_bounded_period(
-                        self.date_start, self.date_end)
+                    # 2. Clamp the slip's OWN period to its contract. Dates
+                    #    set by hand on a slip are kept; batch date changes
+                    #    were already propagated when the batch was saved.
+                    slip.apply_contract_bounded_period()
                     
                     # 3. Regen working days / schedules / generic inputs for the NEW dates
                     slip.onchange_employee()
