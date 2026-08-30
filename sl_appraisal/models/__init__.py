@@ -5,4 +5,3 @@ from . import appraisal_skill_manager_feedback
 from . import appraisal_skill_history
 from . import hr_employee
 from . import appraisal_admin_score_config
-from . import appraisal_admin_score_exclude

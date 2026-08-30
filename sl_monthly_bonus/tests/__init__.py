@@ -11,3 +11,6 @@ from . import test_receipt_report
 from . import test_employee_self_service
 from . import test_refinements
 from . import test_appraisal_batch_ref
+from . import test_category_managers
+from . import test_employee_eligibility
+from . import test_batch_review

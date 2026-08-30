@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <form string="Generate Appraisals">
                 <field name="batch_id" invisible="1"/>
+                <field name="issue_employee_ids" invisible="1"/>
                 <group>
                     <group>
                         <field name="company_id"/>
@@ -20,6 +21,19 @@
                     </group>
                 </group>
 
+                <div class="alert alert-warning d-flex align-items-center justify-content-between mb-2"
+                     role="alert" invisible="not issue_count">
+                    <span>
+                        ⚠ <field name="issue_count" readonly="1" class="oe_inline fw-bold"/>
+                        employee(s) changed job or have a contract starting/ending in this period.
+                        They are not listed below — review them one by one.
+                    </span>
+                    <button name="action_open_review_wizard"
+                            string="Review employees with issues"
+                            type="object"
+                            class="btn-warning ms-2"/>
+                </div>
+
                 <div class="d-flex gap-2 mb-2">
                     <button name="action_select_all_filtered"
                             string="Select All Filtered"
@@ -27,7 +41,8 @@
                             class="btn-secondary"/>
                 </div>
 
-                <field name="employee_ids" widget="many2many">
+                <field name="employee_ids" widget="many2many"
+                       domain="[('appraisal_eligible', '=', True), ('id', 'not in', issue_employee_ids)]">
                     <list>
                         <field name="name"/>
                         <field name="job_id"/>

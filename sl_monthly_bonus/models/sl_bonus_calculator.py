@@ -52,10 +52,11 @@ class SlBonusCalculator(models.AbstractModel):
             })
             return result
 
-        # Employees on the evaluation-exception list have no appraisal by design,
-        # so they must NOT be excluded for a "missing appraisal" — they compute
-        # normally with evaluation treated as 100% (handled in _get_evaluation_percent).
-        is_eval_exempt = self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee)
+        # Employees whose card (Appraisal & Bonus tab) says the bonus is
+        # Fixed have no appraisal by design, so they must NOT be excluded for
+        # a "missing appraisal" — they compute normally with evaluation
+        # treated as 100% (handled in _get_evaluation_percent).
+        is_eval_exempt = employee.bonus_evaluation_mode == 'fixed'
 
         # Eligibility gate: when the batch is bound to a specific appraisal
         # batch, every employee must have an appraisal in it — EXCEPT exempt ones.
@@ -191,6 +192,11 @@ class SlBonusCalculator(models.AbstractModel):
         return (employee.job_id and employee.job_id.bonus_category) or 'none'
 
     def _compute_exclusion(self, employee, period_end):
+        # Employee card → Appraisal & Bonus tab → "Bonus" unchecked. Lines
+        # that already exist for such an employee compute to 0 with a reason
+        # rather than vanishing silently.
+        if not employee.bonus_eligible:
+            return True, _("Not eligible for bonus ('Bonus' unchecked on the employee card).")
         if employee.bonus_quarterly_exclusion:
             return True, _("Quarterly bonus track (excluded from monthly).")
         if employee._bonus_is_in_probation(period_end):
@@ -238,12 +244,13 @@ class SlBonusCalculator(models.AbstractModel):
         2. Else, look for the latest hr_finalization appraisal up to period_end.
         3. Else, return 0% and an explanatory source.
 
-        Exception: employees on the evaluation-exception list have no appraisal,
-        so the evaluation factor is skipped (treated as 100%) instead of zeroing
-        their bonus. Only the % fed into the formulas changes — the formulas do not.
+        Exception: employees whose card (Appraisal & Bonus tab) says the bonus
+        is Fixed have no appraisal, so the evaluation factor is skipped
+        (treated as 100%) instead of zeroing their bonus. Only the % fed into
+        the formulas changes — the formulas do not.
         """
-        if self.env['sl.bonus.evaluation.exception'].sudo().is_exempt(employee):
-            return 100.0, _("Evaluation skipped (exception list)")
+        if employee.bonus_evaluation_mode == 'fixed':
+            return 100.0, _("Evaluation skipped (fixed bonus on the employee card)")
         Appraisal = self.env['hr.appraisal'].sudo()
 
         if appraisal_batch:
@@ -368,6 +375,12 @@ class SlBonusCalculator(models.AbstractModel):
             {'sequence': 90, 'label': _('Evaluation %'), 'value': f"{evaluation_pct:,.2f}%"},
             {'sequence': 100, 'label': _('Result'), 'value': f"{amount:,.2f}"},
         ])
+
+    # Sales Online / Sales Projects pay exactly like Sales: same targets,
+    # same commission tiers, same collected-sales staging source. Only the
+    # category (and therefore which manager group sees the line) differs.
+    _calc_sales_online = _calc_sales
+    _calc_sales_projects = _calc_sales
 
     def _calc_stock(self, employee, period_start, period_end, evaluation_pct, result):
         # The imported stock value IS the commission base — no commission %

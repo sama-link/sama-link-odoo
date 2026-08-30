@@ -1,5 +1,10 @@
 from odoo import models, fields, api, _
 
+BONUS_EVALUATION_MODES = [
+    ('appraisal', 'Depends on appraisal'),
+    ('fixed', 'Fixed (skip appraisal %)'),
+]
+
 
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
@@ -14,6 +19,48 @@ class HrEmployee(models.Model):
         'sl.bonus.edara.mapping', 'employee_id',
         string='Edara Mappings',
     )
+
+    # ── Bonus eligibility (employee card → "Appraisal & Bonus" tab) ──
+    bonus_eligible = fields.Boolean(
+        string='Bonus',
+        default=True,
+        help='Uncheck to exclude this employee from monthly bonuses: they can '
+             'no longer be added to a bonus batch and compute to 0 if already in one.',
+    )
+    bonus_evaluation_mode = fields.Selection(
+        BONUS_EVALUATION_MODES,
+        string='Bonus Evaluation',
+        default='appraisal',
+        help="'Fixed': the appraisal % is skipped (treated as 100%) in this "
+             "employee's bonus formula — use it for employees who never "
+             "receive an appraisal.",
+    )
+
+    # ── Bonus eligibility normalization ──────────────────────────────
+    # The card is the single source of truth: the bonus calculator reads
+    # bonus_evaluation_mode directly.
+    @api.onchange('bonus_eligible')
+    def _onchange_bonus_eligible(self):
+        if not self.bonus_eligible:
+            self.bonus_evaluation_mode = 'appraisal'
+
+    @api.model
+    def _normalize_bonus_eligibility_vals(self, vals):
+        """An employee who cannot take a bonus has no evaluation mode either:
+        reset it so re-enabling starts from the default."""
+        if 'bonus_eligible' in vals and not vals['bonus_eligible']:
+            vals['bonus_evaluation_mode'] = 'appraisal'
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._normalize_bonus_eligibility_vals(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._normalize_bonus_eligibility_vals(vals)
+        return super().write(vals)
 
     def _bonus_get_active_contract(self, on_date=None):
         """Return the hr.contract in force for this employee on a given date

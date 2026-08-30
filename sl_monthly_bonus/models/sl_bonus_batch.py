@@ -5,6 +5,8 @@ from babel.dates import format_date
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
+from .sl_bonus_category import SALES_CATEGORIES, MANAGER_CATEGORY_GROUPS
+
 _logger = logging.getLogger(__name__)
 
 
@@ -193,14 +195,15 @@ class SlBonusBatch(models.Model):
             raise AccessError(_("Only HR Manager / Admin can perform this action."))
 
     def _ensure_can_compute(self):
-        """Compute is the one batch action the Sales Manager also runs.
+        """Compute is the one batch action the category managers also run.
 
         Approving and every other transition stay with HR / Admin. Note the
-        group is tested directly rather than through _is_hr: HR Manager implies
-        the Sales Manager group, so HR passes this on its own.
+        groups are tested directly rather than through _is_hr: HR Manager
+        implies the manager groups, so HR passes this on its own.
         """
-        if self._is_hr() or self.env.user.has_group(
-                'sl_monthly_bonus.group_bonus_manager'):
+        if self._is_hr() or any(
+                self.env.user.has_group(xmlid)
+                for xmlid in MANAGER_CATEGORY_GROUPS.values()):
             return
         raise AccessError(
             _("Only Sales Manager / HR Manager / Admin can compute a batch."))
@@ -269,6 +272,12 @@ class SlBonusBatch(models.Model):
                 "Employees can only be added while the batch is in Draft "
                 "or Data Ready."
             ))
+        ineligible = employees.sudo().filtered(lambda e: not e.bonus_eligible)
+        if ineligible:
+            raise UserError(_(
+                "These employees are not eligible for bonus (the 'Bonus' box "
+                "is unchecked on their employee card):\n%s"
+            ) % "\n".join(ineligible.mapped('name')))
         Line = self.env['sl.bonus.batch.line'].sudo()
         existing_ids = set(self.line_ids.mapped('employee_id.id'))
         new_employees = employees.sudo().filtered(
@@ -293,9 +302,56 @@ class SlBonusBatch(models.Model):
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [rec.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
             rec._add_employees_to_lines(employees)
         return True
+
+    # ── Period issues (contract starts/ends in period, no contract) ──
+    def _review_scope_employees(self):
+        """Employees the Add Employees wizard should consider for this batch:
+        bonus-eligible, in the batch's company (or none), not yet in the
+        batch — active ones plus departed ones who held a contract during
+        the period (see ``hr.employee._period_review_scope``)."""
+        self.ensure_one()
+        scope = self.env['hr.employee']._period_review_scope(
+            self.company_id, self.period_start, self.period_end,
+            [('bonus_eligible', '=', True)])
+        return scope - self.line_ids.mapped('employee_id')
+
+    def _employee_period_issues(self, employees):
+        """``{employee_id: {'boundary', 'summary', ...}}`` for the employees
+        whose contract starts or ends INSIDE the bonus period (hired,
+        departed or renewed mid-month). Only that is a bonus problem: a job
+        change is not (unlike appraisal batches), and an employee with no
+        contract overlapping the period is not flagged either — departed
+        employees keep their bonus rights and the calculator already falls
+        back to their last contract."""
+        self.ensure_one()
+        issues = employees._period_contract_issues(self.period_start, self.period_end)
+        return {
+            emp_id: issue for emp_id, issue in issues.items() if issue['boundary']
+        }
+
+    def _open_review_wizard(self, flagged_employees, ok_employees=None):
+        """Open the review wizard for employees with contract issues.
+        ``ok_employees`` (no issues) are carried along and added when the
+        wizard is confirmed."""
+        self.ensure_one()
+        Review = self.env['sl.bonus.batch.review']
+        wizard = Review.create({
+            'batch_id': self.id,
+            'ok_employee_ids': [(6, 0, (ok_employees or self.env['hr.employee']).ids)],
+            'line_ids': Review._prepare_line_commands(self, flagged_employees),
+        })
+        return {
+            'name': _('Employees Needing Review'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'sl.bonus.batch.review',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
 
     def action_open_add_employees_wizard(self):
         """Open the Add Employees wizard (UI entry point — replaces the
@@ -306,22 +362,6 @@ class SlBonusBatch(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Add Employees'),
             'res_model': 'sl.bonus.add.employees.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_batch_id': self.id,
-            },
-        }
-
-    def action_open_add_from_appraisal_wizard(self):
-        """Open the Add From Appraisal Batch wizard — adds every employee
-        referenced by an appraisal in the selected appraisal batch."""
-        self.ensure_one()
-        self._ensure_hr()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Add From Appraisal Batch'),
-            'res_model': 'sl.bonus.add.from.appraisal.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
@@ -445,6 +485,8 @@ class SlBonusBatch(models.Model):
         category_ar = {
             'service': 'خدمات',
             'sales': 'مبيعات',
+            'sales_online': 'مبيعات أونلاين',
+            'sales_projects': 'مبيعات مشاريع',
             'stock': 'مشتريات المخزون',
             'installation': 'تركيبات',
             'branch_manager': 'مدير فرع / منطقة',
@@ -478,8 +520,8 @@ class SlBonusBatch(models.Model):
             ws.write(row, 3, line.job_id.name or '')
             ws.write(row, 4, _payment_method_label(contract))
             ws.write(row, 5, category_ar.get(line.category, line.category or ''))
-            # Target / Achieved are meaningful for sales lines only.
-            if line.category == 'sales':
+            # Target / Achieved are meaningful for sales-formula lines only.
+            if line.category in SALES_CATEGORIES:
                 ws.write_number(row, 6, line.target_amount or 0.0, money)
                 ws.write_number(row, 7, line.achieved_amount or 0.0, money)
             else:
@@ -568,6 +610,7 @@ class SlBonusBatch(models.Model):
             employees = self.env['hr.employee'].sudo().search([
                 ('company_id', 'in', [self.company_id.id, False]),
                 ('active', '=', True),
+                ('bonus_eligible', '=', True),
             ])
             Line.create([{
                 'batch_id': self.id, 'employee_id': emp.id, 'state': 'draft',

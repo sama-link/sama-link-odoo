@@ -135,8 +135,17 @@
                             <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
                             <field name="creator_id" readonly="1"/>
                             <field name="appraisal_count" readonly="1"/>
+                            <field name="copied_from_batch_id" readonly="1"
+                                   invisible="not copied_from_batch_id"/>
                         </group>
                     </group>
+                    <div class="alert alert-info" role="alert"
+                         invisible="not copied_from_batch_id or appraisal_count">
+                        This batch was copied with its settings only. Use <b>Generate Appraisals</b>
+                        to add employees — the manager/employee who appraised each of them in
+                        <field name="copied_from_batch_id" readonly="1" class="oe_inline"/>
+                        will be assigned automatically.
+                    </div>
 
                     <separator string="Appraisals"/>
 

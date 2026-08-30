@@ -87,6 +87,10 @@ class SlBonusBatchLine(models.Model):
 
     employee_id = fields.Many2one(
         'hr.employee', string='Employee', required=True, ondelete='restrict', index=True,
+        # Employee card → Appraisal & Bonus tab → "Bonus" unchecked means the
+        # employee cannot be picked for a bonus line (server side: calculator
+        # excludes them with a reason, batch refuses to add them).
+        domain="[('bonus_eligible', '=', True)]",
     )
     user_id = fields.Many2one(
         related='employee_id.user_id', store=True, readonly=True,
@@ -118,6 +122,8 @@ class SlBonusBatchLine(models.Model):
     category = fields.Selection([
         ('service', 'Service'),
         ('sales', 'Sales'),
+        ('sales_online', 'Sales Online'),
+        ('sales_projects', 'Sales Projects'),
         ('stock', 'Stock Purchasing'),
         ('installation', 'Installation'),
         ('branch_manager', 'Branch / Area Manager'),

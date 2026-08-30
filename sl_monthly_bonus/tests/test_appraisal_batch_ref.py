@@ -234,23 +234,29 @@ class TestAppraisalBatchReference(TransactionCase):
 
     # ── 3) View placement ────────────────────────────────────────────
     def test_add_buttons_live_in_form_header(self):
-        """The two add-employees buttons must be in the form <header>, not
-        in the Employees & Bonuses tab body."""
+        """Add Employees lives in the form <header>; the Add-From-Appraisal
+        button was removed (the wizard stays available programmatically and
+        appraisal_batch_id is set directly on the form)."""
         view = self.env.ref('sl_monthly_bonus.view_sl_bonus_batch_form')
         arch = etree.fromstring(view.arch)
         header_buttons = arch.xpath(
-            "//header/button[@name='action_open_add_employees_wizard' or "
-            "@name='action_open_add_from_appraisal_wizard']"
+            "//header/button[@name='action_open_add_employees_wizard']"
         )
         self.assertEqual(
-            len(header_buttons), 2,
-            "Both add-employees buttons must be inside <header>; found %s." % len(header_buttons),
+            len(header_buttons), 1,
+            "The Add Employees button must be inside <header>; found %s." % len(header_buttons),
         )
-        # Ensure the buttons are NOT also living inside the notebook page.
+        from_appraisal_buttons = arch.xpath(
+            "//button[@name='action_open_add_from_appraisal_wizard']"
+        )
+        self.assertEqual(
+            len(from_appraisal_buttons), 0,
+            "The Add-From-Appraisal button must be removed; found %s." % len(from_appraisal_buttons),
+        )
+        # Ensure the button is NOT also living inside the notebook page.
         page_buttons = arch.xpath(
             "//notebook/page[@name='page_employees_bonuses']//button["
-            "@name='action_open_add_employees_wizard' or "
-            "@name='action_open_add_from_appraisal_wizard']"
+            "@name='action_open_add_employees_wizard']"
         )
         self.assertEqual(
             len(page_buttons), 0,

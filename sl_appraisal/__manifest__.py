@@ -1,6 +1,6 @@
 {
     'name': 'Samalink Appraisals v1.0.0',
-    'version': '18.0.1.3.0',
+    'version': '18.0.1.7.0',
     'summary': 'Customized HR Appraisals with Skills Integration & 3-Stage Workflow',
     'description': """
         Extends Open HRMS Appraisals for Samalink:
@@ -27,7 +27,7 @@
         'data/stages.xml',
         'data/ir_cron_data.xml',
         'wizard/hr_appraisal_batch_employees_views.xml',
-        'wizard/hr_appraisal_batch_contract_warning_views.xml',
+        'wizard/hr_appraisal_batch_review_views.xml',
         'views/manager_feedback_views.xml',
         'views/hr_appraisal_views.xml',
         'views/hr_appraisal_batch_views.xml',

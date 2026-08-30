@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_appraisal_batch_review_form" model="ir.ui.view">
+        <field name="name">hr.appraisal.batch.review.form</field>
+        <field name="model">hr.appraisal.batch.review</field>
+        <field name="arch" type="xml">
+            <form string="Employees Needing Review">
+                <field name="batch_id" invisible="1"/>
+                <field name="ok_employee_ids" invisible="1"/>
+                <field name="line_count" invisible="1"/>
+                <div class="alert alert-warning" role="alert">
+                    ⚠ The employees below need a decision before entering the appraisal batch
+                    for the period <field name="date_from" readonly="1" class="oe_inline"/> →
+                    <field name="date_to" readonly="1" class="oe_inline"/>:
+                    <ul class="mb-0 mt-1">
+                        <li><b>Changed job</b> — choose in <i>Appraise As</i> which position the appraisal is for.</li>
+                        <li><b>Contract starts/ends in period</b> or <b>No active contract</b> — choose whether to add them.</li>
+                    </ul>
+                </div>
+                <div class="alert alert-info" role="alert" invisible="line_count">
+                    No employee currently needs review for this period.
+                </div>
+                <field name="line_ids" nolabel="1" invisible="not line_count">
+                    <list editable="bottom" create="0" delete="0"
+                          decoration-muted="decision == 'exclude'">
+                        <field name="employee_id" force_save="1" readonly="1"/>
+                        <field name="department_id"/>
+                        <field name="issue_summary"/>
+                        <field name="issue_job_change" column_invisible="1"/>
+                        <field name="issue_contract" column_invisible="1"/>
+                        <field name="period_job_ids" column_invisible="1"/>
+                        <field name="job_id"
+                               readonly="not issue_job_change"
+                               required="issue_job_change and decision == 'include'"
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="decision" widget="radio" options="{'horizontal': true}"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm"
+                            string="Confirm"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not line_count and not ok_employee_ids"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

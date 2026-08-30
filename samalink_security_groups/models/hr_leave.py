@@ -27,21 +27,32 @@ class HrLeave(models.Model):
                 if current_leave_mgr and self.env.user != current_leave_mgr:
                     raise UserError("You cannot approve leaves for employees you do not manage.")
 
-        # Temporarily elevate permissions for Odoo's super().action_approve()
-        # which requires group_hr_holidays_user
-        needs_elevation = is_sl_timeoff_mgr or is_sl_general_manager
-        timeoff_group = self.env.ref('hr_holidays.group_hr_holidays_user')
+        # Time Off Managers / General Managers are not Time Off Officers
+        # (hr_holidays.group_hr_holidays_user), which Odoo's core approval
+        # checks require. The SamaLink role checks above are the real
+        # authorisation, so run the core approval as superuser: hr_holidays
+        # already treats the superuser as an officer in write() and
+        # _check_approval_update() (and see _check_double_validation_rules
+        # below).
+        #
+        # This used to temporarily ADD the user to the Time Off Officer group
+        # and REMOVE it again in a finally block, together with
+        # hr.group_hr_user which that group implies. It never checked whether
+        # the user already had those groups, so anyone holding "Officer:
+        # Manage all employees" / Time Off Officer legitimately (granted by
+        # hand, or implied by the SamaLink HR Officer group) lost them the
+        # first time they approved a request. The group juggling also cleared
+        # the whole registry cache twice per approval. No group is touched
+        # any more.
+        if is_sl_timeoff_mgr or is_sl_general_manager:
+            return super(HrLeave, self.sudo()).action_approve(check_state)
+        return super().action_approve(check_state)
 
-        if needs_elevation:
-            timeoff_group.sudo().write({'users': [(4, self.env.user.id)]})
-
-        try:
-            res = super().action_approve(check_state)
-        finally:
-            if needs_elevation and self.env.user.has_group('hr_holidays.group_hr_holidays_user'):
-                timeoff_group.sudo().write({'users': [(3, self.env.user.id)]})
-                # Also clean up implicit hr.group_hr_user if added
-                employee_group = self.env.ref('hr.group_hr_user')
-                employee_group.sudo().write({'users': [(3, self.env.user.id)]})
-
-        return res
+    def _check_double_validation_rules(self, employees, state):
+        # hr_holidays skips _check_approval_update() for the superuser but not
+        # this sibling check (it looks at the real user's groups). Mirror the
+        # superuser rule so the sudo() approval above also works for
+        # "both"-validation leave types.
+        if self.env.su:
+            return
+        return super()._check_double_validation_rules(employees, state)

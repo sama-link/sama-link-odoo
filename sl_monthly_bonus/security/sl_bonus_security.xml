@@ -43,6 +43,18 @@
             <field name="domain_force">[('category', '=', 'sales')]</field>
             <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
         </record>
+        <record id="rule_batch_line_manager_online" model="ir.rule">
+            <field name="name">Bonus batch line: online manager sees sales online only</field>
+            <field name="model_id" ref="model_sl_bonus_batch_line"/>
+            <field name="domain_force">[('category', '=', 'sales_online')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_online'))]"/>
+        </record>
+        <record id="rule_batch_line_manager_projects" model="ir.rule">
+            <field name="name">Bonus batch line: projects manager sees sales projects only</field>
+            <field name="model_id" ref="model_sl_bonus_batch_line"/>
+            <field name="domain_force">[('category', '=', 'sales_projects')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_projects'))]"/>
+        </record>
         <record id="rule_batch_line_hr_all" model="ir.rule">
             <field name="name">Bonus batch line: HR sees all</field>
             <field name="model_id" ref="model_sl_bonus_batch_line"/>
@@ -67,6 +79,18 @@
             <field name="domain_force">[('line_id.category', '=', 'sales')]</field>
             <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
         </record>
+        <record id="rule_batch_line_component_manager_online" model="ir.rule">
+            <field name="name">Bonus line component: online manager</field>
+            <field name="model_id" ref="model_sl_bonus_batch_line_component"/>
+            <field name="domain_force">[('line_id.category', '=', 'sales_online')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_online'))]"/>
+        </record>
+        <record id="rule_batch_line_component_manager_projects" model="ir.rule">
+            <field name="name">Bonus line component: projects manager</field>
+            <field name="model_id" ref="model_sl_bonus_batch_line_component"/>
+            <field name="domain_force">[('line_id.category', '=', 'sales_projects')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_projects'))]"/>
+        </record>
         <record id="rule_batch_line_component_hr_all" model="ir.rule">
             <field name="name">Bonus line component: HR sees all</field>
             <field name="model_id" ref="model_sl_bonus_batch_line_component"/>
@@ -89,12 +113,32 @@
         </record>
         <!-- Sales staging is the sales manager's own subject matter, and the
              employee rule he also carries would otherwise narrow this to his
-             own rows. New record: noupdate only blocks updates, not creation. -->
+             own rows. Since v18.0.2.18.0 the scope is the sales CATEGORY, not
+             all rows — the function write below applies that to databases
+             that already hold this noupdate record. -->
         <record id="rule_edara_sales_manager_all" model="ir.rule">
-            <field name="name">Edara sales staging: sales manager sees all</field>
+            <field name="name">Edara sales staging: sales manager sees sales category</field>
             <field name="model_id" ref="model_sl_bonus_edara_staging_sales"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="domain_force">['|', ('employee_id', '=', False),
+                ('employee_id.job_id.bonus_category', '=', 'sales')]</field>
             <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
+        </record>
+        <!-- Category managers see their own category's staging rows. Unmapped
+             rows (no employee resolved yet) stay visible to every manager so
+             each can fix the errors of their own imports. -->
+        <record id="rule_edara_sales_manager_online" model="ir.rule">
+            <field name="name">Edara sales staging: online manager sees sales online</field>
+            <field name="model_id" ref="model_sl_bonus_edara_staging_sales"/>
+            <field name="domain_force">['|', ('employee_id', '=', False),
+                ('employee_id.job_id.bonus_category', '=', 'sales_online')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_online'))]"/>
+        </record>
+        <record id="rule_edara_sales_manager_projects" model="ir.rule">
+            <field name="name">Edara sales staging: projects manager sees sales projects</field>
+            <field name="model_id" ref="model_sl_bonus_edara_staging_sales"/>
+            <field name="domain_force">['|', ('employee_id', '=', False),
+                ('employee_id.job_id.bonus_category', '=', 'sales_projects')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_projects'))]"/>
         </record>
         <record id="rule_edara_stock_employee_own" model="ir.rule">
             <field name="name">Edara stock staging: employee sees only own</field>
@@ -117,6 +161,67 @@
         <record id="rule_edara_install_hr_all" model="ir.rule">
             <field name="name">Edara install staging: HR all</field>
             <field name="model_id" ref="model_sl_bonus_edara_staging_installation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_hr_manager'))]"/>
+        </record>
+
+        <!-- ════════════════════ Targets & commission tiers — per category ═══════
+             v18.0.2.18.0: each category manager maintains only the targets and
+             tiers of employees whose JOB carries their category. HR keeps the
+             explicit sees-all rule: HR implies all three manager groups, and
+             without it the OR of the three category rules would hide targets
+             of employees in non-sales categories or with no job set. -->
+        <record id="rule_target_manager_sales" model="ir.rule">
+            <field name="name">Sales target: sales manager sees sales category</field>
+            <field name="model_id" ref="model_sl_bonus_target"/>
+            <field name="domain_force">[('employee_id.job_id.bonus_category', '=', 'sales')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
+        </record>
+        <record id="rule_target_manager_online" model="ir.rule">
+            <field name="name">Sales target: online manager sees sales online</field>
+            <field name="model_id" ref="model_sl_bonus_target"/>
+            <field name="domain_force">[('employee_id.job_id.bonus_category', '=', 'sales_online')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_online'))]"/>
+        </record>
+        <record id="rule_target_manager_projects" model="ir.rule">
+            <field name="name">Sales target: projects manager sees sales projects</field>
+            <field name="model_id" ref="model_sl_bonus_target"/>
+            <field name="domain_force">[('employee_id.job_id.bonus_category', '=', 'sales_projects')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_projects'))]"/>
+        </record>
+        <record id="rule_target_hr_all" model="ir.rule">
+            <field name="name">Sales target: HR sees all</field>
+            <field name="model_id" ref="model_sl_bonus_target"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_hr_manager'))]"/>
+        </record>
+
+        <!-- Per-employee commission tiers follow their target's category; the
+             global default table (no target) stays shared by all managers. -->
+        <record id="rule_sales_tier_manager_sales" model="ir.rule">
+            <field name="name">Commission tier: sales manager</field>
+            <field name="model_id" ref="model_sl_bonus_sales_tier"/>
+            <field name="domain_force">['|', ('target_id', '=', False),
+                ('target_id.employee_id.job_id.bonus_category', '=', 'sales')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager'))]"/>
+        </record>
+        <record id="rule_sales_tier_manager_online" model="ir.rule">
+            <field name="name">Commission tier: online manager</field>
+            <field name="model_id" ref="model_sl_bonus_sales_tier"/>
+            <field name="domain_force">['|', ('target_id', '=', False),
+                ('target_id.employee_id.job_id.bonus_category', '=', 'sales_online')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_online'))]"/>
+        </record>
+        <record id="rule_sales_tier_manager_projects" model="ir.rule">
+            <field name="name">Commission tier: projects manager</field>
+            <field name="model_id" ref="model_sl_bonus_sales_tier"/>
+            <field name="domain_force">['|', ('target_id', '=', False),
+                ('target_id.employee_id.job_id.bonus_category', '=', 'sales_projects')]</field>
+            <field name="groups" eval="[(4, ref('group_bonus_manager_projects'))]"/>
+        </record>
+        <record id="rule_sales_tier_hr_all" model="ir.rule">
+            <field name="name">Commission tier: HR sees all</field>
+            <field name="model_id" ref="model_sl_bonus_sales_tier"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_bonus_hr_manager'))]"/>
         </record>
@@ -184,4 +289,12 @@
               eval="[[ref('rule_batch_line_component_manager_team')],
                      {'name': 'Bonus line component: sales manager',
                       'domain_force': '''[('line_id.category', '=', 'sales')]'''}]"/>
+    <!-- v18.0.2.18.0: the Sales Manager's staging view narrows from all rows
+         to the sales category, symmetric with the two new category managers.
+         Unmapped rows stay visible so import errors can be fixed. -->
+    <function model="ir.rule" name="write"
+              eval="[[ref('rule_edara_sales_manager_all')],
+                     {'name': 'Edara sales staging: sales manager sees sales category',
+                      'domain_force': '''['|', ('employee_id', '=', False),
+                          ('employee_id.job_id.bonus_category', '=', 'sales')]'''}]"/>
 </odoo>
