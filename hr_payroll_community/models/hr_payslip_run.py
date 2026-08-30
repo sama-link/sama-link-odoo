@@ -26,6 +26,7 @@ from urllib.parse import quote
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from odoo import fields, models, _, api
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -77,6 +78,22 @@ class HrPayslipRun(models.Model):
             self.slip_ids.apply_contract_bounded_period(
                 self.date_start, self.date_end)
 
+    def write(self, vals):
+        """A batch period change propagates to every unlocked payslip of the
+        batch, server-side, whichever view or RPC the change came through.
+        Only an actual change triggers it, so saving a batch with unchanged
+        dates never resets a period set by hand on one payslip."""
+        before = {}
+        if 'date_start' in vals or 'date_end' in vals:
+            before = {run.id: (run.date_start, run.date_end) for run in self}
+        res = super().write(vals)
+        for run in self:
+            if run.id in before and before[run.id] != (run.date_start,
+                                                       run.date_end):
+                run.slip_ids.apply_contract_bounded_period(
+                    run.date_start, run.date_end)
+        return res
+
     @api.depends('date_start', 'date_end')
     def _compute_duration(self):
         for record in self:
@@ -119,6 +136,38 @@ class HrPayslipRun(models.Model):
         action['view_mode'] = 'list,pivot,form'
         return action
 
+    @api.model
+    def _export_paths_readable(self, model_name, paths):
+        """Filter export field paths (``employee_id/visa_no`` style chains on
+        ``model_name``) down to those the current user may read.
+
+        Mirrors the per-field check ``export_data`` performs: a path is
+        dropped as soon as one of its steps carries a field-level ``groups=``
+        the user lacks. Model ACL / record-rule grants (e.g. the General
+        Reviewer Manager group) do not cover field-level groups, so a
+        hardcoded column list would otherwise fail the whole export with an
+        AccessError. Unknown field names are left in so the export raises
+        its usual error on them."""
+        readable = []
+        for path in paths:
+            Model = self.env[model_name]
+            allowed = True
+            for step in path.split('/'):
+                field = Model._fields.get(step)
+                if field is None:
+                    break
+                try:
+                    Model.check_field_access_rights('read', [step])
+                except AccessError:
+                    allowed = False
+                    break
+                if not field.relational:
+                    break
+                Model = self.env[field.comodel_name]
+            if allowed:
+                readable.append(path)
+        return readable
+
     def action_export_batch_finance_xlsx(self):
         """One-click export of batch payslips with finance template fields."""
         self.ensure_one()
@@ -151,19 +200,32 @@ class HrPayslipRun(models.Model):
             'wage': 'الموظف/عقود الموظف/الأجر' if is_arabic else _('Employee/Employee Contracts/Wage'),
         }
 
+        columns = [
+            {'name': 'employee_id/name', 'label': labels['employee_name'], 'type': 'char'},
+            {'name': 'employee_id/visa_no', 'label': labels['visa_no'], 'type': 'char'},
+            {'name': 'employee_id/work_location_id/name', 'label': labels['work_location'], 'type': 'char'},
+            {'name': 'contract_id/salary_payment_method', 'label': labels['payment_method'], 'type': 'char'},
+            {'name': 'net_amount', 'label': labels['net_amount'], 'type': 'float'},
+            {'name': 'advance_amount', 'label': labels['loan_advance'], 'type': 'float'},
+            {'name': 'contract_id/wage', 'label': labels['wage'], 'type': 'float'},
+        ]
+        # /web/export/xlsx runs export_data() as the clicking user, and
+        # export_data enforces field-level groups= (hr.employee.visa_no is
+        # Employees/Officer only) on top of model ACLs. Users who read
+        # payslips without those groups (General Reviewer Manager) got an
+        # AccessError for the whole sheet; export the columns they may read.
+        readable = self._export_paths_readable(
+            'hr.payslip', [column['name'] for column in columns])
+        skipped = [c['name'] for c in columns if c['name'] not in readable]
+        if skipped:
+            _logger.info(
+                "Batch %s finance export: uid %s lacks field-level read "
+                "access to %s; columns skipped", self.id, self.env.uid, skipped)
         export_payload = {
             'model': 'hr.payslip',
             'ids': False,
             'domain': [('payslip_run_id', '=', self.id)],
-            'fields': [
-                {'name': 'employee_id/name', 'label': labels['employee_name'], 'type': 'char'},
-                {'name': 'employee_id/visa_no', 'label': labels['visa_no'], 'type': 'char'},
-                {'name': 'employee_id/work_location_id/name', 'label': labels['work_location'], 'type': 'char'},
-                {'name': 'contract_id/salary_payment_method', 'label': labels['payment_method'], 'type': 'char'},
-                {'name': 'net_amount', 'label': labels['net_amount'], 'type': 'float'},
-                {'name': 'advance_amount', 'label': labels['loan_advance'], 'type': 'float'},
-                {'name': 'contract_id/wage', 'label': labels['wage'], 'type': 'float'},
-            ],
+            'fields': [c for c in columns if c['name'] in readable],
             'groupby': [],
             'import_compat': False,
             'context': dict(self.env.context),
@@ -206,10 +268,10 @@ class HrPayslipRun(models.Model):
                                 entry['loan_line_ids'] = list(il.loan_line_ids.ids)
                             saved_inputs.append(entry)
                             
-                    # 2. Sync physical dates to match any fresh batch changes
-                    #    (skip payslips whose period is locked)
-                    slip.apply_contract_bounded_period(
-                        self.date_start, self.date_end)
+                    # 2. Clamp the slip's OWN period to its contract. Dates
+                    #    set by hand on a slip are kept; batch date changes
+                    #    were already propagated when the batch was saved.
+                    slip.apply_contract_bounded_period()
                     
                     # 3. Regen working days / schedules / generic inputs for the NEW dates
                     slip.onchange_employee()

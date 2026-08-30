@@ -10,8 +10,8 @@
                 <field name="number"/>
                 <field name="employee_id"/>
                 <field name="name"/>
-                <field name="date_from" groups="hr_payroll.group_hr_payroll_community_user"/>
-                <field name="date_to" groups="hr_payroll.group_hr_payroll_community_user"/>
+                <field name="date_from" groups="hr_payroll_community.group_hr_payroll_community_user"/>
+                <field name="date_to" groups="hr_payroll_community.group_hr_payroll_community_user"/>
                 <field name="state"/>
                 <field name="net_amount" string="Net Amount" sum="Total Net Amount"/>
                 <field name="company_id" groups="base.group_multi_company"
@@ -41,7 +41,7 @@
                                         <field name="state"/>
                                     </span>
                                 </div>
-                                <div class="col-12" groups="hr_payroll.group_hr_payroll_community_user">
+                                <div class="col-12" groups="hr_payroll_community.group_hr_payroll_community_user">
                                     <span>
                                         <field name="date_from"/>
                                         -
