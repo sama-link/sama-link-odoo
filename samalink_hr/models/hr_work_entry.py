@@ -119,7 +119,10 @@ class HrWorkEntry(models.Model):
             attended_dates = attendance_by_emp.get(emp.id, set())
 
             for d in sorted(rest_dates):
-                if d in holiday_dates or d in timeoff_by_emp.get(emp.id, set()):
+                if d in holiday_dates or (
+                    d in timeoff_by_emp.get(emp.id, set())
+                    and d not in attended_dates
+                ):
                     _logger.debug(
                         "Flex: emp %s day %s → skip (holiday/leave)", emp.id, d,
                     )

@@ -228,7 +228,12 @@ class HrEmployee(models.Model):
         If the employee took fewer rest days than entitled in a payroll week,
         the shortfall is filled by injecting the default rest days (Friday first,
         then Saturday for 2-rest schedules).  A default day that falls on a
-        public holiday or approved leave is skipped (it's already covered).
+        public holiday, or on an approved leave without any attendance, is
+        skipped (it's already covered).  A day the employee actually worked
+        stays a valid candidate even when an hours-based permission
+        (Late/Early) is recorded on it — the dual REST100 alongside the
+        attendance is exactly the compensation for working the default rest
+        day.
         Days that are already in rest_set (from the full-period split) are not
         counted twice.
         """
@@ -249,6 +254,9 @@ class HrEmployee(models.Model):
             self._get_grouped_timeoff_dates(start_date, end_date).get(self.id, set())
         )
         public_holidays = self._get_public_holiday_dates(start_date, end_date)
+        attendance_dates = set(
+            self._get_grouped_attendance_dates(start_date, end_date).get(self.id, [])
+        )
 
         calc_start = self._samalink_flexible_calc_start(start_date)
         week_key = self._get_friday_week_key(calc_start)
@@ -277,7 +285,9 @@ class HrEmployee(models.Model):
                         break
                     if day < start_date or day > end_date:
                         continue
-                    if day in public_holidays or day in timeoff_dates:
+                    if day in public_holidays:
+                        continue
+                    if day in timeoff_dates and day not in attendance_dates:
                         continue
                     if day in rest_set:
                         continue
