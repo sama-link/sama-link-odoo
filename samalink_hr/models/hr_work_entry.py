@@ -36,6 +36,14 @@ class HrWorkEntry(models.Model):
         - Days classified as real absence → left unchanged (e.g. OUT from generator)
         - Other working days → attendance (WORK100)
         - Public holidays / approved leave dates → left unchanged
+
+        The window is extended back to the Friday anchoring the payroll week
+        that contains ``date_from``: that straddling week was decided by the
+        previous period's run with only its first day(s) known (e.g. a dual
+        REST100 topped up on the worked Friday before knowing the employee
+        would take his real rest a day later, inside this period), so it is
+        re-decided here with the full week's attendance and stale premature
+        rest entries are corrected.
         """
         Employee = self.env['hr.employee']
         if employee_ids is not None:
@@ -47,6 +55,7 @@ class HrWorkEntry(models.Model):
             if not employee_ids:
                 return
 
+        date_from = Employee._get_friday_week_key(date_from)
         from_dt = datetime.combine(date_from, time.min)
         to_dt = datetime.combine(date_to, time.max)
         domain = [
@@ -109,6 +118,7 @@ class HrWorkEntry(models.Model):
 
         created_rest = 0
         converted_rest = 0
+        stale_rest = self.env['hr.work.entry']
 
         for emp in employees:
             if emp.id not in rest_by_emp:
@@ -203,8 +213,33 @@ class HrWorkEntry(models.Model):
             elif d in real_dates:
                 continue
             else:
+                if (
+                    entry.work_entry_type_id == rest_type
+                    and d in attendance_by_emp.get(emp.id, set())
+                ):
+                    siblings = entries.filtered(
+                        lambda e, day=d, other=entry: e.employee_id == other.employee_id
+                        and e.id != other.id
+                        and e.date_start and e.date_start.date() == day
+                        and e.work_entry_type_id != rest_type
+                        and not (has_leave_id and e.leave_id)
+                    )
+                    if siblings:
+                        # Stale dual REST100 from the previous period's
+                        # premature top-up on a worked day that is no longer
+                        # rest; the day keeps its attendance entry.
+                        stale_rest |= entry
+                        continue
                 if entry.work_entry_type_id != attendance_type:
                     entry.work_entry_type_id = attendance_type.id
+
+        if stale_rest:
+            _logger.info(
+                "Flex adjust: removing %d stale premature REST100 entr%s: %s",
+                len(stale_rest), 'y' if len(stale_rest) == 1 else 'ies',
+                [(e.employee_id.id, str(e.date_start.date())) for e in stale_rest],
+            )
+            stale_rest.unlink()
 
         _logger.info(
             "Flex adjust done: %d entries, %d flex employees, "
