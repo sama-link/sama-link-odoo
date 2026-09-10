@@ -124,6 +124,28 @@ class HrAppraisal(models.Model):
         readonly=True,
     )
 
+    # Evaluators reach an appraisal through access_user_ids, but hr.employee
+    # stays limited to their own team (see the note above). The kanban shows
+    # the employee avatar, and an <field name="employee_id" widget="image">
+    # reads hr.employee.avatar_128 with the evaluator's rights - which raises
+    # an AccessError the moment the kanban loads a card whose employee the
+    # evaluator may not read. Expose the avatar through a compute_sudo proxy
+    # so the card renders the image without ever reading the employee record
+    # as the evaluator. compute_sudo (not a plain related) makes the intent
+    # explicit and independent of the related_sudo default.
+    employee_avatar_128 = fields.Binary(
+        string='Employee Avatar',
+        compute='_compute_employee_avatar_128',
+        compute_sudo=True,
+        help="Employee avatar for the appraisal kanban, read with sudo so "
+             "evaluators who can open the appraisal but not the employee "
+             "record do not hit an access error.")
+
+    @api.depends('employee_id')
+    def _compute_employee_avatar_128(self):
+        for rec in self:
+            rec.employee_avatar_128 = rec.employee_id.avatar_128
+
     access_user_ids = fields.Many2many(
         'res.users',
         compute='_compute_access_user_ids',
